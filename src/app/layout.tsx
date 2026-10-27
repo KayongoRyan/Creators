@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Creators",
-  description: "Creator marketplace platform",
+  description:
+    "Brands post campaigns. Creators apply. Submissions come back for review.",
 };
 
 export default function RootLayout({

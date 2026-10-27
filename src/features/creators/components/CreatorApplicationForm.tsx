@@ -15,7 +15,7 @@ export function CreatorApplicationForm() {
         <input
           name="fullName"
           required
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="rounded-xl border border-black/10 bg-white px-3 py-2.5 outline-none focus:border-[#00EC97]"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -23,7 +23,7 @@ export function CreatorApplicationForm() {
         <input
           name="niche"
           required
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="rounded-xl border border-black/10 bg-white px-3 py-2.5 outline-none focus:border-[#00EC97]"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -31,10 +31,12 @@ export function CreatorApplicationForm() {
         <input
           name="portfolio"
           type="url"
-          className="rounded-md border border-neutral-300 px-3 py-2"
+          className="rounded-xl border border-black/10 bg-white px-3 py-2.5 outline-none focus:border-[#00EC97]"
         />
       </label>
-      <Button type="submit">Submit application</Button>
+      <Button type="submit" className="rounded-xl bg-[#171717] hover:bg-black">
+        Submit application
+      </Button>
     </form>
   );
 }

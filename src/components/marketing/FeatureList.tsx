@@ -1,3 +1,5 @@
+import { marketingFrame, marketingType } from "@/lib/marketing";
+
 const features = [
   {
     title: "Post the brief",
@@ -19,31 +21,35 @@ const features = [
 
 export function FeatureList() {
   return (
-    <section className="mx-auto w-full max-w-7xl border-x border-black/[0.08]">
+    <section className={`mx-auto w-full max-w-7xl ${marketingFrame}`}>
       <div className="px-6 pb-8 pt-24 sm:px-8 sm:pt-32">
-        <h2 className="max-w-3xl text-4xl font-medium tracking-tight sm:text-5xl sm:leading-[1.08]">
+        <h2 className={marketingType.sectionTitle}>
           The brief stays attached to the work.
         </h2>
-        <p className="mt-4 max-w-xl text-lg text-neutral-600">
+        <p className={marketingType.sectionLead}>
           Post it, staff it, and review what comes back.
         </p>
       </div>
-      <div className="divide-y divide-black/10 border-t border-black/10">
+      <div className="divide-y divide-black/11 border-t border-black/11">
         {features.map((feature, index) => (
           <details
             key={feature.title}
             open={index === 0}
             className="group px-6 sm:px-8"
           >
-            <summary className="cursor-pointer list-none py-6 text-xl font-medium tracking-tight marker:content-none [&::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none py-6 marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center justify-between gap-6">
-                {feature.title}
-                <span className="text-neutral-400 transition group-open:rotate-45">
+                <span className={marketingType.accordionTitle}>
+                  {feature.title}
+                </span>
+                <span className="text-base text-gray-400 transition group-open:rotate-45">
                   +
                 </span>
               </span>
             </summary>
-            <p className="max-w-2xl pb-6 text-neutral-600">{feature.body}</p>
+            <p className={`max-w-2xl pb-6 ${marketingType.body}`}>
+              {feature.body}
+            </p>
           </details>
         ))}
       </div>

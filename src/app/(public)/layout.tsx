@@ -1,10 +1,6 @@
-import { Figtree } from "next/font/google";
-import { SiteFooter, SiteHeader } from "@/components/marketing";
-
-const figtree = Figtree({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { marketingShell } from "@/lib/marketing";
 
 export default function PublicLayout({
   children,
@@ -12,9 +8,7 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={`${figtree.className} flex min-h-screen flex-col bg-white text-[#171717] antialiased selection:bg-[#00EC97] selection:text-black`}
-    >
+    <div className={`${marketingShell} flex min-h-screen flex-col`}>
       <SiteHeader />
       <main className="flex-1">{children}</main>
       <SiteFooter />

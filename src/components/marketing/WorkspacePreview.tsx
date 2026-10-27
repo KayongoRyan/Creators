@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
+import { marketingType } from "@/lib/marketing";
 
 const tabs = [
   {
@@ -47,12 +48,12 @@ export function WorkspacePreview() {
   const view = tabs.find((tab) => tab.id === active) ?? tabs[0];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)]">
+    <div className="overflow-hidden rounded-2xl border border-black/11 bg-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)]">
       <div className="grid min-h-[440px] md:grid-cols-[232px_1fr]">
-        <aside className="flex bg-[#171717] text-white">
+        <aside className="flex bg-gray-900 text-white">
           <div className="w-2 shrink-0 bg-gradient-to-b from-[#65FBAA] via-[#31F49C] to-[#00EC97]" />
           <div className="flex flex-1 flex-col p-4">
-            <p className="px-3 pb-3 text-xs font-medium tracking-wide text-white/45">
+            <p className="px-3 pb-3 text-xs font-medium uppercase tracking-wide text-white/45">
               Workspace
             </p>
             <nav className="flex flex-col gap-1">
@@ -62,9 +63,9 @@ export function WorkspacePreview() {
                   type="button"
                   onClick={() => setActive(tab.id)}
                   className={cn(
-                    "rounded-xl px-3 py-2.5 text-left text-sm",
+                    "rounded-xl px-3 py-2.5 text-left text-base font-normal",
                     active === tab.id
-                      ? "bg-white/10 text-white"
+                      ? "bg-white/10 font-medium text-white"
                       : "text-white/65 hover:bg-white/5 hover:text-white",
                   )}
                 >
@@ -75,19 +76,19 @@ export function WorkspacePreview() {
           </div>
         </aside>
         <div className="bg-[#f7f7f7] p-5 sm:p-7">
-          <p className="text-sm text-neutral-500">{view.kicker}</p>
-          <h2 className="mt-1 text-2xl font-medium tracking-tight">{view.title}</h2>
-          <p className="mt-2 max-w-md text-sm leading-6 text-neutral-600">
-            {view.detail}
-          </p>
-          <ul className="mt-6 divide-y divide-black/10 overflow-hidden rounded-2xl border border-black/10 bg-white">
+          <p className={marketingType.cardKicker}>{view.kicker}</p>
+          <h2 className={`mt-1 ${marketingType.cardTitle}`}>{view.title}</h2>
+          <p className={`mt-2 max-w-md ${marketingType.body}`}>{view.detail}</p>
+          <ul className="mt-6 divide-y divide-black/11 overflow-hidden rounded-2xl border border-black/11 bg-white">
             {view.rows.map((row) => (
               <li
                 key={row.label}
                 className="flex items-center justify-between gap-4 px-4 py-4"
               >
-                <span className="text-sm font-medium">{row.label}</span>
-                <span className="text-right text-sm text-neutral-500">
+                <span className="text-sm font-medium text-gray-900">
+                  {row.label}
+                </span>
+                <span className="text-right text-sm leading-5 text-gray-500">
                   {row.value}
                 </span>
               </li>

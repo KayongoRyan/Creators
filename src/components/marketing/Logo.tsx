@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { routes } from "@/config/routes";
+import { marketingType } from "@/lib/marketing";
 
 export function Logo() {
   return (
     <Link
       href={routes.public.home}
-      className="inline-flex items-center gap-2.5 text-[#171717]"
+      className="inline-flex items-center gap-2.5"
     >
       <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8" fill="#00EC97" />
@@ -17,7 +18,7 @@ export function Logo() {
           strokeLinecap="round"
         />
       </svg>
-      <span className="text-[17px] font-semibold tracking-tight">Creators</span>
+      <span className={marketingType.wordmark}>Creators</span>
     </Link>
   );
 }

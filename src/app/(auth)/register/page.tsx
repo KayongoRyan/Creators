@@ -1,10 +1,11 @@
 import { RegisterForm } from "@/features/auth";
+import { marketingType } from "@/lib/marketing";
 
 export default function RegisterPage() {
   return (
-    <main className="mx-auto max-w-sm px-6 py-16">
-      <h1 className="text-2xl font-semibold">Create account</h1>
+    <div className="mx-auto w-full max-w-sm flex-1 px-6 py-16 sm:py-24">
+      <h1 className={marketingType.pageTitle}>Create account</h1>
       <RegisterForm />
-    </main>
+    </div>
   );
 }

@@ -1,37 +1,52 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  ClosingCta,
-  FaqList,
-  FeatureList,
-  Principles,
-  WorkspacePreview,
-} from "@/components/marketing";
+import { ClosingCta } from "@/components/marketing/ClosingCta";
+import { FaqList } from "@/components/marketing/FaqList";
+import { FeatureList } from "@/components/marketing/FeatureList";
+import { Principles } from "@/components/marketing/Principles";
+import { marketingFrame, marketingType } from "@/lib/marketing";
 import { routes } from "@/config/routes";
+
+const WorkspacePreview = dynamic(
+  () =>
+    import("@/components/marketing/WorkspacePreview").then(
+      (mod) => mod.WorkspacePreview,
+    ),
+  { ssr: true },
+);
 
 export default function HomePage() {
   return (
     <>
-      <section className="mx-auto w-full max-w-7xl border-x border-black/[0.08]">
-        <div className="flex flex-col items-start gap-6 px-6 pb-12 pt-16 sm:px-8 sm:pb-16 sm:pt-24">
-          <h1 className="max-w-4xl text-4xl font-medium leading-[1.12] tracking-tight sm:text-6xl sm:leading-[1.05] sm:tracking-[-0.03em]">
+      <section className={`mx-auto w-full max-w-7xl ${marketingFrame}`}>
+        <div className="flex min-h-[62vh] flex-col items-center justify-center px-6 py-20 text-center sm:px-8 sm:py-24">
+          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">
+            Creator campaigns, connected
+          </p>
+          <h1 className={`max-w-5xl ${marketingType.hero}`}>
             Campaigns, creators, and the work between them.
           </h1>
-          <p className="max-w-xl text-lg leading-7 text-neutral-600">
+          <p className={`mt-6 max-w-2xl ${marketingType.body}`}>
             Brands post the brief. Creators apply. The cut and the stills come
             back on that same campaign.
           </p>
-          <Link
-            href={routes.public.apply}
-            className="rounded-xl bg-[#171717] px-4 py-2.5 text-sm font-medium text-white hover:bg-black"
-          >
-            Apply as creator
-          </Link>
-          <p className="text-sm text-neutral-500">
-            A name, a niche, and a portfolio. Someone reviews it.
-          </p>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+            <Link
+              href={routes.public.apply}
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-gray-900 px-6 text-sm font-medium text-white transition-colors hover:bg-black"
+            >
+              Apply as creator
+            </Link>
+            <a
+              href="#workspace"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/15 px-6 text-sm font-medium text-gray-900 transition-colors hover:border-black/30 hover:bg-black/[0.03]"
+            >
+              Explore the workspace
+            </a>
+          </div>
         </div>
-        <div className="px-6 pb-20 sm:px-8">
-          <p className="mb-4 text-sm text-neutral-500">The workspace.</p>
+        <div id="workspace" className="scroll-mt-20 px-6 pb-20 sm:px-8">
+          <p className={marketingType.eyebrow}>The workspace.</p>
           <WorkspacePreview />
         </div>
       </section>

@@ -1,3 +1,5 @@
+import { marketingFrame, marketingType } from "@/lib/marketing";
+
 const faqs = [
   {
     q: "What is Creators?",
@@ -23,27 +25,25 @@ const faqs = [
 
 export function FaqList() {
   return (
-    <section className="mx-auto w-full max-w-7xl border-x border-black/[0.08]">
+    <section className={`mx-auto w-full max-w-7xl ${marketingFrame}`}>
       <div className="px-6 pb-10 pt-24 sm:px-8 sm:pt-32">
-        <h2 className="text-4xl font-medium tracking-tight sm:text-5xl">
-          Frequently asked questions
-        </h2>
-        <p className="mt-4 text-neutral-600">
+        <h2 className={marketingType.sectionTitle}>Frequently asked questions</h2>
+        <p className={marketingType.sectionLead}>
           How a brief becomes an application, then a submission.
         </p>
       </div>
-      <div className="divide-y divide-black/10 border-t border-black/10">
+      <div className="divide-y divide-black/11 border-t border-black/11">
         {faqs.map((item) => (
           <details key={item.q} className="group px-6 sm:px-8">
-            <summary className="cursor-pointer list-none py-5 text-lg font-medium marker:content-none [&::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none py-5 marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center justify-between gap-6">
-                {item.q}
-                <span className="text-neutral-400 transition group-open:rotate-45">
+                <span className={marketingType.faqQuestion}>{item.q}</span>
+                <span className="text-base text-gray-400 transition group-open:rotate-45">
                   +
                 </span>
               </span>
             </summary>
-            <p className="max-w-2xl pb-5 text-neutral-600">{item.a}</p>
+            <p className={`max-w-2xl pb-5 ${marketingType.body}`}>{item.a}</p>
           </details>
         ))}
       </div>

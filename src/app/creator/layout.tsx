@@ -7,7 +7,7 @@ export default function CreatorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardShell title="Creator" nav={creatorNav}>
+    <DashboardShell title="Creator" role="creator" nav={creatorNav}>
       {children}
     </DashboardShell>
   );

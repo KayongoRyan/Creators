@@ -7,7 +7,7 @@ export default function BrandLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardShell title="Brand" nav={brandNav}>
+    <DashboardShell title="Brand" role="brand" nav={brandNav}>
       {children}
     </DashboardShell>
   );

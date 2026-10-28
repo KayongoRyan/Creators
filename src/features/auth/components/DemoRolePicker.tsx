@@ -1,0 +1,51 @@
+"use client";
+
+import type { UserRole } from "@/types";
+import { demoRoleOptions } from "../demoSession";
+
+type DemoRolePickerProps = {
+    value: UserRole;
+    onChange: (role: UserRole) => void;
+};
+
+export function DemoRolePicker({ value, onChange }: DemoRolePickerProps) {
+    return (
+        <fieldset className="flex flex-col gap-3">
+            <legend className="text-sm font-medium text-gray-900">
+                Choose a demo workspace
+            </legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+                {demoRoleOptions.map((option) => {
+                    const isSelected = value === option.role;
+
+                    return (
+                        <label
+                            key={option.role}
+                            className={`flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors focus-within:ring-2 focus-within:ring-emerald-700 focus-within:ring-offset-2 ${isSelected
+                                    ? "border-emerald-600 bg-emerald-50"
+                                    : "border-black/15 bg-white hover:border-black/30"
+                                }`}
+                        >
+                            <input
+                                type="radio"
+                                name="demoRole"
+                                value={option.role}
+                                checked={isSelected}
+                                onChange={() => onChange(option.role)}
+                                className="mt-1 size-4 shrink-0 accent-emerald-700"
+                            />
+                            <span className="min-w-0">
+                                <span className="block text-sm font-medium text-gray-900">
+                                    {option.label}
+                                </span>
+                                <span className="mt-1 block text-xs leading-4 text-gray-600">
+                                    {option.description}
+                                </span>
+                            </span>
+                        </label>
+                    );
+                })}
+            </div>
+        </fieldset>
+    );
+}

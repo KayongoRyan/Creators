@@ -6,16 +6,26 @@ import { demoRoleOptions } from "../demoSession";
 type DemoRolePickerProps = {
     value: UserRole;
     onChange: (role: UserRole) => void;
+    excludedRoles?: UserRole[];
 };
 
-export function DemoRolePicker({ value, onChange }: DemoRolePickerProps) {
+export function DemoRolePicker({
+    value,
+    onChange,
+    excludedRoles = [],
+}: DemoRolePickerProps) {
+    const options = demoRoleOptions.filter(
+        (option) => !excludedRoles.includes(option.role),
+    );
+    const columns = options.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3";
+
     return (
         <fieldset className="flex flex-col gap-3">
             <legend className="text-sm font-medium text-gray-900">
                 Choose a demo workspace
             </legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-                {demoRoleOptions.map((option) => {
+            <div className={`grid gap-2 ${columns}`}>
+                {options.map((option) => {
                     const isSelected = value === option.role;
 
                     return (

@@ -41,7 +41,11 @@ export function LoginForm() {
         router.replace(getRoleHome(role));
       }}
     >
-      <DemoRolePicker value={role} onChange={setRole} />
+      <DemoRolePicker
+        value={role}
+        onChange={setRole}
+        excludedRoles={["admin"]}
+      />
       <label className={marketingType.formLabel}>
         Email
         <input

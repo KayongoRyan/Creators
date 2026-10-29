@@ -1,5 +1,5 @@
+import { MarketingThemeProvider } from "@/components/marketing/MarketingThemeProvider";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
-import { marketingShell } from "@/lib/marketing";
 
 export default function AuthLayout({
   children,
@@ -7,9 +7,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${marketingShell} flex min-h-screen flex-col`}>
+    <MarketingThemeProvider>
       <SiteHeader />
-      <main className="flex flex-1 flex-col">{children}</main>
-    </div>
+      <main className="flex flex-1 flex-col bg-mkt-bg text-mkt-fg">{children}</main>
+    </MarketingThemeProvider>
   );
 }

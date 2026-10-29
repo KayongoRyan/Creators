@@ -4,7 +4,8 @@ import { useState } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Field, inputClassName, inputErrorClassName } from "@/components/shared/formField";
-import { useAdminStore, type CreateCampaignInput } from "@/features/admin/store";
+import { useAdminStore } from "@/features/admin/store";
+import type { CreateCampaignInput } from "@/types";
 import {
   centsToRwf,
   formatCampaignStatus,

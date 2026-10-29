@@ -100,6 +100,14 @@ export type BrandCollection = {
   status: "paid" | "pending";
 };
 
+export type CreateCampaignInput = {
+  title: string;
+  brandName: string;
+  campaignType: string;
+  budgetRwf: number;
+  deadline: string;
+};
+
 export type AdminState = {
   campaigns: Campaign[];
   creatorApplications: CreatorApplication[];

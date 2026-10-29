@@ -10,9 +10,5 @@ export async function fetchResource<T>(
     return fixtures[path] as T;
   }
 
-  try {
-    return await apiClient<T>(apiPath);
-  } catch {
-    return fixtures[path] as T;
-  }
+  return apiClient<T>(apiPath);
 }

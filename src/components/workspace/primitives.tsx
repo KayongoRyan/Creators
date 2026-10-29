@@ -84,7 +84,7 @@ export function StatGrid({
   items: { value: string; label: string }[];
 }) {
   return (
-    <div className="mb-4 grid grid-cols-3 gap-2">
+    <div className="mb-4 grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
       {items.map((item) => (
         <div key={item.label} className="rounded-lg bg-[#f5f4ed] p-3">
           <p className="text-xl font-medium text-[#141413]">{item.value}</p>

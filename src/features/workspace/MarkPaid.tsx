@@ -70,7 +70,7 @@ export function AdminOverview() {
       <PageHeader title="Overview" description="Week of May 26, 2026" />
       <section
         aria-label="Platform totals"
-        className="mb-10 grid gap-3 sm:grid-cols-3"
+        className="mb-10 grid grid-cols-1 gap-3 min-[480px]:grid-cols-3"
       >
         {[
           [String(metrics.activeCampaigns), "Active campaigns"],

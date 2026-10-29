@@ -1,6 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { siteConfig } from "@/config/site";
+import {
+  apiApplyToCampaign,
+  apiSubmitAssignment,
+  apiUpdateCreatorProfile,
+  fetchCreatorState,
+} from "@/lib/api/portalApi";
+import {
+  hydrateFromApi,
+  runApiMutation,
+  type PortalLoadStatus,
+} from "@/lib/portal/hydration";
 import { creatorSeed } from "@/lib/portalSeeds";
 import type {
   CampaignApplication,
@@ -31,8 +50,54 @@ function nextId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}`;
 }
 
+type CreatorStoreValue = ReturnType<typeof useCreatorStoreController>;
+
+const CreatorStoreContext = createContext<CreatorStoreValue | null>(null);
+
+export function CreatorStoreProvider({ children }: { children: React.ReactNode }) {
+  const value = useCreatorStoreController();
+  return createElement(CreatorStoreContext.Provider, { value }, children);
+}
+
 export function useCreatorStore() {
+  const value = useContext(CreatorStoreContext);
+  if (!value) {
+    throw new Error("useCreatorStore must be used within CreatorStoreProvider");
+  }
+  return value;
+}
+
+function useCreatorStoreController() {
   const [state, setState] = useState<CreatorState>(() => readState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() =>
+    siteConfig.useMockData ? "ready" : "loading",
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const hydrate = useCallback(async () => {
+    if (siteConfig.useMockData) {
+      setState(readState());
+      setStatus("ready");
+      setError(null);
+      return;
+    }
+    setStatus("loading");
+    setError(null);
+    const result = await hydrateFromApi(fetchCreatorState, writeState);
+    if (result.ok) {
+      setState(result.data);
+      setStatus("ready");
+      return;
+    }
+    setState(readState());
+    setError(result.error);
+    setStatus("error");
+  }, []);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     const sync = () => setState(readState());
@@ -52,14 +117,20 @@ export function useCreatorStore() {
     });
   }, []);
 
+  const notifyMutationFailure = useCallback(async (mutation: () => Promise<void>) => {
+    const result = await runApiMutation(mutation);
+    if (!result.ok) setActionError(result.error);
+  }, []);
+
   const updateProfile = useCallback(
     (patch: Partial<CreatorProfile>) => {
       persist((s) => ({
         ...s,
         profile: { ...s.profile, ...patch },
       }));
+      void notifyMutationFailure(() => apiUpdateCreatorProfile(patch));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const applyToCampaign = useCallback(
@@ -84,19 +155,21 @@ export function useCreatorStore() {
           ),
         };
       });
+      void notifyMutationFailure(() => apiApplyToCampaign(campaignId, pitch));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const submitAssignment = useCallback(
     (assignmentId: string, postUrl: string) => {
+      const url = postUrl.trim();
       persist((s) => {
         const assignment = s.assignments.find((a) => a.id === assignmentId);
         if (!assignment) return s;
 
         const updated: CreatorAssignment = {
           ...assignment,
-          postUrl: postUrl.trim(),
+          postUrl: url,
           status: "pending",
         };
 
@@ -122,12 +195,18 @@ export function useCreatorStore() {
               ],
         };
       });
+      void notifyMutationFailure(() => apiSubmitAssignment(assignmentId, url));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   return {
     state,
+    status,
+    error,
+    actionError,
+    retryHydration: hydrate,
+    clearActionError: () => setActionError(null),
     updateProfile,
     applyToCampaign,
     submitAssignment,

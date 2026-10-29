@@ -1,11 +1,31 @@
 import Link from "next/link";
 import { routes } from "@/config/routes";
+import { cn } from "@/lib/utils/cn";
 
-export function Logo() {
+type LogoProps = {
+  variant?: "default" | "wordmark";
+  className?: string;
+};
+
+export function Logo({ variant = "default", className }: LogoProps) {
+  if (variant === "wordmark") {
+    return (
+      <Link
+        href={routes.public.home}
+        className={cn(
+          "text-lg font-medium tracking-tight text-mkt-fg sm:text-xl",
+          className,
+        )}
+      >
+        Creators
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={routes.public.home}
-      className="inline-flex items-center gap-2.5 text-mkt-fg"
+      className={cn("inline-flex items-center gap-2.5 text-mkt-fg", className)}
     >
       <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
         <rect width="32" height="32" rx="8" fill="var(--m-accent)" />

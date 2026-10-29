@@ -10,7 +10,7 @@ export default function PublicLayout({
   return (
     <MarketingThemeProvider>
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 bg-mkt-bg">{children}</main>
       <SiteFooter />
     </MarketingThemeProvider>
   );

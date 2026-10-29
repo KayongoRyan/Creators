@@ -21,7 +21,7 @@ export function DemoRolePicker({
 
     return (
         <fieldset className="flex flex-col gap-3">
-            <legend className="text-sm font-medium text-gray-900">
+            <legend className="text-sm font-medium text-mkt-fg">
                 Choose a demo workspace
             </legend>
             <div className={`grid gap-2 ${columns}`}>
@@ -31,9 +31,9 @@ export function DemoRolePicker({
                     return (
                         <label
                             key={option.role}
-                            className={`flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors focus-within:ring-2 focus-within:ring-emerald-700 focus-within:ring-offset-2 ${isSelected
-                                    ? "border-emerald-600 bg-emerald-50"
-                                    : "border-black/15 bg-white hover:border-black/30"
+                            className={`flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors focus-within:ring-2 focus-within:ring-mkt-accent focus-within:ring-offset-2 ${isSelected
+                                ? "border-mkt-accent bg-mkt-surface"
+                                : "border-mkt-border bg-mkt-bg-muted hover:border-mkt-fg-subtle"
                                 }`}
                         >
                             <input
@@ -42,13 +42,13 @@ export function DemoRolePicker({
                                 value={option.role}
                                 checked={isSelected}
                                 onChange={() => onChange(option.role)}
-                                className="mt-1 size-4 shrink-0 accent-emerald-700"
+                                className="mt-1 size-4 shrink-0 accent-mkt-accent"
                             />
                             <span className="min-w-0">
-                                <span className="block text-sm font-medium text-gray-900">
+                                <span className="block text-sm font-medium text-mkt-fg">
                                     {option.label}
                                 </span>
-                                <span className="mt-1 block text-xs leading-4 text-gray-600">
+                                <span className="mt-1 block text-xs leading-4 text-mkt-fg-muted">
                                     {option.description}
                                 </span>
                             </span>

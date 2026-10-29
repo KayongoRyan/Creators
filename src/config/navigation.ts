@@ -2,6 +2,12 @@ import { routes } from "./routes";
 
 export type NavItem = { href: string; label: string };
 
+/** Public marketing header */
+export const marketingJoinCta = {
+  href: routes.auth.login,
+  label: "Join",
+} as const;
+
 export const adminNav: NavItem[] = [
   { href: routes.admin.root, label: "Dashboard" },
   { href: routes.admin.campaigns, label: "Campaigns" },

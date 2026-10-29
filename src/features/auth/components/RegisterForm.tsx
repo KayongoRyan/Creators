@@ -4,13 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
-import type { UserRole } from "@/types";
 import { marketingType } from "@/lib/marketing";
+import { cn } from "@/lib/utils/cn";
 import { isValidEmail } from "@/lib/validators";
+import type { UserRole } from "@/types";
 
-export function RegisterForm() {
+type RegisterFormProps = {
+  initialRole: Extract<UserRole, "creator" | "brand">;
+};
+
+export function RegisterForm({ initialRole }: RegisterFormProps) {
   const router = useRouter();
-  const [role, setRole] = useState<UserRole>("creator");
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [error, setError] = useState("");
 
   return (
@@ -25,7 +30,11 @@ export function RegisterForm() {
         const password = String(data.get("password") ?? "");
 
         if (!displayName) {
-          setError("Enter your name to continue.");
+          setError(
+            role === "creator"
+              ? "Enter your name to continue."
+              : "Enter your business name to continue.",
+          );
           return;
         }
 
@@ -43,18 +52,27 @@ export function RegisterForm() {
         router.replace(getRoleHome(role));
       }}
     >
-      <DemoRolePicker value={role} onChange={setRole} />
-      <label className={marketingType.formLabel}>
-        Display name
+      <DemoRolePicker
+        value={role}
+        onChange={setRole}
+        excludedRoles={["admin"]}
+      />
+      <label className={cn(marketingType.formLabel, "text-mkt-fg")}>
+        {role === "creator" ? "Full name" : "Business name"}
         <input
           name="displayName"
-          autoComplete="name"
-          placeholder="Your name"
+          autoComplete={role === "creator" ? "name" : "organization"}
+          placeholder={
+            role === "creator" ? "Your name" : "Your company or brand"
+          }
           required
-          className={marketingType.formInput}
+          className={cn(
+            marketingType.formInput,
+            "border-mkt-border bg-mkt-bg-muted text-mkt-fg placeholder:text-mkt-fg-subtle focus:border-mkt-accent",
+          )}
         />
       </label>
-      <label className={marketingType.formLabel}>
+      <label className={cn(marketingType.formLabel, "text-mkt-fg")}>
         Email
         <input
           name="email"
@@ -62,10 +80,13 @@ export function RegisterForm() {
           autoComplete="email"
           placeholder="you@example.com"
           required
-          className={marketingType.formInput}
+          className={cn(
+            marketingType.formInput,
+            "border-mkt-border bg-mkt-bg-muted text-mkt-fg placeholder:text-mkt-fg-subtle focus:border-mkt-accent",
+          )}
         />
       </label>
-      <label className={marketingType.formLabel}>
+      <label className={cn(marketingType.formLabel, "text-mkt-fg")}>
         Password
         <input
           name="password"
@@ -73,18 +94,24 @@ export function RegisterForm() {
           autoComplete="new-password"
           required
           minLength={8}
-          className={marketingType.formInput}
+          className={cn(
+            marketingType.formInput,
+            "border-mkt-border bg-mkt-bg-muted text-mkt-fg placeholder:text-mkt-fg-subtle focus:border-mkt-accent",
+          )}
         />
       </label>
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm font-medium text-mkt-error">
           {error}
         </p>
       )}
-      <button type="submit" className={`${marketingType.ctaPrimary} w-full`}>
-        Create account
+      <button
+        type="submit"
+        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-mkt-accent px-5 text-sm font-semibold text-mkt-on-accent transition-colors hover:bg-mkt-accent-hi focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mkt-accent"
+      >
+        Create {role} account
       </button>
-      <p className="text-xs leading-5 text-gray-500">
+      <p className="text-xs leading-5 text-mkt-fg-muted">
         Frontend demo only. Account details stay in this browser; passwords are
         not stored.
       </p>

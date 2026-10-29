@@ -6,11 +6,15 @@ const config: Config = {
     extend: {
       colors: {
         palette: {
-          ink: "#000814",
-          navy: "#001d3d",
-          blue: "#003566",
-          gold: "#ffc300",
-          yellow: "#ffd60a",
+          black: "#000000",
+          white: "#ffffff",
+          gray950: "#0a0a0a",
+          gray900: "#171717",
+          gray800: "#262626",
+          gray600: "#525252",
+          gray400: "#a3a3a3",
+          gray200: "#e5e5e5",
+          gray100: "#f5f5f5",
         },
         mkt: {
           bg: "var(--m-bg)",
@@ -20,9 +24,12 @@ const config: Config = {
           "accent-hi": "var(--m-accent-hi)",
           fg: "var(--m-fg)",
           "fg-muted": "var(--m-fg-muted)",
+          error: "var(--m-error)",
           "fg-subtle": "var(--m-fg-subtle)",
           border: "var(--m-border)",
           "on-accent": "var(--m-on-accent)",
+          "nav-join": "var(--m-nav-join)",
+          "nav-join-hi": "var(--m-nav-join-hi)",
         },
       },
       backgroundColor: {

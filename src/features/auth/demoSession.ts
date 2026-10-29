@@ -29,7 +29,7 @@ export const demoRoleOptions: {
         },
     ];
 
-const demoSessionKey = "creators.demo-session";
+const demoSessionKey = "creators.demo-session.v2";
 
 const roleHome: Record<UserRole, string> = {
     admin: routes.admin.root,

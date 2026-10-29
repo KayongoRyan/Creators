@@ -15,15 +15,23 @@ Frontend-only demo today: interactive **admin**, **brand**, and **creator** port
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
-npm run dev:admin    # opens /admin (admin demo session)
-npm run dev:brand    # opens /brand
-npm run dev:creator  # opens /creator
+npm run dev          # http://localhost:3000  (.next)
+npm run dev:admin    # http://localhost:3001/admin  (.next-admin)
+npm run dev:brand    # http://localhost:3002/brand  (.next-brand)
+npm run dev:creator  # http://localhost:3003/creator (.next-creator)
 ```
 
-Stop any other `next dev` first so port **3000** is free.
+Role dev scripts use **separate ports and `.next-*` folders** so you can run admin + brand + creator at once without corrupting the cache.
 
-If you see `__webpack_modules__[moduleId] is not a function`, a stale dev server is almost always the cause (do not delete `.next` while `next dev` is still running). Stop every dev terminal with Ctrl+C, then:
+If you see `Cannot find module './611.js'`, missing `vendor-chunks`, or `reading '/_app'` errors — corrupted `.next` from old parallel dev or running `build` while dev is up:
+
+```bash
+npm run dev:reset
+```
+
+Then start the dev servers you need again. Do not delete `.next` manually while any `next dev` is still running.
+
+Legacy one-liner (port 3000 only):
 
 ```bash
 npm run dev:clean

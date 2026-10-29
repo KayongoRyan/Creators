@@ -38,6 +38,7 @@ body {
     rgba(255, 195, 0, 0.12),
     rgba(0, 53, 102, 0.2)
   );
+  --m-cta-shadow: #001d3d;
 }
 
 [data-marketing-theme="light"] {
@@ -61,4 +62,14 @@ body {
   --m-pill-active-bg: #003566;
   --m-pill-active-fg: #ffffff;
   --m-spotlight: linear-gradient(135deg, #e2ecf7, #ffffff);
+  --m-cta-shadow: #003566;
+}
+
+@layer utilities {
+  .shadow-mkt-cta {
+    box-shadow: 0 6px 0 0 var(--m-cta-shadow);
+  }
+  .shadow-mkt-cta-active {
+    box-shadow: 0 2px 0 0 var(--m-cta-shadow);
+  }
 }

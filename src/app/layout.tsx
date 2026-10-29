@@ -13,7 +13,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={figtree.variable}>
+    <html
+      lang="en"
+      className={figtree.variable}
+      data-marketing-theme="light"
+      style={{ colorScheme: "light" }}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{document.documentElement.setAttribute("data-marketing-theme","light");document.documentElement.style.colorScheme="light";localStorage.setItem("creators-marketing-theme","light");}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

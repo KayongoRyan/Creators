@@ -5,6 +5,9 @@
 :root {
   --background: #fafafa;
   --foreground: #0a0a0a;
+  --m-nav-join: #000000;
+  --m-nav-join-hi: #171717;
+  --m-nav-join-fg: #ffffff;
 }
 
 body {
@@ -12,64 +15,155 @@ body {
   background: var(--background);
 }
 
-/* Marketing palette: 000814 · 001d3d · 003566 · ffc300 · ffd60a */
-[data-marketing-theme="dark"] {
-  --m-bg: #000814;
-  --m-bg-muted: #001d3d;
-  --m-surface: #003566;
-  --m-accent: #ffc300;
-  --m-accent-hi: #ffd60a;
-  --m-fg: #ffffff;
-  --m-fg-muted: rgba(255, 255, 255, 0.62);
-  --m-fg-subtle: rgba(255, 255, 255, 0.42);
-  --m-border: rgba(255, 255, 255, 0.12);
-  --m-on-accent: #000814;
-  --m-header: rgba(0, 8, 20, 0.88);
-  --m-card: rgba(0, 53, 102, 0.35);
-  --m-code-bg: #001d3d;
-  --m-code-fg: #ffd60a;
-  --m-tab-idle: rgba(255, 255, 255, 0.08);
-  --m-tab-active-bg: #ffc300;
-  --m-tab-active-fg: #000814;
-  --m-pill-active-bg: #ffc300;
-  --m-pill-active-fg: #000814;
-  --m-spotlight: linear-gradient(
-    135deg,
-    rgba(255, 195, 0, 0.12),
-    rgba(0, 53, 102, 0.2)
-  );
-  --m-cta-shadow: #001d3d;
+html[data-marketing-theme="light"] body {
+  color: var(--m-fg);
+  background: var(--m-bg);
 }
 
+/* Marketing palette: light only (black · white · neutral grays) */
+html[data-marketing-theme="light"],
 [data-marketing-theme="light"] {
   --m-bg: #ffffff;
-  --m-bg-muted: #f4f8fc;
-  --m-surface: #e2ecf7;
-  --m-accent: #ffc300;
-  --m-accent-hi: #ffd60a;
-  --m-fg: #000814;
-  --m-fg-muted: #003566;
-  --m-fg-subtle: rgba(0, 29, 61, 0.55);
-  --m-border: rgba(0, 29, 61, 0.14);
-  --m-on-accent: #000814;
+  --m-bg-muted: #f5f5f5;
+  --m-surface: #e5e5e5;
+  --m-accent: #000000;
+  --m-accent-hi: #171717;
+  --m-fg: #000000;
+  --m-fg-muted: #525252;
+  --m-fg-subtle: rgba(0, 0, 0, 0.5);
+  --m-error: #b91c1c;
+  --m-border: rgba(0, 0, 0, 0.12);
+  --m-on-accent: #ffffff;
   --m-header: rgba(255, 255, 255, 0.92);
-  --m-card: #e2ecf7;
-  --m-code-bg: #001d3d;
-  --m-code-fg: #ffd60a;
-  --m-tab-idle: rgba(0, 29, 61, 0.06);
-  --m-tab-active-bg: #003566;
+  --m-card: #f5f5f5;
+  --m-code-bg: #171717;
+  --m-code-fg: #f5f5f5;
+  --m-tab-idle: rgba(0, 0, 0, 0.06);
+  --m-tab-active-bg: #000000;
   --m-tab-active-fg: #ffffff;
-  --m-pill-active-bg: #003566;
+  --m-pill-active-bg: #000000;
   --m-pill-active-fg: #ffffff;
-  --m-spotlight: linear-gradient(135deg, #e2ecf7, #ffffff);
-  --m-cta-shadow: #003566;
+  --m-spotlight: linear-gradient(135deg, #f5f5f5, #ffffff);
+  --m-cta-shadow: #000000;
+  --m-nav-group-bg: #ececec;
+  --m-nav-pill-fg: #000000;
+  --m-nav-pill-hover: rgba(0, 0, 0, 0.08);
+  --m-footer-bg: #000000;
+  --m-footer-fg: #ffffff;
+  --m-footer-muted: rgba(255, 255, 255, 0.8);
+  --m-footer-subtle: rgba(255, 255, 255, 0.5);
+  --m-footer-border: rgba(255, 255, 255, 0.35);
+  --m-footer-primary-bg: #ffffff;
+  --m-footer-primary-fg: #000000;
+  --m-footer-legal-bg: rgba(255, 255, 255, 0.12);
+  --m-footer-legal-fg: rgba(255, 255, 255, 0.75);
+  --m-footer-logo-bg: #ffffff;
+  --m-footer-logo-stroke: #000000;
+  --m-footer-pattern-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1'%3E%3Cpath d='M-20 80c80-40 160-40 240 0s160 40 240 0'/%3E%3Cpath d='M-20 160c80-40 160-40 240 0s160 40 240 0'/%3E%3Cpath d='M-20 240c80-40 160-40 240 0s160 40 240 0'/%3E%3Cpath d='M-20 320c80-40 160-40 240 0s160 40 240 0'/%3E%3Cpath d='M0 40c60 30 120 30 180 0'/%3E%3Cpath d='M100 120c60 30 120 30 180 0'/%3E%3Cpath d='M40 200c60 30 120 30 180 0'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 @layer utilities {
+  .mkt-nav-group {
+    background-color: var(--m-nav-group-bg);
+  }
+  .mkt-nav-link {
+    color: var(--m-nav-pill-fg);
+  }
+  .mkt-nav-link:hover {
+    background-color: var(--m-nav-pill-hover);
+  }
   .shadow-mkt-cta {
     box-shadow: 0 6px 0 0 var(--m-cta-shadow);
   }
   .shadow-mkt-cta-active {
     box-shadow: 0 2px 0 0 var(--m-cta-shadow);
+  }
+  /* Hero: fixed dark treatment — not tied to marketing theme */
+  .mkt-hero-isolated {
+    background-color: #000000;
+    color: #ffffff;
+  }
+  .mkt-hero-isolated .mkt-hero-scrim-x {
+    background: linear-gradient(
+      to right,
+      rgb(0 0 0 / 0.92),
+      rgb(0 0 0 / 0.65),
+      rgb(0 0 0 / 0.2)
+    );
+  }
+  .mkt-hero-isolated .mkt-hero-scrim-y {
+    background: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.78),
+      transparent,
+      rgb(0 0 0 / 0.18)
+    );
+  }
+  .mkt-hero-eyebrow {
+    color: #c8ff00;
+  }
+  .mkt-hero-body {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .mkt-hero-cta {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  .mkt-hero-cta:hover {
+    background-color: #f5f5f5;
+  }
+  .shadow-mkt-hero-cta {
+    box-shadow: 0 5px 0 0 rgb(0 0 0 / 0.85);
+  }
+  .shadow-mkt-hero-cta-hover {
+    box-shadow: 0 7px 0 0 rgb(0 0 0 / 0.85);
+  }
+  .mkt-footer-shell {
+    background-color: var(--m-footer-bg);
+    color: var(--m-footer-fg);
+  }
+  .mkt-footer-pattern {
+    background-image: var(--m-footer-pattern-image);
+    background-size: 480px 480px;
+  }
+  .mkt-footer-muted {
+    color: var(--m-footer-muted);
+  }
+  .mkt-footer-subtle {
+    color: var(--m-footer-subtle);
+  }
+  .mkt-footer-link {
+    color: var(--m-footer-muted);
+    transition: color 0.15s ease;
+  }
+  .mkt-footer-link:hover {
+    color: var(--m-footer-fg);
+  }
+  .mkt-footer-btn-primary {
+    background-color: var(--m-footer-primary-bg);
+    color: var(--m-footer-primary-fg);
+  }
+  .mkt-footer-btn-primary:hover {
+    filter: brightness(0.92);
+  }
+  .mkt-footer-btn-secondary {
+    border: 1px solid var(--m-footer-border);
+    color: var(--m-footer-fg);
+  }
+  .mkt-footer-btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--m-footer-fg) 10%, transparent);
+  }
+  .mkt-footer-legal-pill {
+    background-color: var(--m-footer-legal-bg);
+    color: var(--m-footer-legal-fg);
+  }
+  .mkt-footer-logo rect {
+    fill: var(--m-footer-logo-bg);
+  }
+  .mkt-footer-logo path {
+    stroke: var(--m-footer-logo-stroke);
+  }
+  .hero-character-art {
+    filter: contrast(1.08);
   }
 }

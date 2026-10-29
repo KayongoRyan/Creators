@@ -2,24 +2,39 @@ import { RegisterForm } from "@/features/auth";
 import { marketingType } from "@/lib/marketing";
 import Link from "next/link";
 import { routes } from "@/config/routes";
+import { cn } from "@/lib/utils/cn";
 
-export default function RegisterPage() {
+type RegisterPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function RegisterPage({
+  searchParams,
+}: RegisterPageProps) {
+  const params = await searchParams;
+  const requestedRole = Array.isArray(params.role)
+    ? params.role[0]
+    : params.role;
+  const initialRole = requestedRole === "brand" ? "brand" : "creator";
+
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-12 sm:py-20">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
-        Get started
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-mkt-accent">
+        Choose your workspace
       </p>
-      <h1 className={marketingType.pageTitle}>Create your workspace</h1>
-      <p className={marketingType.sectionLead}>
-        Choose a role for this frontend demo. You can explore creator, brand, or
-        admin screens without connecting an account service.
+      <h1 className={cn(marketingType.pageTitle, "text-mkt-fg")}>
+        Create your account
+      </h1>
+      <p className={cn(marketingType.sectionLead, "text-mkt-fg-muted")}>
+        Choose Creator to find brand campaigns or Brand to launch campaigns and
+        review creator content.
       </p>
-      <RegisterForm />
-      <p className="mt-8 border-t border-black/10 pt-6 text-sm text-gray-600">
+      <RegisterForm initialRole={initialRole} />
+      <p className="mt-8 border-t border-mkt-border pt-6 text-sm text-mkt-fg-muted">
         Already have an account?{" "}
         <Link
-          href={routes.auth.login}
-          className="font-medium text-gray-900 underline decoration-emerald-500 underline-offset-4"
+          href={`${routes.auth.login}?role=${initialRole}`}
+          className="font-medium text-mkt-fg underline decoration-mkt-accent underline-offset-4"
         >
           Sign in
         </Link>

@@ -52,22 +52,6 @@ export const whopLanding = {
   deploy: {
     title: "Deploy a business instantly.",
   },
-  featured: {
-    title: "Featured customers",
-    names: [
-      "Viral Coach",
-      "The Ultimate Etsy Course",
-      "Glass Factory",
-      "Stock Dads",
-      "Whop",
-      "Woobie",
-      "SkyAccess",
-    ],
-    spotlight: {
-      name: "Viral Coach",
-      body: "Daniel Iles is the founder of Viral Coach, an AI-powered SaaS platform that helps creators, coaches, and agencies generate, schedule, and publish viral short-form content across TikTok, Instagram, and YouTube.",
-    },
-  },
   mission: {
     title: "Our mission is to deliver everyone a sustainable income.",
     body: "Whop is built by builders and operators who pioneered internet markets. The average employee age is 25, and three-quarters of our team are ex-founders. We use our product daily and many of our team members run their own businesses on Whop.",

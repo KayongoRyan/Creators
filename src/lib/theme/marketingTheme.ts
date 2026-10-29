@@ -1,27 +1,18 @@
-/** https://coolors.co/palette/000814-001d3d-003566-ffc300-ffd60a */
+/** Marketing palette: black & white (+ neutral grays for surfaces). */
 export const palette = {
-  ink: "#000814",
-  navy: "#001d3d",
-  blue: "#003566",
-  gold: "#ffc300",
-  yellow: "#ffd60a",
+  black: "#000000",
+  white: "#ffffff",
+  gray950: "#0a0a0a",
+  gray900: "#171717",
+  gray800: "#262626",
+  gray600: "#525252",
+  gray400: "#a3a3a3",
+  gray200: "#e5e5e5",
+  gray100: "#f5f5f5",
 } as const;
 
-export type MarketingTheme = "light" | "dark";
+export type MarketingTheme = "light";
 
 export const marketingThemeStorageKey = "creators-marketing-theme";
 
-export function readStoredMarketingTheme(): MarketingTheme | null {
-  if (typeof window === "undefined") return null;
-  const value = localStorage.getItem(marketingThemeStorageKey);
-  if (value === "light" || value === "dark") return value;
-  return null;
-}
-
-export function resolveMarketingTheme(stored: MarketingTheme | null): MarketingTheme {
-  if (stored) return stored;
-  if (typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: light)").matches) {
-    return "light";
-  }
-  return "dark";
-}
+export const marketingTheme: MarketingTheme = "light";

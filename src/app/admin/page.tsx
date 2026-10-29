@@ -1,9 +1,5 @@
-import { PageHeader } from "@/components/shared/PageHeader";
+import { AdminOverview } from "@/features/workspace/MarkPaid";
 
 export default function AdminHomePage() {
-  return (
-    <>
-      <PageHeader title="Admin overview" description="Platform operations" />
-    </>
-  );
+  return <AdminOverview />;
 }

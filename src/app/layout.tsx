@@ -3,9 +3,8 @@ import { figtree } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Creators",
-  description:
-    "Brands post campaigns. Creators apply. Submissions come back for review.",
+  title: "Creators — The new economy.",
+  description: "Build businesses, run ads, get paid.",
 };
 
 export default function RootLayout({

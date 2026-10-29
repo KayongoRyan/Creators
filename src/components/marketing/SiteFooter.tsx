@@ -1,55 +1,56 @@
 import Link from "next/link";
+import { whopLanding } from "@/content/whopLanding";
 import { routes } from "@/config/routes";
-import { marketingType } from "@/lib/marketing";
 import { Logo } from "./Logo";
-
-const columns = [
-  {
-    title: "Product",
-    links: [
-      { href: routes.public.apply, label: "Apply" },
-      { href: routes.auth.login, label: "Log in" },
-      { href: routes.brand.root, label: "Brand workspace" },
-      { href: routes.creator.root, label: "Creator workspace" },
-    ],
-  },
-  {
-    title: "Work",
-    links: [
-      { href: routes.brand.campaigns, label: "Campaigns" },
-      { href: routes.creator.applications, label: "Applications" },
-      { href: routes.creator.submissions, label: "Submissions" },
-    ],
-  },
-];
 
 export function SiteFooter() {
   return (
-    <footer className="bg-gray-800 text-white">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-6 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="border-t border-mkt-border bg-mkt-bg-muted text-mkt-fg">
+      <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-14 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <div className="[&_span]:text-white">
-            <Logo />
-          </div>
-          <p className={marketingType.footerBlurb}>
-            Brands post campaigns. Creators apply. Submissions come back for
-            review.
+          <Logo />
+          <p className="mt-4 max-w-sm text-sm leading-6 text-mkt-fg-muted">
+            {whopLanding.hero.subtitle}
           </p>
         </div>
-        {columns.map((column) => (
-          <div key={column.title}>
-            <h2 className={marketingType.footerColumn}>{column.title}</h2>
-            <ul className="mt-4 space-y-2">
-              {column.links.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className={marketingType.footerLink}>
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div>
+          <h2 className="text-sm font-medium text-mkt-fg-subtle">Product</h2>
+          <ul className="mt-4 space-y-2 text-sm text-mkt-fg-muted">
+            <li>
+              <Link href={routes.auth.register} className="hover:text-mkt-accent">
+                Get started
+              </Link>
+            </li>
+            <li>
+              <Link href={routes.public.apply} className="hover:text-mkt-accent">
+                Apply as creator
+              </Link>
+            </li>
+            <li>
+              <Link href={routes.auth.login} className="hover:text-mkt-accent">
+                Sign in
+              </Link>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-sm font-medium text-mkt-fg-subtle">Contact</h2>
+          <ul className="mt-4 space-y-2 text-sm text-mkt-fg-muted">
+            <li>
+              <a href={`mailto:${whopLanding.mission.press}`} className="hover:text-mkt-accent">
+                {whopLanding.mission.press}
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${whopLanding.mission.support}`} className="hover:text-mkt-accent">
+                {whopLanding.mission.support}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div className="border-t border-mkt-border py-6 text-center text-xs text-mkt-fg-subtle">
+        Creators · palette navy & gold · © {new Date().getFullYear()}
       </div>
     </footer>
   );

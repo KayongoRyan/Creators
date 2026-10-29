@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/config/routes";
+import { AdminSubmissions } from "@/features/admin/AdminSubmissions";
 
 export default function AdminSubmissionsPage() {
-  redirect(routes.admin.campaigns);
+  return <AdminSubmissions />;
 }

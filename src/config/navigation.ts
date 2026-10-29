@@ -6,6 +6,7 @@ export const adminNav: NavItem[] = [
   { href: routes.admin.root, label: "Dashboard" },
   { href: routes.admin.campaigns, label: "Campaigns" },
   { href: routes.admin.creators, label: "Creators" },
+  { href: routes.admin.submissions, label: "Submissions" },
   { href: routes.admin.brands, label: "Brands" },
   { href: routes.admin.payments, label: "Payments" },
 ];

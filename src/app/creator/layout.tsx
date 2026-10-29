@@ -1,5 +1,7 @@
+import { CreatorPortalGate } from "@/components/layout/CreatorPortalGate";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { creatorNav } from "@/config/navigation";
+import { CreatorStoreProvider } from "@/features/creator/store";
 
 export default function CreatorLayout({
   children,
@@ -8,7 +10,9 @@ export default function CreatorLayout({
 }) {
   return (
     <DashboardShell title="Creator" role="creator" nav={creatorNav}>
-      {children}
+      <CreatorStoreProvider>
+        <CreatorPortalGate>{children}</CreatorPortalGate>
+      </CreatorStoreProvider>
     </DashboardShell>
   );
 }

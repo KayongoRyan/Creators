@@ -1,6 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { siteConfig } from "@/config/site";
+import { fetchBrandState } from "@/lib/api/portalApi";
+import { hydrateFromApi, type PortalLoadStatus } from "@/lib/portal/hydration";
 import { brandSeed } from "@/lib/portalSeeds";
 import type { BrandState } from "@/types";
 
@@ -22,8 +32,53 @@ function writeState(state: BrandState) {
   window.dispatchEvent(new CustomEvent("brand-store-updated"));
 }
 
+type BrandStoreValue = ReturnType<typeof useBrandStoreController>;
+
+const BrandStoreContext = createContext<BrandStoreValue | null>(null);
+
+export function BrandStoreProvider({ children }: { children: React.ReactNode }) {
+  const value = useBrandStoreController();
+  return createElement(BrandStoreContext.Provider, { value }, children);
+}
+
 export function useBrandStore() {
+  const value = useContext(BrandStoreContext);
+  if (!value) {
+    throw new Error("useBrandStore must be used within BrandStoreProvider");
+  }
+  return value;
+}
+
+function useBrandStoreController() {
   const [state, setState] = useState<BrandState>(() => readState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() =>
+    siteConfig.useMockData ? "ready" : "loading",
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  const hydrate = useCallback(async () => {
+    if (siteConfig.useMockData) {
+      setState(readState());
+      setStatus("ready");
+      setError(null);
+      return;
+    }
+    setStatus("loading");
+    setError(null);
+    const result = await hydrateFromApi(fetchBrandState, writeState);
+    if (result.ok) {
+      setState(result.data);
+      setStatus("ready");
+      return;
+    }
+    setState(readState());
+    setError(result.error);
+    setStatus("error");
+  }, []);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     const sync = () => setState(readState());
@@ -35,15 +90,12 @@ export function useBrandStore() {
     };
   }, []);
 
-  const persist = useCallback((updater: (prev: BrandState) => BrandState) => {
-    setState((prev) => {
-      const next = updater(prev);
-      writeState(next);
-      return next;
-    });
-  }, []);
-
-  return { state, persist };
+  return {
+    state,
+    status,
+    error,
+    retryHydration: hydrate,
+  };
 }
 
 export function selectBrandDashboard(state: BrandState) {

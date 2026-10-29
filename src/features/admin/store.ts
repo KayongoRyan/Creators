@@ -1,11 +1,36 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { siteConfig } from "@/config/site";
 import { adminSeed } from "@/lib/api/fixtures";
+import {
+  apiApproveSubmission,
+  apiCreateCampaign,
+  apiMarkAllPayoutsPaid,
+  apiMarkPayoutPaid,
+  apiRejectCreator,
+  apiRejectSubmission,
+  apiRequestRevision,
+  apiVerifyCreator,
+  fetchAdminState,
+} from "@/lib/api/portalApi";
+import {
+  hydrateFromApi,
+  runApiMutation,
+  type PortalLoadStatus,
+} from "@/lib/portal/hydration";
 import type {
   AdminState,
   AdminSubmission,
   Campaign,
+  CreateCampaignInput,
   CreatorApplication,
   PayoutRecord,
 } from "@/types";
@@ -34,20 +59,60 @@ export function resetAdminStore() {
   writeState(structuredClone(adminSeed));
 }
 
-export type CreateCampaignInput = {
-  title: string;
-  brandName: string;
-  campaignType: string;
-  budgetRwf: number;
-  deadline: string;
-};
+export type { CreateCampaignInput };
 
 function nextId(prefix: string) {
   return `${prefix}_${Date.now().toString(36)}`;
 }
 
+export type AdminStoreValue = ReturnType<typeof useAdminStoreController>;
+
+const AdminStoreContext = createContext<AdminStoreValue | null>(null);
+
+export function AdminStoreProvider({ children }: { children: React.ReactNode }) {
+  const value = useAdminStoreController();
+  return createElement(AdminStoreContext.Provider, { value }, children);
+}
+
 export function useAdminStore() {
+  const value = useContext(AdminStoreContext);
+  if (!value) {
+    throw new Error("useAdminStore must be used within AdminStoreProvider");
+  }
+  return value;
+}
+
+function useAdminStoreController() {
   const [state, setState] = useState<AdminState>(() => readState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() =>
+    siteConfig.useMockData ? "ready" : "loading",
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const hydrate = useCallback(async () => {
+    if (siteConfig.useMockData) {
+      setState(readState());
+      setStatus("ready");
+      setError(null);
+      return;
+    }
+    setStatus("loading");
+    setError(null);
+    const result = await hydrateFromApi(fetchAdminState, writeState);
+    if (result.ok) {
+      setState(result.data);
+      setStatus("ready");
+      return;
+    }
+    setState(readState());
+    setError(result.error);
+    setStatus("error");
+  }, []);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     const sync = () => setState(readState());
@@ -65,6 +130,11 @@ export function useAdminStore() {
       writeState(next);
       return next;
     });
+  }, []);
+
+  const notifyMutationFailure = useCallback(async (mutation: () => Promise<void>) => {
+    const result = await runApiMutation(mutation);
+    if (!result.ok) setActionError(result.error);
   }, []);
 
   const createCampaign = useCallback(
@@ -85,9 +155,10 @@ export function useAdminStore() {
         createdAt: new Date().toISOString(),
       };
       persist((s) => ({ ...s, campaigns: [campaign, ...s.campaigns] }));
+      void notifyMutationFailure(() => apiCreateCampaign(input));
       return campaign;
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const verifyCreator = useCallback(
@@ -114,8 +185,9 @@ export function useAdminStore() {
           verifiedCreators: [verified, ...s.verifiedCreators],
         };
       });
+      void notifyMutationFailure(() => apiVerifyCreator(applicationId));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const rejectCreator = useCallback(
@@ -126,34 +198,41 @@ export function useAdminStore() {
           (a) => a.id !== applicationId,
         ),
       }));
+      void notifyMutationFailure(() => apiRejectCreator(applicationId));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const approveSubmission = useCallback(
     (submissionId: string) => {
       persist((s) => updateSubmission(s, submissionId, { status: "approved" }));
+      void notifyMutationFailure(() => apiApproveSubmission(submissionId));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const rejectSubmission = useCallback(
     (submissionId: string) => {
       persist((s) => updateSubmission(s, submissionId, { status: "rejected" }));
+      void notifyMutationFailure(() => apiRejectSubmission(submissionId));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const requestRevision = useCallback(
     (submissionId: string, revisionNote: string) => {
+      const note = revisionNote.trim();
       persist((s) =>
         updateSubmission(s, submissionId, {
           status: "revision",
-          revisionNote: revisionNote.trim(),
+          revisionNote: note,
         }),
       );
+      void notifyMutationFailure(() =>
+        apiRequestRevision(submissionId, note),
+      );
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const markPayoutPaid = useCallback(
@@ -164,8 +243,9 @@ export function useAdminStore() {
           p.id === payoutId ? { ...p, status: "paid" as const } : p,
         ),
       }));
+      void notifyMutationFailure(() => apiMarkPayoutPaid(payoutId));
     },
-    [persist],
+    [notifyMutationFailure, persist],
   );
 
   const markAllDuePayoutsPaid = useCallback(() => {
@@ -175,10 +255,16 @@ export function useAdminStore() {
         p.status === "pending" ? { ...p, status: "paid" as const } : p,
       ),
     }));
-  }, [persist]);
+    void notifyMutationFailure(() => apiMarkAllPayoutsPaid());
+  }, [notifyMutationFailure, persist]);
 
   return {
     state,
+    status,
+    error,
+    actionError,
+    retryHydration: hydrate,
+    clearActionError: () => setActionError(null),
     createCampaign,
     verifyCreator,
     rejectCreator,

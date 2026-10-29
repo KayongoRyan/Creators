@@ -1,8 +1,19 @@
 import { siteConfig } from "@/config/site";
+import { readDemoSession } from "@/features/auth/demoSession";
 
 type RequestOptions = RequestInit & {
   params?: Record<string, string | number | boolean | undefined>;
 };
+
+function demoAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const session = readDemoSession();
+  if (!session) return {};
+  return {
+    "X-Demo-Role": session.role,
+    "X-Demo-Email": session.email,
+  };
+}
 
 function buildUrl(path: string, params?: RequestOptions["params"]) {
   const url = new URL(path, siteConfig.apiBaseUrl);
@@ -22,6 +33,7 @@ export async function apiClient<T>(
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...demoAuthHeaders(),
       ...init.headers,
     },
   });

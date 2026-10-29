@@ -1,5 +1,7 @@
+import { BrandPortalGate } from "@/components/layout/BrandPortalGate";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { brandNav } from "@/config/navigation";
+import { BrandStoreProvider } from "@/features/brand/store";
 
 export default function BrandLayout({
   children,
@@ -8,7 +10,9 @@ export default function BrandLayout({
 }) {
   return (
     <DashboardShell title="Brand portal" role="brand" nav={brandNav}>
-      {children}
+      <BrandStoreProvider>
+        <BrandPortalGate>{children}</BrandPortalGate>
+      </BrandStoreProvider>
     </DashboardShell>
   );
 }

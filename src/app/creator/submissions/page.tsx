@@ -1,13 +1,6 @@
-import { PageHeader } from "@/components/shared/PageHeader";
-import { SubmissionList, getSubmissions } from "@/features/submissions";
+import { redirect } from "next/navigation";
+import { routes } from "@/config/routes";
 
-export default async function CreatorSubmissionsPage() {
-  const submissions = await getSubmissions();
-
-  return (
-    <>
-      <PageHeader title="Submissions" />
-      <SubmissionList submissions={submissions} />
-    </>
-  );
+export default function CreatorSubmissionsPage() {
+  redirect(routes.creator.root);
 }

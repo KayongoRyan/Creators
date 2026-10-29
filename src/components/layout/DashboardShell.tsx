@@ -9,6 +9,7 @@ import {
   clearDemoSession,
   getRoleHome,
   readDemoSession,
+  saveDemoSession,
   type DemoSession,
 } from "@/features/auth/demoSession";
 import type { UserRole } from "@/types";
@@ -36,6 +37,17 @@ export function DashboardShell({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_ROLE === role) {
+      const existing = readDemoSession();
+      if (!existing || existing.role !== role) {
+        saveDemoSession({
+          role,
+          displayName: role[0].toUpperCase() + role.slice(1),
+          email: `${role}@creators.dev`,
+        });
+      }
+    }
+
     const currentSession = readDemoSession();
 
     if (!currentSession) {

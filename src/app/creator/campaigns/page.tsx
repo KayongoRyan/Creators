@@ -1,13 +1,6 @@
-import { PageHeader } from "@/components/shared/PageHeader";
-import { CampaignList, getCampaigns } from "@/features/campaigns";
+import { redirect } from "next/navigation";
+import { routes } from "@/config/routes";
 
-export default async function CreatorCampaignsPage() {
-  const campaigns = await getCampaigns();
-
-  return (
-    <>
-      <PageHeader title="Browse campaigns" />
-      <CampaignList campaigns={campaigns} />
-    </>
-  );
+export default function CreatorCampaignsPage() {
+  redirect(routes.creator.root);
 }

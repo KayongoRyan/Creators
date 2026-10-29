@@ -108,3 +108,113 @@ export type AdminState = {
   brandCollections: BrandCollection[];
   payouts: PayoutRecord[];
 };
+
+export type BrandPostLink = {
+  id: string;
+  creatorName: string;
+  handle: string;
+  platform: string;
+  followersLabel: string;
+  postUrl?: string;
+  views?: number;
+  status: SubmissionStatus | "not_submitted";
+};
+
+export type BrandCampaignView = {
+  id: string;
+  title: string;
+  status: CampaignStatus;
+  runPeriod: string;
+  budgetRwf: number;
+  feeRwf: number;
+  campaignType: string;
+  brief: string;
+  assignedCreators: number;
+  submitted: number;
+  approved: number;
+  posts: BrandPostLink[];
+  performance: {
+    totalViews: number;
+    engagementRate: string;
+    spendRwf: number;
+  };
+};
+
+export type BrandInvoice = {
+  id: string;
+  label: string;
+  creatorBudgetRwf: number;
+  feeRwf: number;
+  totalRwf: number;
+  status: "paid" | "pending";
+};
+
+export type BrandState = {
+  brandName: string;
+  companyLine: string;
+  campaigns: BrandCampaignView[];
+  invoices: BrandInvoice[];
+};
+
+export type CreatorProfile = {
+  displayName: string;
+  tiktokHandle: string;
+  instagramHandle: string;
+  tiktokFollowers: number;
+  instagramFollowers: number;
+  niche: string;
+  momo: string;
+  label: string;
+  campaignsCompleted: number;
+};
+
+export type DiscoverCampaign = {
+  id: string;
+  brandName: string;
+  title: string;
+  campaignType: string;
+  brief: string;
+  rpmRwf?: number;
+  flatPayoutRwf?: number;
+  deadline: string;
+  spotsLeft: number;
+  open: boolean;
+};
+
+export type CreatorAssignment = {
+  id: string;
+  campaignId: string;
+  title: string;
+  brief: string;
+  sourceUrl?: string;
+  payoutRwf: number;
+  deadline: string;
+  postUrl?: string;
+  status: SubmissionStatus | "not_submitted";
+  revisionNote?: string;
+};
+
+export type CampaignApplicationStatus = "pending" | "accepted" | "rejected";
+
+export type CampaignApplication = {
+  campaignId: string;
+  status: CampaignApplicationStatus;
+  appliedAt: string;
+  pitch?: string;
+};
+
+export type CreatorEarningLine = {
+  id: string;
+  campaignTitle: string;
+  amountRwf: number;
+  status: "approved" | "pending" | "paid";
+  payoutDate?: string;
+};
+
+export type CreatorState = {
+  profile: CreatorProfile;
+  discover: DiscoverCampaign[];
+  assignments: CreatorAssignment[];
+  applications: CampaignApplication[];
+  earnings: CreatorEarningLine[];
+};

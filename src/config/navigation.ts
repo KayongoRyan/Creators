@@ -12,13 +12,17 @@ export const adminNav: NavItem[] = [
 ];
 
 export const brandNav: NavItem[] = [
-  { href: routes.brand.root, label: "My campaigns" },
-  { href: routes.brand.campaigns, label: "Invoices" },
+  { href: routes.brand.root, label: "Dashboard" },
+  { href: routes.brand.campaigns, label: "Campaigns" },
+  { href: routes.brand.invoices, label: "Invoices" },
   { href: routes.brand.reports, label: "Contact us" },
 ];
 
 export const creatorNav: NavItem[] = [
-  { href: routes.creator.root, label: "My tasks" },
+  { href: routes.creator.root, label: "Dashboard" },
+  { href: routes.creator.campaigns, label: "Discover" },
+  { href: routes.creator.tasks, label: "My tasks" },
+  { href: routes.creator.submissions, label: "Submissions" },
   { href: routes.creator.earnings, label: "Earnings" },
   { href: routes.creator.applications, label: "My profile" },
 ];

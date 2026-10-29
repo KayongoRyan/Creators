@@ -1,5 +1,5 @@
-import { CreatorTasks } from "@/features/workspace/CreatorTasks";
+import { CreatorDashboard } from "@/features/creator/CreatorDashboard";
 
 export default function CreatorHomePage() {
-  return <CreatorTasks />;
+  return <CreatorDashboard />;
 }

@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/config/routes";
+import { CreatorSubmissions } from "@/features/creator/CreatorSubmissions";
 
 export default function CreatorSubmissionsPage() {
-  redirect(routes.creator.root);
+  return <CreatorSubmissions />;
 }

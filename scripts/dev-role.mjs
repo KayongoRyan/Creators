@@ -3,8 +3,24 @@ import { spawn } from "node:child_process";
 const role = process.argv[2] || "admin";
 const route = process.argv[3] || "/admin";
 
-const child = spawn("npx", ["next", "dev"], {
-  env: { ...process.env, NEXT_PUBLIC_DEMO_ROLE: role },
+/** Each role gets its own port + distDir so parallel dev servers do not corrupt .next */
+const roleConfig = {
+  admin: { port: 3001, distDir: ".next-admin", route: "/admin" },
+  brand: { port: 3002, distDir: ".next-brand", route: "/brand" },
+  creator: { port: 3003, distDir: ".next-creator", route: "/creator" },
+};
+
+const config = roleConfig[role] ?? roleConfig.admin;
+const port = process.env.PORT ?? String(config.port);
+const distDir = process.env.NEXT_DIST_DIR ?? config.distDir;
+const openRoute = route || config.route;
+
+const child = spawn("npx", ["next", "dev", "-p", port], {
+  env: {
+    ...process.env,
+    NEXT_PUBLIC_DEMO_ROLE: role,
+    NEXT_DIST_DIR: distDir,
+  },
   shell: true,
   stdio: ["inherit", "pipe", "pipe"],
 });
@@ -21,7 +37,7 @@ function handleOutput(chunk) {
   if (!match) return;
 
   opened = true;
-  const target = new URL(route, match[1]).href;
+  const target = new URL(openRoute, match[1]).href;
   const command =
     process.platform === "win32"
       ? `start "" "${target}"`

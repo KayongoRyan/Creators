@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { CampaignHeroSlideshow } from "@/components/marketing/whop/CampaignHeroSlideshow";
+import { EarnByNicheSection } from "@/components/marketing/whop/EarnByNicheSection";
 import { whopLanding } from "@/content/whopLanding";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
@@ -25,80 +27,8 @@ function Section({
   );
 }
 
-function RotatingSuggestions() {
-  const items = whopLanding.economicIntelligence.suggestions;
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setIndex((i) => (i + 1) % items.length);
-    }, 3200);
-    return () => window.clearInterval(timer);
-  }, [items.length]);
-
-  return (
-    <div className="relative mt-10 min-h-[4.5rem] overflow-hidden rounded-2xl border border-mkt-border bg-mkt-card px-6 py-5">
-      {items.map((line, i) => (
-        <p
-          key={line}
-          className={cn(
-            "absolute inset-x-6 top-5 text-lg font-medium tracking-tight text-mkt-fg transition-all duration-500 sm:text-xl",
-            i === index
-              ? "translate-y-0 opacity-100"
-              : i === (index - 1 + items.length) % items.length
-                ? "-translate-y-3 opacity-0"
-                : "translate-y-3 opacity-0",
-          )}
-        >
-          {line}
-        </p>
-      ))}
-    </div>
-  );
-}
-
-function ApiShowcase() {
-  const tabs = whopLanding.api.tabs;
-  type TabId = (typeof tabs)[number]["id"];
-  const [active, setActive] = useState<TabId>(tabs[0].id);
-  const current = tabs.find((t) => t.id === active) ?? tabs[0];
-
-  return (
-    <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,11rem)_1fr]">
-      <div className="flex flex-row gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActive(tab.id)}
-            className={cn(
-              "whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-              active === tab.id
-                ? "bg-[var(--m-tab-active-bg)] text-[var(--m-tab-active-fg)]"
-                : "text-mkt-fg-muted hover:bg-mkt-muted hover:text-mkt-fg",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      <div className="min-w-0 rounded-2xl border border-mkt-border bg-mkt-code">
-        <div className="border-b border-mkt-border px-5 py-4">
-          <p className="text-sm font-medium text-mkt-fg">{current.label}</p>
-          <p className="mt-1 text-sm text-mkt-fg-muted">{current.description}</p>
-        </div>
-        <pre className="overflow-x-auto p-5 text-[11px] leading-relaxed text-mkt-code sm:text-xs">
-          <code>{current.code}</code>
-        </pre>
-      </div>
-    </div>
-  );
-}
-
 const btnPrimary =
   "inline-flex min-h-11 items-center justify-center rounded-full bg-mkt-accent px-6 text-sm font-semibold text-mkt-on-accent transition hover:bg-mkt-accent-hi";
-const btnGhost =
-  "inline-flex min-h-11 items-center justify-center rounded-full border border-mkt-border px-6 text-sm font-semibold text-mkt-fg transition hover:bg-mkt-muted";
 
 export function WhopLanding() {
   type FeaturedName = (typeof whopLanding.featured.names)[number];
@@ -108,52 +38,9 @@ export function WhopLanding() {
 
   return (
     <div className="bg-mkt-bg text-mkt-fg">
-      <Section className="pb-16 pt-12 sm:pt-20">
-        <p className="text-sm text-mkt-fg-subtle">{whopLanding.metaLine}</p>
-        <h1 className="mt-6 max-w-4xl text-balance text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-          {whopLanding.hero.title}
-        </h1>
-        <p className="mt-5 max-w-xl text-lg text-mkt-fg-muted sm:text-xl">
-          {whopLanding.hero.subtitle}
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={routes.auth.register} className={btnPrimary}>
-            Get started
-          </Link>
-          <Link href={routes.auth.login} className={btnGhost}>
-            Sign in
-          </Link>
-        </div>
-      </Section>
+      <CampaignHeroSlideshow />
 
-      <Section className="border-t border-mkt-border py-16">
-        <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          {whopLanding.economicIntelligence.title}
-        </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-mkt-fg-muted">
-          {whopLanding.economicIntelligence.lead}
-        </p>
-        <RotatingSuggestions />
-        <ul className="mt-8 grid gap-2 sm:grid-cols-2">
-          {whopLanding.economicIntelligence.suggestions.map((item) => (
-            <li key={item} className="text-sm text-mkt-fg-subtle">
-              {item}
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section className="border-t border-mkt-border">
-        <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          {whopLanding.agentic.title}
-        </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-mkt-fg-muted">
-          {whopLanding.agentic.lead}
-        </p>
-        <pre className="mt-10 overflow-x-auto rounded-2xl border border-mkt-border bg-mkt-code p-5 text-[11px] leading-relaxed text-mkt-code sm:text-xs">
-          <code>{whopLanding.agentic.terminal}</code>
-        </pre>
-      </Section>
+      <EarnByNicheSection />
 
       <Section className="border-t border-mkt-border">
         <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -170,13 +57,6 @@ export function WhopLanding() {
             </li>
           ))}
         </ul>
-      </Section>
-
-      <Section className="border-t border-mkt-border">
-        <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          {whopLanding.api.title}
-        </h2>
-        <ApiShowcase />
       </Section>
 
       <Section className="border-t border-mkt-border text-center">

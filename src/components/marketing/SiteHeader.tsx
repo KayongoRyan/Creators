@@ -1,10 +1,16 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { marketingJoinCta } from "@/config/navigation";
 import { routes } from "@/config/routes";
-import { readDemoSession } from "@/features/auth/demoSession";
+import {
+  clearDemoSession,
+  readDemoSession,
+  type DemoSession,
+} from "@/features/auth/demoSession";
 import type { UserRole } from "@/types";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils/cn";
@@ -75,6 +81,11 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const onHome = pathname === "/";
+  const [session, setSession] = useState<DemoSession | null>(null);
+
+  useEffect(() => {
+    setSession(readDemoSession());
+  }, [pathname]);
 
   function handleWorkspaceClick(
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -86,6 +97,12 @@ export function SiteHeader() {
     event.preventDefault();
     const authRoute = currentSession ? routes.auth.login : routes.auth.register;
     router.push(`${authRoute}?role=${role}`);
+  }
+
+  function handleLogOut() {
+    clearDemoSession();
+    setSession(null);
+    router.replace(routes.public.home);
   }
 
   return (
@@ -109,17 +126,68 @@ export function SiteHeader() {
             />
           </nav>
 
-          <Link
-            href={marketingJoinCta.href}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-2 rounded-full bg-mkt-nav-join px-5 py-3 sm:px-7 sm:py-3.5",
-              "font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--m-nav-join-fg)]",
-              "transition hover:bg-mkt-nav-join-hi active:scale-[0.98]",
-            )}
-          >
-            {marketingJoinCta.label}
-            <JoinArrowIcon className="size-4" />
-          </Link>
+          {session ? (
+            <details className="relative">
+              <summary
+                aria-label="Open profile menu"
+                title="Profile"
+                className="grid size-11 cursor-pointer list-none place-items-center overflow-hidden rounded-full border border-mkt-border bg-mkt-surface text-sm font-bold text-mkt-fg [&::-webkit-details-marker]:hidden"
+              >
+                {session.avatarDataUrl ? (
+                  <Image
+                    src={session.avatarDataUrl}
+                    alt=""
+                    width={44}
+                    height={44}
+                    unoptimized
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  getInitials(session.displayName)
+                )}
+              </summary>
+              <div className="absolute right-0 top-full z-50 mt-3 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-mkt-border bg-mkt-bg p-4 text-mkt-fg shadow-xl">
+                <p className="truncate text-sm font-semibold">
+                  {session.displayName}
+                </p>
+                <p className="mt-1 break-all text-xs text-mkt-fg-muted">
+                  {session.email}
+                </p>
+                {session.role === "creator" && session.niches?.length ? (
+                  <p className="mt-3 border-t border-mkt-border pt-3 text-xs leading-5 text-mkt-fg-muted">
+                    Niches: {session.niches.join(", ")}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleLogOut}
+                  className="mt-4 w-full rounded-md border border-mkt-border px-3 py-2 text-left text-sm font-medium text-mkt-fg transition hover:bg-mkt-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mkt-accent"
+                >
+                  Log out
+                </button>
+              </div>
+            </details>
+          ) : (
+            <>
+              <Link
+                href={routes.auth.login}
+                className="hidden rounded-lg px-3 py-2 text-sm font-medium text-mkt-fg-muted hover:text-mkt-fg sm:inline-flex"
+              >
+                Sign in
+              </Link>
+              <Link
+                href={marketingJoinCta.href}
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-2 rounded-full bg-mkt-nav-join px-5 py-3 sm:px-7 sm:py-3.5",
+                  "font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--m-nav-join-fg)]",
+                  "transition hover:bg-mkt-nav-join-hi active:scale-[0.98]",
+                )}
+              >
+                {marketingJoinCta.label}
+                <JoinArrowIcon className="size-4" />
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -134,4 +202,13 @@ export function SiteHeader() {
       </nav>
     </header>
   );
+}
+
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }

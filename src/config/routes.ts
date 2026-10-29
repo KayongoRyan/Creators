@@ -18,13 +18,17 @@ export const routes = {
   brand: {
     root: "/brand",
     campaigns: "/brand/campaigns",
+    invoices: "/brand/invoices",
     reports: "/brand/reports",
+    campaign: (id: string) => `/brand/campaigns/${id}`,
   },
   creator: {
     root: "/creator",
     campaigns: "/creator/campaigns",
+    tasks: "/creator/tasks",
     applications: "/creator/applications",
     submissions: "/creator/submissions",
     earnings: "/creator/earnings",
+    campaign: (id: string) => `/creator/campaigns/${id}`,
   },
 } as const;

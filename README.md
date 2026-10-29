@@ -27,6 +27,13 @@ npm run dev:admin
 
 Starts the same app and opens [http://localhost:3000/admin](http://localhost:3000/admin) signed in as the admin demo. Stop any other `next dev` first so port 3000 is free.
 
+```bash
+npm run dev:brand
+npm run dev:creator
+```
+
+Same pattern for the brand portal (`/brand`) and creator portal (`/creator`). Demo state is stored in `localStorage` (`creators_brand_state_v1`, `creators_creator_state_v1`).
+
 If you see `__webpack_modules__[moduleId] is not a function`, a stale dev server is almost always the cause (do not delete `.next` while `next dev` is still running). Stop every dev terminal with Ctrl+C, then:
 
 ```bash
@@ -101,8 +108,8 @@ src/
 | Public | `/`, `/apply` |
 | Auth | `/login`, `/register` |
 | Admin | `/admin`, `/admin/campaigns`, `/admin/creators`, `/admin/brands`, `/admin/submissions`, `/admin/payments` |
-| Brand | `/brand`, `/brand/campaigns`, `/brand/reports` |
-| Creator | `/creator`, `/creator/campaigns`, `/creator/applications`, `/creator/submissions`, `/creator/earnings` |
+| Brand | `/brand`, `/brand/campaigns`, `/brand/campaigns/[id]`, `/brand/invoices`, `/brand/reports` |
+| Creator | `/creator`, `/creator/campaigns`, `/creator/campaigns/[id]`, `/creator/tasks`, `/creator/submissions`, `/creator/earnings`, `/creator/applications` |
 
 Default branch is `main`. Work happens on `Ryan`.
 

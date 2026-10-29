@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "dev:admin": "node scripts/dev-role.mjs admin /admin",
+    "dev:brand": "node scripts/dev-role.mjs brand /brand",
+    "dev:creator": "node scripts/dev-role.mjs creator /creator",
     "dev:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev",
     "build": "next build",
     "start": "next start",

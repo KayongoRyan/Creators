@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { routes } from "@/config/routes";
+import { CreatorDiscover } from "@/features/creator/CreatorDiscover";
 
 export default function CreatorCampaignsPage() {
-  redirect(routes.creator.root);
+  return <CreatorDiscover />;
 }

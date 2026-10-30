@@ -81,7 +81,7 @@ function imageForTile(pool: readonly string[], tileIndex: number): string {
 const ROTATE_MS = 2000;
 
 export function AreasOfWorkGallery() {
-  const stageRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLElement>(null);
   const rotateTimerRef = useRef<number | null>(null);
   const stageHoverRef = useRef(false);
   const prevIndexRef = useRef(0);
@@ -305,15 +305,13 @@ export function AreasOfWorkGallery() {
   return (
     <section
       aria-labelledby="areas-of-work-heading"
-      className="bg-[#202020] px-[max(1rem,env(safe-area-inset-left,0px))] py-6 text-white sm:px-6 sm:py-10 lg:px-8"
+      ref={stageRef}
+      onPointerEnter={onStagePointerEnter}
+      onPointerMove={moveTiles}
+      onPointerLeave={resetTiles}
+      className="relative min-h-[min(88svh,44rem)] w-full overflow-hidden bg-[#09090b] text-white sm:min-h-[min(88svh,680px)] lg:min-h-[min(92svh,720px)]"
     >
-      <div
-        ref={stageRef}
-        onPointerEnter={onStagePointerEnter}
-        onPointerMove={moveTiles}
-        onPointerLeave={resetTiles}
-        className="relative mx-auto min-h-[clamp(22rem,92vw,36rem)] max-w-[1400px] overflow-hidden rounded-md bg-[#09090b] sm:min-h-[680px]"
-      >
+      <div className="relative mx-auto min-h-[min(88svh,44rem)] w-full max-w-[1400px] px-[max(1rem,env(safe-area-inset-left,0px))] sm:min-h-[min(88svh,680px)] sm:px-6 lg:min-h-[min(92svh,720px)] lg:px-8">
         <h2
           id="areas-of-work-heading"
           className="absolute left-4 top-4 z-40 text-base font-medium tracking-tight sm:left-8 sm:top-8 sm:text-xl"

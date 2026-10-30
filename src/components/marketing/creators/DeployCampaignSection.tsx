@@ -65,16 +65,14 @@ export function DeployCampaignSection() {
   return (
     <section
       id="start-campaign"
-      className={cn(
-        "overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg",
-        mktSectionY,
-      )}
+      className="overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg"
       aria-labelledby="deploy-campaign-heading"
     >
       <div className="grid lg:grid-cols-2 lg:items-stretch">
         <div
           className={cn(
             mktSafeXWide,
+            mktSectionY,
             "flex flex-col justify-center bg-mkt-bg lg:max-w-xl lg:pl-[max(2.5rem,8vw)]",
           )}
         >
@@ -97,7 +95,7 @@ export function DeployCampaignSection() {
 
         <div
           ref={collageRef}
-          className="relative min-h-[22rem] border-t border-mkt-border bg-mkt-bg sm:min-h-[26rem] lg:min-h-[32rem] lg:border-l lg:border-t-0 xl:min-h-[36rem]"
+          className="relative min-h-[24rem] border-t border-mkt-border bg-black sm:min-h-[28rem] lg:min-h-full lg:border-l lg:border-t-0 lg:border-white/10 xl:min-h-[36rem]"
         >
           {collageItems.map((item) => (
             <div

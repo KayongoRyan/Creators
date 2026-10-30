@@ -1,31 +1,12 @@
 import Link from "next/link";
-import { earnByNichePromo, earnByNicheSteps } from "@/content/earnByNiche";
+import { AreasOfWorkGallery } from "@/components/marketing/whop/AreasOfWorkGallery";
+import { earnByNicheSteps } from "@/content/earnByNiche";
 import { routes } from "@/config/routes";
 
 export function EarnByNicheSection() {
   return (
     <>
-      <section className="border-t border-mkt-border bg-mkt-bg px-6 py-16 sm:px-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-3xl rounded-[2rem] border border-mkt-border bg-mkt-muted p-8 sm:p-10 lg:p-12">
-            <span className="inline-flex rounded-full border border-mkt-border bg-mkt-card px-4 py-1.5 text-sm font-medium text-mkt-fg">
-              {earnByNichePromo.badge}
-            </span>
-            <h2 className="mt-8 text-balance text-4xl font-semibold leading-[1.08] tracking-tight text-mkt-fg sm:text-5xl lg:text-[3.25rem]">
-              {earnByNichePromo.title}
-            </h2>
-            <p className="mt-6 text-lg leading-relaxed text-mkt-fg-muted sm:text-xl">
-              {earnByNichePromo.lead}
-            </p>
-            <Link
-              href="#how-earnings-work"
-              className="mt-10 flex w-full items-center justify-center rounded-2xl bg-mkt-accent py-4 text-lg font-semibold text-mkt-on-accent shadow-mkt-cta transition hover:bg-mkt-accent-hi active:translate-y-0.5 active:shadow-mkt-cta-active"
-            >
-              {earnByNichePromo.cta}
-            </Link>
-          </div>
-        </div>
-      </section>
+      <AreasOfWorkGallery />
 
       <section
         id="how-earnings-work"

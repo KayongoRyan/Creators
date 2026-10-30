@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { figtree } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Creators — The new economy.",
   description: "Build businesses, run ads, get paid.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

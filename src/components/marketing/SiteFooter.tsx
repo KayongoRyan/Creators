@@ -47,7 +47,7 @@ export function SiteFooter() {
       <div className="mkt-footer-shell relative overflow-hidden rounded-t-[3rem] sm:rounded-t-[4.5rem] lg:rounded-t-[5.5rem]">
         <div className="mkt-footer-pattern pointer-events-none absolute inset-0" aria-hidden="true" />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pb-10 pt-14 sm:px-8 sm:pb-12 sm:pt-16">
+        <div className="relative z-10 mx-auto max-w-6xl px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-14 pr-[max(1.25rem,env(safe-area-inset-right,0px))] sm:px-8 sm:pb-12 sm:pt-16">
           <div className="flex flex-col items-center text-center">
             <Link href={routes.public.home} className="inline-flex flex-col items-center gap-4">
               <svg
@@ -123,7 +123,7 @@ export function SiteFooter() {
               <h3 className="mkt-footer-subtle text-sm font-semibold uppercase tracking-wider">
                 Quick links
               </h3>
-              <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm min-[420px]:grid-cols-2 min-[420px]:gap-x-6">
                 <ul className="space-y-2">
                   {quickLinksLeft.map((item) => (
                     <li key={item.href}>

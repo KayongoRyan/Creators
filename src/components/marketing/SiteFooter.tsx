@@ -1,8 +1,16 @@
+"use client";
+
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
+import { useRef } from "react";
 import { marketingJoinCta } from "@/config/navigation";
 import { routes } from "@/config/routes";
 import { creatorsLanding } from "@/content/creatorsLanding";
 import { cn } from "@/lib/utils/cn";
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 function FooterArrow({ className }: { className?: string }) {
   return (
@@ -41,14 +49,94 @@ const quickLinksRight = [
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
+  const footerRef = useRef<HTMLElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const patternRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const footer = footerRef.current;
+      const inner = innerRef.current;
+      const pattern = patternRef.current;
+      if (!footer || !inner || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      gsap.set(inner, { yPercent: -35, opacity: 0.92 });
+      if (pattern) {
+        gsap.set(pattern, { yPercent: 8, scale: 1.08 });
+      }
+
+      const reveal = gsap.to(inner, {
+        yPercent: 0,
+        opacity: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: footer,
+          start: "top bottom",
+          end: "top 25%",
+          scrub: 0.65,
+        },
+      });
+
+      const patternTween = pattern
+        ? gsap.to(pattern, {
+            yPercent: 0,
+            scale: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: footer,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 0.85,
+            },
+          })
+        : null;
+
+      const blocks = gsap.utils.toArray<HTMLElement>("[data-footer-reveal]", inner);
+      const blockTween = gsap.fromTo(
+        blocks,
+        { y: 28, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.55,
+          stagger: 0.08,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: footer,
+            start: "top 72%",
+            toggleActions: "play none none reverse",
+          },
+        },
+      );
+
+      return () => {
+        reveal.scrollTrigger?.kill();
+        reveal.kill();
+        patternTween?.scrollTrigger?.kill();
+        patternTween?.kill();
+        blockTween.scrollTrigger?.kill();
+        blockTween.kill();
+      };
+    },
+    { scope: footerRef },
+  );
 
   return (
-    <footer className="mt-auto">
+    <footer ref={footerRef} className="mt-auto overflow-hidden">
       <div className="mkt-footer-shell relative overflow-hidden rounded-t-[3rem] sm:rounded-t-[4.5rem] lg:rounded-t-[5.5rem]">
-        <div className="mkt-footer-pattern pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div
+          ref={patternRef}
+          className="mkt-footer-pattern pointer-events-none absolute inset-0 will-change-transform"
+          aria-hidden="true"
+        />
 
-        <div className="relative z-10 mx-auto max-w-6xl px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-14 pr-[max(1.25rem,env(safe-area-inset-right,0px))] sm:px-8 sm:pb-12 sm:pt-16">
-          <div className="flex flex-col items-center text-center">
+        <div
+          ref={innerRef}
+          className="relative z-10 mx-auto max-w-6xl px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-[max(2.5rem,env(safe-area-inset-bottom,0px))] pt-14 pr-[max(1.25rem,env(safe-area-inset-right,0px))] will-change-transform sm:px-8 sm:pb-12 sm:pt-16"
+        >
+          <div data-footer-reveal className="flex flex-col items-center text-center">
             <Link href={routes.public.home} className="inline-flex flex-col items-center gap-4">
               <svg
                 width="56"
@@ -89,7 +177,7 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          <div data-footer-reveal className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             <div>
               <h3 className="mkt-footer-subtle text-sm font-semibold uppercase tracking-wider">
                 Contact
@@ -146,7 +234,7 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="mt-14 flex justify-center">
+          <div data-footer-reveal className="mt-14 flex justify-center">
             <div className="mkt-footer-legal-pill inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-full px-5 py-2.5 text-xs">
               <Link href="#" className="mkt-footer-link">
                 Privacy policy

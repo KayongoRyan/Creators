@@ -2,16 +2,15 @@
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { creatorsLanding } from "@/content/creatorsLanding";
 import { routes } from "@/config/routes";
-import { mktContainer, mktSafeXWide } from "@/lib/marketing/layout";
+import { mktContainer, mktSafeXWide, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(useGSAP);
 
 type MarketItem = (typeof creatorsLanding.markets.items)[number];
 type MarketTab = MarketItem["tab"];
@@ -163,155 +162,125 @@ function MarketCard({ item }: { item: MarketItem }) {
   );
 }
 
-function MarketsBlock({
-  id,
-  activeTab,
-  items,
-  showIntro,
-  showCta,
-}: {
-  id: string;
-  activeTab: MarketTab;
-  items: MarketItem[];
-  showIntro?: boolean;
-  showCta?: boolean;
-}) {
+export function CompetitiveMarketsSection() {
+  const [activeTab, setActiveTab] = useState<MarketTab>("workflow");
   const sectionRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const workflowLabel = creatorsLanding.markets.tabs.workflow;
-  const platformLabel = creatorsLanding.markets.tabs.platform;
 
-  useGSAP(
-    () => {
-      const section = sectionRef.current;
-      const panel = panelRef.current;
-      if (!section || !panel || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        return;
-      }
-
-      const cards = gsap.utils.toArray<HTMLElement>("[data-market-card]", panel);
-      const tween = gsap.fromTo(
-        cards,
-        { opacity: 0, y: 56 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.12,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: section,
-            start: "top 72%",
-            toggleActions: "play none none reverse",
-          },
-        },
-      );
-
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
-      };
-    },
-    { scope: sectionRef, dependencies: [activeTab] },
-  );
-
-  return (
-    <section
-      ref={sectionRef}
-      id={id}
-      className={cn(
-        "flex min-h-[100svh] flex-col overflow-hidden bg-[#e9e9e9] text-mkt-fg",
-        mktSafeXWide,
-        "py-8 sm:py-10 lg:py-12",
-      )}
-      aria-labelledby={`${id}-heading`}
-    >
-      <div className={cn(mktContainer, "flex min-h-0 flex-1 flex-col lg:max-w-[80rem]")}>
-        <div className="grid shrink-0 gap-6 lg:grid-cols-12 lg:gap-y-8">
-          {showIntro ? (
-            <p className="max-w-md text-sm leading-6 text-mkt-fg-muted lg:col-span-5 lg:pl-[min(8rem,12vw)] lg:text-base lg:leading-7">
-              {creatorsLanding.markets.intro}
-            </p>
-          ) : (
-            <div className="hidden lg:col-span-5 lg:block" aria-hidden="true" />
-          )}
-
-          <div className="flex flex-col items-start gap-5 lg:col-span-12 lg:flex-row lg:items-end lg:gap-0">
-            <div
-              id={`${id}-heading`}
-              className="flex flex-col gap-1 sm:flex-row sm:items-end sm:gap-8 lg:-ml-1 lg:gap-14"
-            >
-              <h2
-                className={cn(
-                  "font-medium uppercase leading-[0.92] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]",
-                  activeTab === "workflow" ? "text-mkt-fg opacity-100" : "text-mkt-fg opacity-25",
-                )}
-              >
-                {workflowLabel}
-              </h2>
-              <h2
-                className={cn(
-                  "font-medium uppercase leading-[0.92] tracking-tight text-[clamp(2.5rem,8vw,5.25rem)]",
-                  activeTab === "platform" ? "text-mkt-fg opacity-100" : "text-mkt-fg opacity-25",
-                )}
-              >
-                {platformLabel}
-              </h2>
-            </div>
-
-            {showCta ? (
-              <Link
-                href={routes.auth.register}
-                className="hidden text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:inline-flex lg:ml-auto lg:mb-2"
-              >
-                Start on Creators
-              </Link>
-            ) : null}
-          </div>
-        </div>
-
-        <div ref={panelRef} className="mt-6 flex min-h-0 flex-1 flex-col sm:mt-8 lg:mt-10">
-          <div className="grid min-h-0 flex-1 auto-rows-fr gap-6 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-3 lg:gap-x-6">
-            {items.map((item) => (
-              <MarketCard key={item.title} item={item} />
-            ))}
-          </div>
-        </div>
-
-        {showCta ? (
-          <Link
-            href={routes.auth.register}
-            className="mt-6 inline-flex shrink-0 text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:hidden"
-          >
-            Start on Creators
-          </Link>
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-export function CompetitiveMarketsSection() {
   const itemsByTab = useMemo(() => {
     const workflow = creatorsLanding.markets.items.filter((i) => i.tab === "workflow");
     const platform = creatorsLanding.markets.items.filter((i) => i.tab === "platform");
     return { workflow, platform };
   }, []);
 
+  const visibleItems = itemsByTab[activeTab];
+  const workflowLabel = creatorsLanding.markets.tabs.workflow;
+  const platformLabel = creatorsLanding.markets.tabs.platform;
+
+  useGSAP(
+    () => {
+      const panel = panelRef.current;
+      if (!panel || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      const cards = gsap.utils.toArray<HTMLElement>("[data-market-card]", panel);
+      gsap.fromTo(
+        cards,
+        { opacity: 0, y: 48 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.65,
+          stagger: 0.1,
+          ease: "power3.out",
+        },
+      );
+    },
+    { scope: panelRef, dependencies: [activeTab] },
+  );
+
   return (
-    <div id="competitive-markets">
-      <MarketsBlock
-        id="markets-workflow"
-        activeTab="workflow"
-        items={itemsByTab.workflow}
-        showIntro
-        showCta
-      />
-      <MarketsBlock
-        id="markets-platform"
-        activeTab="platform"
-        items={itemsByTab.platform}
-      />
-    </div>
+    <section
+      ref={sectionRef}
+      id="competitive-markets"
+      className={cn(
+        "overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg",
+        mktSafeXWide,
+        mktSectionY,
+      )}
+      aria-labelledby="competitive-markets-heading"
+    >
+      <div className={cn(mktContainer, "lg:max-w-[80rem]")}>
+        <div className="grid gap-6 lg:grid-cols-12 lg:gap-y-8">
+          <p className="max-w-md text-sm leading-6 text-mkt-fg-muted lg:col-span-5 lg:pl-[min(8rem,12vw)] lg:text-base lg:leading-7">
+            {creatorsLanding.markets.intro}
+          </p>
+
+          <div className="flex flex-col items-start gap-5 lg:col-span-12 lg:flex-row lg:items-end lg:gap-0">
+            <div
+              id="competitive-markets-heading"
+              className="flex flex-col gap-1 sm:flex-row sm:items-end sm:gap-8 lg:-ml-1 lg:gap-14"
+              role="tablist"
+              aria-label="Market capabilities"
+            >
+              {(
+                [
+                  ["workflow", workflowLabel],
+                  ["platform", platformLabel],
+                ] as const
+              ).map(([id, label]) => {
+                const selected = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    aria-controls="markets-panel"
+                    id={`markets-tab-${id}`}
+                    onClick={() => setActiveTab(id)}
+                    className={cn(
+                      "text-left font-medium uppercase leading-[0.92] tracking-tight transition-opacity duration-300",
+                      "text-[clamp(2.25rem,7.5vw,5rem)]",
+                      selected ? "text-mkt-fg opacity-100" : "text-mkt-fg opacity-25 hover:opacity-40",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Link
+              href={routes.auth.register}
+              className="hidden text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:inline-flex lg:ml-auto lg:mb-2"
+            >
+              Start on Creators
+            </Link>
+          </div>
+        </div>
+
+        <div
+          ref={panelRef}
+          key={activeTab}
+          id="markets-panel"
+          role="tabpanel"
+          aria-labelledby={`markets-tab-${activeTab}`}
+          className="mt-10 grid gap-6 sm:grid-cols-2 sm:gap-x-5 sm:gap-y-8 lg:mt-14 lg:grid-cols-3 lg:gap-x-6"
+        >
+          {visibleItems.map((item) => (
+            <MarketCard key={item.title} item={item} />
+          ))}
+        </div>
+
+        <Link
+          href={routes.auth.register}
+          className="mt-8 inline-flex text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:hidden"
+        >
+          Start on Creators
+        </Link>
+      </div>
+    </section>
   );
 }

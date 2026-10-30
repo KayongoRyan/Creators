@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { creatorsLanding } from "@/content/creatorsLanding";
 import { routes } from "@/config/routes";
-import { mktSafeXWide } from "@/lib/marketing/layout";
+import { mktSafeXWide, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
 const collageItems = [
@@ -65,14 +65,17 @@ export function DeployCampaignSection() {
   return (
     <section
       id="start-campaign"
-      className="overflow-hidden border-t border-mkt-border bg-[#e9e9e9]"
+      className={cn(
+        "overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg",
+        mktSectionY,
+      )}
       aria-labelledby="deploy-campaign-heading"
     >
       <div className="grid lg:grid-cols-2 lg:items-stretch">
         <div
           className={cn(
             mktSafeXWide,
-            "flex flex-col justify-center py-14 sm:py-16 lg:max-w-xl lg:py-20 lg:pl-[max(2.5rem,8vw)] xl:py-24",
+            "flex flex-col justify-center bg-mkt-bg lg:max-w-xl lg:pl-[max(2.5rem,8vw)]",
           )}
         >
           <h2
@@ -94,7 +97,7 @@ export function DeployCampaignSection() {
 
         <div
           ref={collageRef}
-          className="relative min-h-[22rem] bg-black sm:min-h-[26rem] lg:min-h-[32rem] xl:min-h-[36rem]"
+          className="relative min-h-[22rem] border-t border-mkt-border bg-mkt-bg sm:min-h-[26rem] lg:min-h-[32rem] lg:border-l lg:border-t-0 xl:min-h-[36rem]"
         >
           {collageItems.map((item) => (
             <div

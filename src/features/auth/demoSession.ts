@@ -5,6 +5,11 @@ export type DemoSession = {
     role: UserRole;
     displayName: string;
     email: string;
+    avatarDataUrl?: string;
+    address?: string;
+    birthDate?: string;
+    phone?: string;
+    niches?: string[];
 };
 
 export const demoRoleOptions: {
@@ -65,6 +70,22 @@ export function readDemoSession(): DemoSession | null {
             role: session.role as UserRole,
             displayName: session.displayName,
             email: session.email,
+            ...(typeof session.avatarDataUrl === "string"
+                ? { avatarDataUrl: session.avatarDataUrl }
+                : {}),
+            ...(typeof session.address === "string"
+                ? { address: session.address }
+                : {}),
+            ...(typeof session.birthDate === "string"
+                ? { birthDate: session.birthDate }
+                : {}),
+            ...(typeof session.phone === "string"
+                ? { phone: session.phone }
+                : {}),
+            ...(Array.isArray(session.niches) &&
+                session.niches.every((niche) => typeof niche === "string")
+                ? { niches: session.niches }
+                : {}),
         };
     } catch {
         return null;

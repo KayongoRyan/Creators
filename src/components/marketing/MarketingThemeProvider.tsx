@@ -19,7 +19,7 @@ export function MarketingThemeProvider({
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-mkt-bg text-mkt-fg antialiased selection:bg-mkt-accent selection:text-mkt-on-accent">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-mkt-bg text-mkt-fg antialiased selection:bg-mkt-accent selection:text-mkt-on-accent supports-[padding:max(0px)]:pb-[env(safe-area-inset-bottom)]">
       {children}
     </div>
   );

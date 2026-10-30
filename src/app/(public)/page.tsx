@@ -1,5 +1,5 @@
-import { WhopLanding } from "@/components/marketing/whop/WhopLanding";
+import { CreatorsLanding } from "@/components/marketing/creators/CreatorsLanding";
 
 export default function HomePage() {
-  return <WhopLanding />;
+  return <CreatorsLanding />;
 }

@@ -13,8 +13,8 @@ export function HeroCharacterRow() {
         width={1588}
         height={795}
         priority
-        className="hero-character-art h-[220px] w-auto max-w-[min(100vw-0.5rem,1200px)] object-contain object-bottom sm:h-[280px] lg:h-[320px]"
-        sizes="(max-width: 1024px) 100vw, 1200px"
+        className="hero-character-art h-[clamp(9rem,38vw,20rem)] w-auto max-w-[min(100vw-1rem,1200px)] object-contain object-bottom"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 1200px"
       />
     </div>
   );

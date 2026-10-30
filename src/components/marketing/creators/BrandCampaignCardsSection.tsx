@@ -1,20 +1,25 @@
 import Link from "next/link";
-import { BrandCampaignCardsCarousel } from "@/components/marketing/whop/BrandCampaignCardsCarousel";
+import { BrandCampaignCardsCarousel } from "@/components/marketing/creators/BrandCampaignCardsCarousel";
 import { routes } from "@/config/routes";
+import { mktContainer, mktSafeXWide, mktSectionTitle, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
 export function BrandCampaignCardsSection() {
   return (
     <section
       id="open-campaigns"
-      className="scroll-mt-24 border-t border-mkt-border bg-mkt-bg px-6 py-16 sm:px-8 sm:py-20"
+      className={cn(
+        "scroll-mt-24 border-t border-mkt-border bg-mkt-bg",
+        mktSafeXWide,
+        mktSectionY,
+      )}
     >
-      <div className="mx-auto max-w-6xl">
+      <div className={mktContainer}>
         <div className="max-w-2xl">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-mkt-fg-subtle">
             Brands hiring now
           </p>
-          <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-mkt-fg sm:text-4xl">
+          <h2 className={cn("mt-3 text-mkt-fg", mktSectionTitle)}>
             Campaigns looking for creators
           </h2>
           <p className="mt-4 text-base leading-7 text-mkt-fg-muted">

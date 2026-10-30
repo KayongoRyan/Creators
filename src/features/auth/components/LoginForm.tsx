@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { routes } from "@/config/routes";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
-import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
+import { saveDemoSession } from "@/features/auth/demoSession";
 import type { UserRole } from "@/types";
 import { marketingType } from "@/lib/marketing";
 import { cn } from "@/lib/utils/cn";
@@ -43,7 +44,7 @@ export function LoginForm({ initialRole }: LoginFormProps) {
           displayName: email.split("@")[0] || "Creator",
           email,
         });
-        router.replace(getRoleHome(role));
+        router.replace(routes.public.home);
       }}
     >
       <DemoRolePicker

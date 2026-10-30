@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BrandCampaignLogo } from "@/components/marketing/whop/BrandCampaignLogo";
+import { BrandCampaignLogo } from "@/components/marketing/creators/BrandCampaignLogo";
 import { featuredBrandCampaigns } from "@/content/featuredBrandCampaigns";
 import { cn } from "@/lib/utils/cn";
 
-const CARD_HEIGHT = "h-[18rem] sm:h-[18rem]";
+const CARD_HEIGHT = "min-h-[16.5rem] h-auto sm:h-[18rem]";
 
 function BrandCampaignCard({
   campaign,
@@ -15,16 +15,19 @@ function BrandCampaignCard({
   return (
     <article
       className={cn(
-        "flex h-full w-[min(94vw,28rem)] shrink-0 snap-start overflow-hidden rounded-2xl border border-mkt-border sm:w-[32rem] lg:w-[34rem]",
+        "flex h-full w-[min(calc(100vw-2.5rem),28rem)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-mkt-border sm:w-[32rem] sm:flex-row lg:w-[34rem]",
       )}
     >
-      <div className="flex w-[40%] shrink-0 items-center justify-center px-6 py-8 sm:px-8">
-        <BrandCampaignLogo id={campaign.id} className="max-w-[8rem] sm:max-w-[9.5rem]" />
+      <div className="flex w-full shrink-0 items-center justify-center border-b border-mkt-border px-6 py-6 sm:w-[40%] sm:border-b-0 sm:px-8 sm:py-8">
+        <BrandCampaignLogo id={campaign.id} className="max-w-[7.5rem] sm:max-w-[9.5rem]" />
       </div>
 
-      <div className="my-8 w-px shrink-0 bg-mkt-border sm:my-10" aria-hidden="true" />
+      <div
+        className="hidden w-px shrink-0 bg-mkt-border sm:my-10 sm:block"
+        aria-hidden="true"
+      />
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 py-7 pl-5 pr-6 sm:gap-6 sm:py-9 sm:pl-7 sm:pr-8">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 py-6 pl-5 pr-6 sm:gap-6 sm:py-9 sm:pl-7 sm:pr-8">
         <div>
           <p className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-mkt-fg-subtle">
             {campaign.brand}
@@ -131,7 +134,7 @@ export function BrandCampaignCardsCarousel() {
       <div
         ref={scrollRef}
         onScroll={updateScrollState}
-        className="-mx-6 overflow-x-auto px-6 [scrollbar-width:none] sm:-mx-8 sm:px-8 [&::-webkit-scrollbar]:hidden"
+        className="-mx-[max(1.25rem,env(safe-area-inset-left,0px))] overflow-x-auto px-[max(1.25rem,env(safe-area-inset-left,0px))] [scrollbar-width:none] sm:-mx-8 sm:px-8 [&::-webkit-scrollbar]:hidden"
       >
         <ul className="flex w-max items-stretch gap-6 snap-x snap-mandatory sm:gap-8">
           {featuredBrandCampaigns.map((campaign) => (

@@ -1,4 +1,5 @@
-import { HeroCharacterRow } from "@/components/marketing/whop/HeroCharacterRow";
+import { HeroCharacterRow } from "@/components/marketing/creators/HeroCharacterRow";
+import { mktPageTitle } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
 function HeroSquiggle({ className }: { className?: string }) {
@@ -23,14 +24,14 @@ export function CampaignHeroSlideshow() {
   return (
     <section
       className={cn(
-        "relative isolate -mt-[4.5rem] overflow-hidden bg-mkt-bg pt-[4.5rem] text-mkt-fg",
+        "relative isolate -mt-[7.25rem] overflow-hidden bg-mkt-bg pt-[7.25rem] text-mkt-fg lg:-mt-[4.5rem] lg:pt-[4.5rem]",
         "rounded-b-[3rem] sm:rounded-b-[4.5rem] lg:rounded-b-[5.5rem]",
       )}
     >
       <HeroSquiggle className="pointer-events-none absolute left-2 top-32 hidden h-64 w-16 text-mkt-fg opacity-90 sm:block lg:left-8" />
       <HeroSquiggle className="pointer-events-none absolute right-2 top-28 hidden h-64 w-16 scale-x-[-1] text-mkt-fg opacity-90 sm:block lg:right-8" />
 
-      <div className="relative z-10 mx-auto max-w-4xl px-6 pb-2 pt-16 text-center sm:px-8 sm:pt-20 lg:pt-24">
+      <div className="relative z-10 mx-auto max-w-4xl px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-2 pt-14 text-center sm:px-8 sm:pt-20 lg:pt-24">
         <div
           className="mx-auto mb-6 flex w-fit items-end justify-center gap-1.5 text-mkt-fg"
           aria-hidden="true"
@@ -40,7 +41,7 @@ export function CampaignHeroSlideshow() {
           <span className="h-6 w-0.5 rounded-full bg-mkt-fg" />
         </div>
 
-        <h1 className="text-balance text-4xl font-bold uppercase leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+        <h1 className={mktPageTitle}>
           Make your{" "}
           <span className="relative inline-block px-1">
             <span

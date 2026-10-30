@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { marketingJoinCta } from "@/config/navigation";
 import { routes } from "@/config/routes";
-import { whopLanding } from "@/content/whopLanding";
+import { creatorsLanding } from "@/content/creatorsLanding";
 import { cn } from "@/lib/utils/cn";
 
 function FooterArrow({ className }: { className?: string }) {
@@ -68,7 +68,7 @@ export function SiteFooter() {
               <span className="text-3xl font-semibold tracking-tight sm:text-4xl">Creators</span>
             </Link>
             <p className="mkt-footer-muted mt-3 max-w-md text-sm italic sm:text-base">
-              {whopLanding.hero.subtitle}
+              {creatorsLanding.hero.subtitle}
             </p>
 
             <div className="mt-8 flex w-full max-w-lg flex-col gap-3 sm:flex-row sm:justify-center">
@@ -96,13 +96,13 @@ export function SiteFooter() {
               </h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a href={`mailto:${whopLanding.mission.press}`} className="mkt-footer-link">
-                    {whopLanding.mission.press}
+                  <a href={`mailto:${creatorsLanding.mission.press}`} className="mkt-footer-link">
+                    {creatorsLanding.mission.press}
                   </a>
                 </li>
                 <li>
-                  <a href={`mailto:${whopLanding.mission.support}`} className="mkt-footer-link">
-                    {whopLanding.mission.support}
+                  <a href={`mailto:${creatorsLanding.mission.support}`} className="mkt-footer-link">
+                    {creatorsLanding.mission.support}
                   </a>
                 </li>
               </ul>

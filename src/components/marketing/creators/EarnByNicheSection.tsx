@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AreasOfWorkGallery } from "@/components/marketing/whop/AreasOfWorkGallery";
+import { AreasOfWorkGallery } from "@/components/marketing/creators/AreasOfWorkGallery";
 import { earnByNicheSteps } from "@/content/earnByNiche";
 import { routes } from "@/config/routes";
 import { mktContainer, mktSafeXWide, mktSectionY } from "@/lib/marketing/layout";

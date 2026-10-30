@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandCampaignCardsCarousel } from "@/components/marketing/whop/BrandCampaignCardsCarousel";
+import { BrandCampaignCardsCarousel } from "@/components/marketing/creators/BrandCampaignCardsCarousel";
 import { routes } from "@/config/routes";
 import { mktContainer, mktSafeXWide, mktSectionTitle, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";

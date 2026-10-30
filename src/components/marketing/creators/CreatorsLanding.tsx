@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { BrandCampaignCardsSection } from "@/components/marketing/whop/BrandCampaignCardsSection";
-import { CampaignHeroSlideshow } from "@/components/marketing/whop/CampaignHeroSlideshow";
-import { CompetitiveMarketsSection } from "@/components/marketing/whop/CompetitiveMarketsSection";
-import { EarnByNicheSection } from "@/components/marketing/whop/EarnByNicheSection";
-import { whopLanding } from "@/content/whopLanding";
+import { BrandCampaignCardsSection } from "@/components/marketing/creators/BrandCampaignCardsSection";
+import { CampaignHeroSlideshow } from "@/components/marketing/creators/CampaignHeroSlideshow";
+import { CompetitiveMarketsSection } from "@/components/marketing/creators/CompetitiveMarketsSection";
+import { DeployCampaignSection } from "@/components/marketing/creators/DeployCampaignSection";
+import { EarnByNicheSection } from "@/components/marketing/creators/EarnByNicheSection";
+import { creatorsLanding } from "@/content/creatorsLanding";
 import { routes } from "@/config/routes";
 import { mktContainer, mktSafeXWide, mktSectionTitle, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
@@ -26,9 +27,6 @@ function Section({
     </section>
   );
 }
-
-const btnPrimary =
-  "inline-flex min-h-11 items-center justify-center rounded-full bg-mkt-accent px-6 text-sm font-semibold text-mkt-on-accent transition hover:bg-mkt-accent-hi";
 
 function AudiencePathsSection() {
   return (
@@ -91,7 +89,7 @@ function AudiencePathsSection() {
   );
 }
 
-export function WhopLanding() {
+export function CreatorsLanding() {
   return (
     <div className="bg-mkt-bg text-mkt-fg">
       <CampaignHeroSlideshow />
@@ -104,36 +102,29 @@ export function WhopLanding() {
 
       <CompetitiveMarketsSection />
 
-      <Section className="border-t border-mkt-border text-center">
-        <h2 className="text-balance text-[clamp(1.75rem,5vw,3rem)] font-semibold tracking-tight sm:text-5xl">
-          {whopLanding.deploy.title}
-        </h2>
-        <Link href={routes.auth.register} className={cn(btnPrimary, "mt-8 px-8")}>
-          Start now
-        </Link>
-      </Section>
+      <DeployCampaignSection />
 
       <Section className="border-t border-mkt-border pb-24">
         <h2 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-          {whopLanding.mission.title}
+          {creatorsLanding.mission.title}
         </h2>
         <p className="mt-6 max-w-3xl text-base leading-7 text-mkt-fg-muted">
-          {whopLanding.mission.body}
+          {creatorsLanding.mission.body}
         </p>
         <div className="mt-8 flex flex-wrap gap-6 text-sm text-mkt-fg-subtle">
           <p>
             Press Inquiries:{" "}
-            <a className="text-mkt-accent hover:underline" href={`mailto:${whopLanding.mission.press}`}>
-              {whopLanding.mission.press}
+            <a className="text-mkt-accent hover:underline" href={`mailto:${creatorsLanding.mission.press}`}>
+              {creatorsLanding.mission.press}
             </a>
           </p>
           <p>
             Support Inquiries:{" "}
             <a
               className="text-mkt-accent hover:underline"
-              href={`mailto:${whopLanding.mission.support}`}
+              href={`mailto:${creatorsLanding.mission.support}`}
             >
-              {whopLanding.mission.support}
+              {creatorsLanding.mission.support}
             </a>
           </p>
         </div>

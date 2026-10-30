@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BrandCampaignLogo } from "@/components/marketing/whop/BrandCampaignLogo";
+import { BrandCampaignLogo } from "@/components/marketing/creators/BrandCampaignLogo";
 import { featuredBrandCampaigns } from "@/content/featuredBrandCampaigns";
 import { cn } from "@/lib/utils/cn";
 

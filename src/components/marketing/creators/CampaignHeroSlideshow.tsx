@@ -1,4 +1,4 @@
-import { HeroCharacterRow } from "@/components/marketing/whop/HeroCharacterRow";
+import { HeroCharacterRow } from "@/components/marketing/creators/HeroCharacterRow";
 import { mktPageTitle } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 

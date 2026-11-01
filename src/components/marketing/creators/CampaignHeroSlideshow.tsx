@@ -1,5 +1,5 @@
 import { HeroCharacterRow } from "@/components/marketing/creators/HeroCharacterRow";
-import { mktPageTitle } from "@/lib/marketing/layout";
+import { mktPageTitle, mktSafeXWide } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
 function HeroSquiggle({ className }: { className?: string }) {
@@ -31,7 +31,12 @@ export function CampaignHeroSlideshow() {
       <HeroSquiggle className="pointer-events-none absolute left-2 top-32 hidden h-64 w-16 text-mkt-fg opacity-90 sm:block lg:left-8" />
       <HeroSquiggle className="pointer-events-none absolute right-2 top-28 hidden h-64 w-16 scale-x-[-1] text-mkt-fg opacity-90 sm:block lg:right-8" />
 
-      <div className="relative z-10 mx-auto max-w-4xl px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-2 pt-14 text-center sm:px-8 sm:pt-20 lg:pt-24">
+      <div
+        className={cn(
+          "relative z-10 mx-auto max-w-4xl pb-2 pt-14 text-center sm:pt-20 lg:pt-24",
+          mktSafeXWide,
+        )}
+      >
         <div
           className="mx-auto mb-6 flex w-fit items-end justify-center gap-1.5 text-mkt-fg"
           aria-hidden="true"

@@ -30,7 +30,7 @@ export function BrandCampaignCardsSection() {
 
         <BrandCampaignCardsCarousel />
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-4 sm:justify-start">
+        <div className="mt-12 flex flex-wrap items-center justify-start gap-4">
           <Link
             href={routes.creator.campaigns}
             className={cn(

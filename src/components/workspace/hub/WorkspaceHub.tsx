@@ -4,14 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   brandSolutions,
-  creatorSolutions,
   hubBrandLogos,
-  hubCreatorProfiles,
   hubNicheTiles,
   hubPlans,
   hubSteps,
   hubTestimonials,
 } from "@/content/workspaceHub";
+import { CreatorSpotlightStrip } from "@/components/workspace/hub/CreatorSpotlightStrip";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
 
@@ -75,12 +74,14 @@ function SectionTitle({
 export function WorkspaceHub({
   variant,
   guest,
+  afterHero,
 }: {
   variant: "creator" | "brand";
   guest: boolean;
+  afterHero?: React.ReactNode;
 }) {
   const isCreator = variant === "creator";
-  const solutions = isCreator ? creatorSolutions : brandSolutions;
+  const solutions = brandSolutions;
   const steps = hubSteps[variant];
   const plans = hubPlans[variant];
   const testimonials = hubTestimonials[variant];
@@ -109,14 +110,6 @@ export function WorkspaceHub({
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <HubArrowButton href={primaryHref} label={heroCta} variant={variant} />
-              {!guest ? (
-                <Link
-                  href={isCreator ? routes.creator.root : routes.brand.root}
-                  className="text-sm font-medium text-neutral-600 underline underline-offset-4"
-                >
-                  View dashboard summary
-                </Link>
-              ) : null}
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
@@ -144,36 +137,25 @@ export function WorkspaceHub({
         </div>
       </section>
 
-      {/* Profile / logo strip */}
-      <section className="border-y border-black/8 bg-neutral-50 py-6">
-        <div className="flex gap-3 overflow-x-auto px-5 pb-1 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(isCreator ? hubCreatorProfiles : hubBrandLogos).map((item) =>
-            typeof item === "string" ? (
+      {afterHero}
+
+      {isCreator ? <CreatorSpotlightStrip /> : null}
+
+      {/* Brand logo strip */}
+      {!isCreator ? (
+        <section className="border-y border-black/8 bg-neutral-50 py-6">
+          <div className="flex gap-3 overflow-x-auto px-5 pb-1 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {hubBrandLogos.map((item) => (
               <div
                 key={item}
                 className="flex min-w-[8rem] shrink-0 items-center justify-center rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-neutral-800 ring-1 ring-black/8"
               >
                 {item}
               </div>
-            ) : (
-              <div
-                key={item.handle}
-                className="flex min-w-[11rem] shrink-0 items-center gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-black/8"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-neutral-900 text-xs font-bold text-white">
-                  {item.name.slice(0, 2)}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">{item.name}</p>
-                  <p className="text-xs text-neutral-500">
-                    {item.followers} · {item.platform}
-                  </p>
-                </div>
-              </div>
-            ),
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Niche / roster grid */}
       <section className="px-5 sm:px-8">
@@ -203,44 +185,42 @@ export function WorkspaceHub({
         </div>
       </section>
 
-      {/* Solutions carousel */}
-      <section className="px-5 sm:px-8">
-        <SectionTitle
-          eyebrow="Solutions"
-          title={isCreator ? "Creator solutions" : "Business solutions"}
-        />
-        <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {solutions.map((card) => (
-            <article
-              key={card.title}
-              className="flex w-[min(100%,20rem)] shrink-0 flex-col justify-between rounded-[1.5rem] bg-neutral-50 p-6 ring-1 ring-black/8 sm:w-[22rem]"
-            >
-              <div>
-                <div className="flex flex-wrap gap-2">
-                  {card.tags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-black/10"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <h3 className="mt-4 text-lg font-semibold tracking-tight text-neutral-900">
-                  {card.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">{card.body}</p>
-              </div>
-              <Link
-                href={guest ? joinHref : card.href}
-                className="mt-6 inline-flex text-sm font-semibold text-neutral-900 underline underline-offset-4"
+      {!isCreator ? (
+        <section className="px-5 sm:px-8">
+          <SectionTitle eyebrow="Solutions" title="Business solutions" />
+          <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {solutions.map((card) => (
+              <article
+                key={card.title}
+                className="flex w-[min(100%,20rem)] shrink-0 flex-col justify-between rounded-[1.5rem] bg-neutral-50 p-6 ring-1 ring-black/8 sm:w-[22rem]"
               >
-                {guest ? "Join to start" : "Open →"}
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    {card.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-black/10"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold tracking-tight text-neutral-900">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-neutral-600">{card.body}</p>
+                </div>
+                <Link
+                  href={guest ? joinHref : card.href}
+                  className="mt-6 inline-flex text-sm font-semibold text-neutral-900 underline underline-offset-4"
+                >
+                  {guest ? "Join to start" : "Open →"}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* How we work */}
       <section className="bg-neutral-900 px-5 py-14 text-white sm:px-8 sm:py-16">
@@ -260,41 +240,42 @@ export function WorkspaceHub({
         </div>
       </section>
 
-      {/* Plans */}
-      <section className="px-5 sm:px-8">
-        <SectionTitle align="center" eyebrow="Plans" title="Pick the pace that fits you" />
-        <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-3">
-          {plans.map((plan, i) => (
-            <div
-              key={plan.name}
-              className={cn(
-                "flex flex-col rounded-[1.5rem] p-6 ring-1 ring-black/10",
-                i === 1 ? "bg-neutral-900 text-white ring-black" : "bg-white text-neutral-900",
-              )}
-            >
-              <p className="text-sm font-medium opacity-70">{plan.name}</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight">{plan.price}</p>
-              <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm leading-6 opacity-90">
-                {plan.perks.map((perk) => (
-                  <li key={perk} className="flex gap-2">
-                    <span aria-hidden="true">·</span>
-                    {perk}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={joinHref}
+      {!isCreator ? (
+        <section className="px-5 sm:px-8">
+          <SectionTitle align="center" eyebrow="Plans" title="Pick the pace that fits you" />
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-3">
+            {plans.map((plan, i) => (
+              <div
+                key={plan.name}
                 className={cn(
-                  "mt-8 inline-flex min-h-10 items-center justify-center rounded-full text-sm font-semibold",
-                  i === 1 ? "bg-white text-black" : "bg-black text-white",
+                  "flex flex-col rounded-[1.5rem] p-6 ring-1 ring-black/10",
+                  i === 1 ? "bg-neutral-900 text-white ring-black" : "bg-white text-neutral-900",
                 )}
               >
-                {guest ? "Join" : "Manage plan"}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
+                <p className="text-sm font-medium opacity-70">{plan.name}</p>
+                <p className="mt-2 text-3xl font-semibold tracking-tight">{plan.price}</p>
+                <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm leading-6 opacity-90">
+                  {plan.perks.map((perk) => (
+                    <li key={perk} className="flex gap-2">
+                      <span aria-hidden="true">·</span>
+                      {perk}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href={joinHref}
+                  className={cn(
+                    "mt-8 inline-flex min-h-10 items-center justify-center rounded-full text-sm font-semibold",
+                    i === 1 ? "bg-white text-black" : "bg-black text-white",
+                  )}
+                >
+                  {guest ? "Join" : "Manage plan"}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Testimonials */}
       <section className="px-5 pb-8 sm:px-8">

@@ -13,16 +13,18 @@ import {
   type DemoSession,
 } from "@/features/auth/demoSession";
 import { Logo } from "@/components/marketing/Logo";
+import {
+  marketingHeaderShellPadding,
+  marketingNavGroupClass,
+  marketingNavLinkClass,
+  marketingWorkspaceHeaderClass,
+} from "@/components/marketing/pillNavClasses";
 import { cn } from "@/lib/utils/cn";
 import type { UserRole } from "@/types";
 
 type NavItem = { href: string; label: string };
 
-const navGroupClass =
-  "mkt-nav-group inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
-
-const navLinkClass =
-  "mkt-nav-link inline-flex shrink-0 items-center rounded-full px-5 py-3 font-mono text-sm font-semibold uppercase tracking-[0.1em] transition-colors";
+const navActiveClass = "bg-mkt-accent text-mkt-on-accent hover:bg-mkt-accent-hi";
 
 function JoinArrowIcon({ className }: { className?: string }) {
   return (
@@ -69,14 +71,16 @@ export function WorkspaceAppHeader({
     router.replace(routes.public.home);
   }
 
-  const shellPadding =
-    "px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] sm:px-8 lg:px-10";
-
   const joinHref = `${routes.auth.join}?role=${role}&mode=signup`;
+  const compactNav = nav.length > 4;
+  const workspaceLinkClass = cn(
+    marketingNavLinkClass,
+    compactNav && "lg:px-3.5 lg:text-xs lg:tracking-[0.08em]",
+  );
 
   return (
-    <header className="sticky left-0 right-0 top-0 z-40 border-b border-mkt-border bg-mkt-bg/95 backdrop-blur-md">
-      <div className={cn("mx-auto w-full max-w-[90rem]", shellPadding)}>
+    <header className={marketingWorkspaceHeaderClass}>
+      <div className={cn("mx-auto w-full max-w-[90rem]", marketingHeaderShellPadding)}>
         <div className="relative flex min-h-[3.75rem] items-center justify-between gap-3 sm:min-h-[4.5rem]">
           <Logo variant="wordmark" className="relative z-20 shrink-0 text-mkt-fg" />
 
@@ -84,7 +88,7 @@ export function WorkspaceAppHeader({
             className="pointer-events-none absolute inset-x-0 top-1/2 z-10 hidden -translate-y-1/2 justify-center lg:flex"
             aria-label="Workspace"
           >
-            <div className={cn(navGroupClass, "pointer-events-auto")}>
+            <div className={cn(marketingNavGroupClass, "pointer-events-auto transition-[background-color] duration-300")}>
               {nav.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -95,11 +99,7 @@ export function WorkspaceAppHeader({
                     key={item.href}
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      navLinkClass,
-                      "transition-colors duration-300",
-                      isActive && "bg-mkt-accent text-mkt-on-accent hover:bg-mkt-accent-hi",
-                    )}
+                    className={cn(workspaceLinkClass, isActive && navActiveClass)}
                   >
                     {item.label}
                   </Link>
@@ -156,7 +156,10 @@ export function WorkspaceAppHeader({
         </div>
 
         <nav
-          className={cn("flex w-full pb-2 pt-0.5 lg:hidden", navGroupClass)}
+          className={cn(
+            "flex w-full pb-2 pt-0.5 transition-[background-color] duration-300 lg:hidden",
+            marketingNavGroupClass,
+          )}
           aria-label="Workspace mobile"
         >
           {nav.map((item) => {
@@ -169,11 +172,7 @@ export function WorkspaceAppHeader({
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  navLinkClass,
-                  "px-4 py-2.5 text-xs transition-colors duration-300",
-                  isActive && "bg-mkt-accent text-mkt-on-accent hover:bg-mkt-accent-hi",
-                )}
+                className={cn(workspaceLinkClass, "px-4 py-2.5 text-xs", isActive && navActiveClass)}
               >
                 {item.label}
               </Link>

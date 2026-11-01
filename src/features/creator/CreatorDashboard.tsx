@@ -1,9 +1,10 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { WorkspaceHub } from "@/components/workspace/hub/WorkspaceHub";
 import { CreatorWorkspaceSummary } from "@/components/workspace/hub/CreatorWorkspaceSummary";
-import { readDemoSession } from "@/features/auth/demoSession";
+import { isPortalGuest } from "@/features/auth/demoSession";
 import { selectCreatorDashboard, useCreatorStore } from "@/features/creator/store";
 
 export function CreatorDashboard() {
@@ -12,9 +13,11 @@ export function CreatorDashboard() {
   const approvedAssignment = state.assignments.find((a) => a.status === "approved");
   const [guest, setGuest] = useState(true);
 
+  const pathname = usePathname();
+
   useEffect(() => {
-    setGuest(!readDemoSession());
-  }, []);
+    setGuest(isPortalGuest("creator"));
+  }, [pathname]);
 
   const actionTasks = state.assignments.filter(
     (a) => a.status === "not_submitted" || a.status === "revision",

@@ -2,14 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  brandSolutions,
-  hubBrandLogos,
-  hubNicheTiles,
-  hubPlans,
-  hubSteps,
-  hubTestimonials,
-} from "@/content/workspaceHub";
+import { hubNicheTiles, hubSteps, hubTestimonials } from "@/content/workspaceHub";
+import { BrandPartnersStrip } from "@/components/workspace/hub/BrandPartnersStrip";
+import { BrandTrendingCampaigns } from "@/components/workspace/hub/BrandTrendingCampaigns";
 import { CreatorSpotlightStrip } from "@/components/workspace/hub/CreatorSpotlightStrip";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
@@ -81,9 +76,7 @@ export function WorkspaceHub({
   afterHero?: React.ReactNode;
 }) {
   const isCreator = variant === "creator";
-  const solutions = brandSolutions;
   const steps = hubSteps[variant];
-  const plans = hubPlans[variant];
   const testimonials = hubTestimonials[variant];
   const joinHref = `${routes.auth.join}?role=${variant}&mode=signup`;
   const primaryHref = guest ? joinHref : isCreator ? routes.creator.campaigns : routes.brand.campaigns;
@@ -91,7 +84,6 @@ export function WorkspaceHub({
 
   return (
     <div className="-mx-5 space-y-16 sm:-mx-8 sm:space-y-20 lg:space-y-24">
-      {/* Hero */}
       <section className="px-5 sm:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
           <div className="max-w-xl">
@@ -139,90 +131,35 @@ export function WorkspaceHub({
 
       {afterHero}
 
-      {isCreator ? <CreatorSpotlightStrip /> : null}
+      {isCreator ? <CreatorSpotlightStrip /> : <BrandPartnersStrip />}
 
-      {/* Brand logo strip */}
-      {!isCreator ? (
-        <section className="border-y border-black/8 bg-neutral-50 py-6">
-          <div className="flex gap-3 overflow-x-auto px-5 pb-1 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {hubBrandLogos.map((item) => (
-              <div
-                key={item}
-                className="flex min-w-[8rem] shrink-0 items-center justify-center rounded-2xl bg-white px-5 py-4 text-sm font-semibold text-neutral-800 ring-1 ring-black/8"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      {!isCreator ? <BrandTrendingCampaigns guest={guest} /> : null}
 
-      {/* Niche / roster grid */}
-      <section className="px-5 sm:px-8">
-        <div className="overflow-hidden rounded-[2rem] bg-neutral-100 px-6 py-12 sm:px-10 sm:py-16">
-          <SectionTitle
-            align="center"
-            eyebrow={isCreator ? "Every niche" : "Creator roster"}
-            title={
-              isCreator
-                ? "Creators for every brand — starting with yours."
-                : "Creators for every campaign you run."
-            }
-          />
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {hubNicheTiles.map((tile) => (
-              <figure
-                key={tile.tag}
-                className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-200"
-              >
-                <Image src={tile.image} alt="" fill className="object-cover" sizes="25vw" />
-                <figcaption className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-neutral-900">
-                  {tile.tag}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {!isCreator ? (
+      {isCreator ? (
         <section className="px-5 sm:px-8">
-          <SectionTitle eyebrow="Solutions" title="Business solutions" />
-          <div className="mt-8 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {solutions.map((card) => (
-              <article
-                key={card.title}
-                className="flex w-[min(100%,20rem)] shrink-0 flex-col justify-between rounded-[1.5rem] bg-neutral-50 p-6 ring-1 ring-black/8 sm:w-[22rem]"
-              >
-                <div>
-                  <div className="flex flex-wrap gap-2">
-                    {card.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-medium text-neutral-600 ring-1 ring-black/10"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold tracking-tight text-neutral-900">
-                    {card.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-neutral-600">{card.body}</p>
-                </div>
-                <Link
-                  href={guest ? joinHref : card.href}
-                  className="mt-6 inline-flex text-sm font-semibold text-neutral-900 underline underline-offset-4"
+          <div className="overflow-hidden rounded-[2rem] bg-neutral-100 px-6 py-12 sm:px-10 sm:py-16">
+            <SectionTitle
+              align="center"
+              eyebrow="Every niche"
+              title="Creators for every brand — starting with yours."
+            />
+            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+              {hubNicheTiles.map((tile) => (
+                <figure
+                  key={tile.tag}
+                  className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-200"
                 >
-                  {guest ? "Join to start" : "Open →"}
-                </Link>
-              </article>
-            ))}
+                  <Image src={tile.image} alt="" fill className="object-cover" sizes="25vw" />
+                  <figcaption className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-neutral-900">
+                    {tile.tag}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}
 
-      {/* How we work */}
       <section className="bg-neutral-900 px-5 py-14 text-white sm:px-8 sm:py-16">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50">Process</p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">How we work</h2>
@@ -240,44 +177,6 @@ export function WorkspaceHub({
         </div>
       </section>
 
-      {!isCreator ? (
-        <section className="px-5 sm:px-8">
-          <SectionTitle align="center" eyebrow="Plans" title="Pick the pace that fits you" />
-          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-3">
-            {plans.map((plan, i) => (
-              <div
-                key={plan.name}
-                className={cn(
-                  "flex flex-col rounded-[1.5rem] p-6 ring-1 ring-black/10",
-                  i === 1 ? "bg-neutral-900 text-white ring-black" : "bg-white text-neutral-900",
-                )}
-              >
-                <p className="text-sm font-medium opacity-70">{plan.name}</p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight">{plan.price}</p>
-                <ul className="mt-6 flex flex-1 flex-col gap-2 text-sm leading-6 opacity-90">
-                  {plan.perks.map((perk) => (
-                    <li key={perk} className="flex gap-2">
-                      <span aria-hidden="true">·</span>
-                      {perk}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href={joinHref}
-                  className={cn(
-                    "mt-8 inline-flex min-h-10 items-center justify-center rounded-full text-sm font-semibold",
-                    i === 1 ? "bg-white text-black" : "bg-black text-white",
-                  )}
-                >
-                  {guest ? "Join" : "Manage plan"}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Testimonials */}
       <section className="px-5 pb-8 sm:px-8">
         <SectionTitle eyebrow="Proof" title="Teams already shipping here" />
         <div className="mt-8 grid gap-4 sm:grid-cols-2">

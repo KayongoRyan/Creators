@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GuestModeBanner } from "@/components/layout/GuestModeBanner";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -17,7 +18,7 @@ type NavItem = { href: string; label: string };
 
 type DashboardShellProps = {
   title: string;
-  role: UserRole;
+  role: Extract<UserRole, "admin" | "creator" | "brand">;
   nav: NavItem[];
   children: React.ReactNode;
   className?: string;
@@ -33,13 +34,20 @@ export function DashboardShell({
   const pathname = usePathname();
   const router = useRouter();
   const [session, setSession] = useState<DemoSession | null>(null);
+  const [guestMode, setGuestMode] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     const currentSession = readDemoSession();
 
     if (!currentSession) {
-      router.replace(routes.auth.login);
+      if (role === "admin") {
+        router.replace(routes.auth.join);
+        return;
+      }
+      setGuestMode(true);
+      setSession(null);
+      setIsReady(true);
       return;
     }
 
@@ -48,6 +56,7 @@ export function DashboardShell({
       return;
     }
 
+    setGuestMode(false);
     setSession(currentSession);
     setIsReady(true);
   }, [role, router]);
@@ -55,19 +64,22 @@ export function DashboardShell({
   function handleSignOut() {
     clearDemoSession();
     setSession(null);
-    router.replace(routes.auth.login);
+    router.replace(routes.public.home);
   }
 
-  if (!isReady || !session) {
+  if (!isReady) {
     return (
       <main
         className="flex min-h-screen items-center justify-center bg-[#f8faf8] px-6 text-sm text-gray-600"
         aria-live="polite"
       >
-        Checking demo workspace...
+        Loading workspace…
       </main>
     );
   }
+
+  const guestLabel = guestMode ? "Guest" : session?.displayName;
+  const guestEmail = guestMode ? "Preview mode" : session?.email;
 
   return (
     <div className={cn("min-h-screen bg-[#f8faf8] lg:flex", className)}>
@@ -82,15 +94,25 @@ export function DashboardShell({
             </Link>
             <p className="mt-1 text-xs font-medium uppercase text-gray-500">
               {title} workspace
+              {guestMode ? " · guest" : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 lg:hidden"
-          >
-            Sign out
-          </button>
+          {!guestMode ? (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 lg:hidden"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
+              className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
+            >
+              Join
+            </Link>
+          )}
         </div>
         <nav
           aria-label={`${title} navigation`}
@@ -118,20 +140,30 @@ export function DashboardShell({
           })}
         </nav>
         <div className="hidden border-t border-black/10 px-5 py-4 lg:block">
-          <p className="truncate text-sm font-medium text-gray-900">
-            {session.displayName}
-          </p>
-          <p className="truncate text-xs text-gray-500">{session.email}</p>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="mt-3 text-sm font-medium text-gray-600 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
-          >
-            Sign out
-          </button>
+          <p className="truncate text-sm font-medium text-gray-900">{guestLabel}</p>
+          <p className="truncate text-xs text-gray-500">{guestEmail}</p>
+          {guestMode ? (
+            <Link
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
+              className="mt-3 inline-block text-sm font-medium text-emerald-800 hover:text-emerald-950"
+            >
+              Join to unlock
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="mt-3 text-sm font-medium text-gray-600 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </aside>
-      <main className="min-w-0 flex-1 px-5 py-7 sm:px-8 sm:py-9 lg:ml-64">
+      <main className="min-w-0 flex-1 bg-white px-5 py-7 sm:px-8 sm:py-9 lg:ml-64">
+        {guestMode && (role === "creator" || role === "brand") ? (
+          <GuestModeBanner role={role} />
+        ) : null}
         {children}
       </main>
     </div>

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-export const inspiredAccent = "#00EC97";
+export const inspiredAccent = "#000000";
 
 export const underlineInputClassName = cn(
   "block w-full border-0 border-b-[0.5px] border-black bg-transparent px-0 py-2.5 text-base text-gray-900",

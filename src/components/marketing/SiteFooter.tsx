@@ -41,8 +41,8 @@ const quickLinksLeft = [
 ] as const;
 
 const quickLinksRight = [
-  { href: routes.auth.register, label: "Register your business" },
-  { href: marketingJoinCta.href, label: "Sign in" },
+  { href: `${routes.auth.join}?role=brand&mode=signup`, label: "Register your business" },
+  { href: marketingJoinCta.href, label: "Join" },
   { href: routes.brand.root, label: "Brand workspace" },
   { href: routes.creator.root, label: "Creator workspace" },
 ] as const;

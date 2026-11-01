@@ -86,7 +86,7 @@ export function DeployCampaignSection() {
             {creatorsLanding.deploy.body}
           </p>
           <Link
-            href={routes.auth.register}
+            href={`${routes.auth.join}?role=brand&mode=signup`}
             className="mt-10 inline-flex w-fit text-sm font-medium text-mkt-fg underline decoration-1 underline-offset-[7px] transition hover:opacity-70 sm:mt-12 sm:text-base"
           >
             {creatorsLanding.deploy.cta}

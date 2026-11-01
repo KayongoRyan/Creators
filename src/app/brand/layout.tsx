@@ -1,5 +1,5 @@
 import { BrandPortalGate } from "@/components/layout/BrandPortalGate";
-import { DashboardShell } from "@/components/layout/DashboardShell";
+import { WorkspaceMarketingShell } from "@/components/layout/WorkspaceMarketingShell";
 import { brandNav } from "@/config/navigation";
 import { BrandStoreProvider } from "@/features/brand/store";
 
@@ -9,10 +9,10 @@ export default function BrandLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardShell title="Brand portal" role="brand" nav={brandNav}>
+    <WorkspaceMarketingShell role="brand" nav={brandNav}>
       <BrandStoreProvider>
         <BrandPortalGate>{children}</BrandPortalGate>
       </BrandStoreProvider>
-    </DashboardShell>
+    </WorkspaceMarketingShell>
   );
 }

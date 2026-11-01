@@ -4,6 +4,7 @@ export const routes = {
     apply: "/apply",
   },
   auth: {
+    join: "/join",
     login: "/login",
     register: "/register",
   },

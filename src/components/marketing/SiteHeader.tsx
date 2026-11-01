@@ -50,30 +50,35 @@ function JoinArrowIcon({ className }: { className?: string }) {
 
 function NavLinks({
   linkClassName,
-  onWorkspaceClick,
+  pathname,
 }: {
   linkClassName: string;
-  onWorkspaceClick: (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    role: UserRole,
-  ) => void;
+  pathname: string;
 }) {
   return (
     <>
-      {pillNav.map((item) => (
-        <Link
-          key={item.label}
-          href={item.href}
-          onClick={(event) => {
-            if (item.workspaceRole) {
-              onWorkspaceClick(event, item.workspaceRole);
-            }
-          }}
-          className={linkClassName}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {pillNav.map((item) => {
+        const workspaceActive =
+          item.workspaceRole === "creator"
+            ? pathname.startsWith("/creator")
+            : item.workspaceRole === "brand"
+              ? pathname.startsWith("/brand")
+              : false;
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            aria-current={workspaceActive ? "page" : undefined}
+            className={cn(
+              linkClassName,
+              workspaceActive && "bg-mkt-accent text-mkt-on-accent hover:bg-mkt-accent-hi",
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
     </>
   );
 }
@@ -89,18 +94,6 @@ export function SiteHeader() {
   useEffect(() => {
     setSession(readDemoSession());
   }, [pathname]);
-
-  function handleWorkspaceClick(
-    event: React.MouseEvent<HTMLAnchorElement>,
-    role: UserRole,
-  ) {
-    const currentSession = readDemoSession();
-    if (currentSession?.role === role) return;
-
-    event.preventDefault();
-    const authRoute = currentSession ? routes.auth.login : routes.auth.register;
-    router.push(`${authRoute}?role=${role}`);
-  }
 
   function handleLogOut() {
     clearDemoSession();
@@ -150,12 +143,12 @@ export function SiteHeader() {
               )}
             >
               <NavLinks
+                pathname={pathname}
                 linkClassName={cn(
                   navLinkClass,
                   "transition-colors duration-300",
                   onHome && contrast.navOnDark && "text-white hover:bg-white/10",
                 )}
-                onWorkspaceClick={handleWorkspaceClick}
               />
             </div>
           </nav>
@@ -205,17 +198,6 @@ export function SiteHeader() {
             ) : (
               <>
                 <Link
-                  href={routes.auth.login}
-                  className={cn(
-                    "hidden rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-300 sm:inline-flex",
-                    onHome && contrast.actionsOnDark
-                      ? "text-white/75 hover:text-white"
-                      : "text-mkt-fg-muted hover:text-mkt-fg",
-                  )}
-                >
-                  Sign in
-                </Link>
-                <Link
                   href={marketingJoinCta.href}
                   className={cn(
                     "inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-3 sm:px-7 sm:py-3.5",
@@ -243,12 +225,12 @@ export function SiteHeader() {
           aria-label="Primary mobile"
         >
           <NavLinks
+            pathname={pathname}
             linkClassName={cn(
               navLinkClass,
               "px-4 py-2.5 text-xs transition-colors duration-300",
               onHome && (contrast.navOnDark || contrast.logoOnDark) && "text-white hover:bg-white/10",
             )}
-            onWorkspaceClick={handleWorkspaceClick}
           />
         </nav>
       </div>

@@ -2,39 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CreatorWorkspacePageShell } from "@/components/workspace/creator/CreatorWorkspacePageShell";
 import {
-  Card,
-  Meta,
-  PageIntro,
-  Tag,
-} from "@/components/workspace/primitives";
+  CreatorStatusPill,
+  creatorFieldClass,
+  creatorFieldErrorClass,
+  creatorInlineLink,
+  creatorPrimaryButton,
+} from "@/components/workspace/creator/creatorWorkspaceUi";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Field, inputClassName, inputErrorClassName } from "@/components/shared/formField";
+import { Field } from "@/components/shared/formField";
 import { routes } from "@/config/routes";
-import {
-  applicationForCampaign,
-  useCreatorStore,
-} from "@/features/creator/store";
+import { applicationForCampaign, useCreatorStore } from "@/features/creator/store";
 import { formatRwf } from "@/lib/format/money";
 
 export function CreatorCampaignDetail({ campaignId }: { campaignId: string }) {
   const { state, applyToCampaign } = useCreatorStore();
   const campaign = state.discover.find((c) => c.id === campaignId);
-  const application = campaign
-    ? applicationForCampaign(state, campaign.id)
-    : undefined;
+  const application = campaign ? applicationForCampaign(state, campaign.id) : undefined;
   const [pitch, setPitch] = useState("");
   const [pitchError, setPitchError] = useState("");
   const [confirmApply, setConfirmApply] = useState(false);
 
   if (!campaign) {
     return (
-      <>
-        <PageIntro title="Campaign not found" />
-        <Link href={routes.creator.campaigns} className="text-xs text-[#3266ad]">
+      <CreatorWorkspacePageShell eyebrow="Discover" title="Campaign not found">
+        <Link href={routes.creator.campaigns} className={`text-sm ${creatorInlineLink}`}>
           Back to discover
         </Link>
-      </>
+      </CreatorWorkspacePageShell>
     );
   }
 
@@ -46,7 +42,7 @@ export function CreatorCampaignDetail({ campaignId }: { campaignId: string }) {
 
   const onApply = () => {
     if (!pitch.trim()) {
-      setPitchError("Add a one-line pitch (why you’re a fit).");
+      setPitchError("Add a one-line pitch (why you're a fit).");
       return;
     }
     setPitchError("");
@@ -54,68 +50,74 @@ export function CreatorCampaignDetail({ campaignId }: { campaignId: string }) {
   };
 
   return (
-    <>
-      <PageIntro
-        title={campaign.title}
-        subtitle={`${campaign.brandName} · ${campaign.campaignType}`}
-      />
-      <Card>
-        <Meta>
-          <strong>Payout:</strong> {payoutLine}
-          <br />
-          <strong>Deadline:</strong> {campaign.deadline}
-          <br />
-          <strong>Spots:</strong>{" "}
-          {campaign.open ? `${campaign.spotsLeft} remaining` : "Closed to new creators"}
-        </Meta>
-      </Card>
-      <Card>
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.06em] text-[#73726c]">
-          Brief
+    <CreatorWorkspacePageShell
+      eyebrow="Brief"
+      title={campaign.title}
+      subtitle={`${campaign.brandName} · ${campaign.campaignType}`}
+    >
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          { label: "Payout", value: payoutLine },
+          { label: "Deadline", value: campaign.deadline },
+          {
+            label: "Spots",
+            value: campaign.open ? `${campaign.spotsLeft} remaining` : "Closed",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-black/10 bg-neutral-50 px-4 py-4"
+          >
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+              {item.label}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-neutral-900">{item.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-black/10 bg-white px-4 py-5 sm:px-5">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-500">
+          Creative direction
         </p>
-        <p className="whitespace-pre-line text-xs leading-relaxed text-[#3d3d3a]">
+        <p className="mt-3 whitespace-pre-line text-sm leading-7 text-neutral-700">
           {campaign.brief}
         </p>
-      </Card>
+      </div>
 
       {application ? (
-        <Card>
-          <Tag tone="blue">Application {application.status}</Tag>
-          <p className="mt-2 text-xs leading-relaxed text-[#3d3d3a]">
+        <div className="rounded-2xl border border-black/10 bg-neutral-50 px-4 py-5 sm:px-5">
+          <CreatorStatusPill label={`Application ${application.status}`} variant="outline" />
+          <p className="mt-3 text-sm leading-6 text-neutral-600">
             Submitted {new Date(application.appliedAt).toLocaleDateString()}.
             {application.pitch ? (
               <>
-                <br />
-                <strong className="font-medium text-[#141413]">Pitch:</strong>{" "}
-                {application.pitch}
+                {" "}
+                <span className="font-medium text-neutral-900">Pitch:</span> {application.pitch}
               </>
             ) : null}
           </p>
-        </Card>
+        </div>
       ) : campaign.open ? (
-        <Card>
+        <div className="rounded-2xl border border-black/10 bg-white px-4 py-5 sm:px-5">
           <Field id="pitch" label="Your pitch" error={pitchError}>
             <textarea
               id="pitch"
-              rows={3}
-              className={pitchError ? inputErrorClassName : inputClassName}
+              rows={4}
+              className={pitchError ? creatorFieldErrorClass : creatorFieldClass}
               placeholder="Why your audience fits this brief…"
               value={pitch}
               onChange={(e) => setPitch(e.target.value)}
             />
           </Field>
-          <button
-            type="button"
-            onClick={onApply}
-            className="mt-3 rounded-lg bg-[#141413] px-4 py-2 text-xs font-medium text-white"
-          >
+          <button type="button" onClick={onApply} className={`mt-4 ${creatorPrimaryButton}`}>
             Apply to campaign
           </button>
-        </Card>
+        </div>
       ) : (
-        <Card>
-          <Meta>This campaign is assigned-only. Check My tasks if you&apos;re on the roster.</Meta>
-        </Card>
+        <p className="rounded-2xl border border-dashed border-black/15 px-4 py-6 text-sm text-neutral-600">
+          This campaign is assigned-only. Check My tasks if you&apos;re on the roster.
+        </p>
       )}
 
       <ConfirmDialog
@@ -129,6 +131,6 @@ export function CreatorCampaignDetail({ campaignId }: { campaignId: string }) {
         }}
         onCancel={() => setConfirmApply(false)}
       />
-    </>
+    </CreatorWorkspacePageShell>
   );
 }

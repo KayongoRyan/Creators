@@ -1,21 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { CreatorWorkspacePageShell } from "@/components/workspace/creator/CreatorWorkspacePageShell";
 import {
-  Card,
-  CardHeader,
-  Meta,
-  PageIntro,
-  Tag,
-} from "@/components/workspace/primitives";
+  CreatorEmptyBlock,
+  CreatorStatusPill,
+  applicationStatusPill,
+  creatorInlineLink,
+} from "@/components/workspace/creator/creatorWorkspaceUi";
 import { routes } from "@/config/routes";
 import { applicationForCampaign, useCreatorStore } from "@/features/creator/store";
 import { formatRwf } from "@/lib/format/money";
 
-function payoutLabel(campaign: {
-  flatPayoutRwf?: number;
-  rpmRwf?: number;
-}) {
+function payoutLabel(campaign: { flatPayoutRwf?: number; rpmRwf?: number }) {
   if (campaign.rpmRwf) return `${formatRwf(campaign.rpmRwf)} RPM`;
   if (campaign.flatPayoutRwf) return formatRwf(campaign.flatPayoutRwf);
   return "—";
@@ -25,46 +22,50 @@ export function CreatorDiscover() {
   const { state } = useCreatorStore();
 
   return (
-    <>
-      <PageIntro title="Discover campaigns" subtitle="Open briefs you can apply to" />
+    <CreatorWorkspacePageShell
+      eyebrow="Discover"
+      title="Open campaigns"
+      subtitle="Briefs you can apply to right now"
+    >
       {state.discover.length === 0 ? (
-        <Card>
-          <Meta>No open campaigns right now.</Meta>
-        </Card>
+        <CreatorEmptyBlock message="No open campaigns right now." />
       ) : (
-        state.discover.map((campaign) => {
-          const application = applicationForCampaign(state, campaign.id);
-          return (
-            <Card key={campaign.id}>
-              <CardHeader
-                title={campaign.title}
-                tag={
-                  application ? (
-                    <Tag tone={application.status === "rejected" ? "red" : "blue"}>
-                      Applied · {application.status}
-                    </Tag>
-                  ) : campaign.open ? (
-                    <Tag tone="green">{campaign.spotsLeft} spots left</Tag>
-                  ) : (
-                    <Tag tone="gray">Closed</Tag>
-                  )
-                }
-              />
-              <Meta>
-                {campaign.brandName} · {campaign.campaignType}
-                <br />
-                Payout: {payoutLabel(campaign)} · Deadline {campaign.deadline}
-              </Meta>
-              <Link
-                href={`${routes.creator.campaigns}/${campaign.id}`}
-                className="mt-2 inline-block text-xs font-medium text-[#3266ad] hover:underline"
-              >
-                View brief →
-              </Link>
-            </Card>
-          );
-        })
+        <ul className="space-y-2">
+          {state.discover.map((campaign) => {
+            const application = applicationForCampaign(state, campaign.id);
+            const pill = application
+              ? applicationStatusPill(application.status)
+              : campaign.open
+                ? { label: `${campaign.spotsLeft} spots left`, variant: "solid" as const }
+                : { label: "Closed", variant: "muted" as const };
+
+            return (
+              <li key={campaign.id}>
+                <article className="rounded-2xl border border-black/10 bg-white px-4 py-4 sm:px-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-medium text-neutral-900">{campaign.title}</p>
+                      <p className="mt-1 text-sm text-neutral-600">
+                        {campaign.brandName} · {campaign.campaignType}
+                      </p>
+                      <p className="mt-2 text-xs text-neutral-500">
+                        Payout {payoutLabel(campaign)} · Deadline {campaign.deadline}
+                      </p>
+                    </div>
+                    <CreatorStatusPill label={pill.label} variant={pill.variant} />
+                  </div>
+                  <Link
+                    href={`${routes.creator.campaigns}/${campaign.id}`}
+                    className={`mt-4 inline-block text-sm ${creatorInlineLink}`}
+                  >
+                    View brief
+                  </Link>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </>
+    </CreatorWorkspacePageShell>
   );
 }

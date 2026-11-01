@@ -28,7 +28,6 @@ type NavItem = {
 };
 
 const pillNav: NavItem[] = [
-  { href: "#", label: "Careers" },
   { href: routes.creator.root, label: "Creators", workspaceRole: "creator" },
   { href: routes.brand.root, label: "Business", workspaceRole: "brand" },
 ];

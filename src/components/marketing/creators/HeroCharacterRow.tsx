@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { heroCharacterGroup } from "@/content/heroCharacters";
 
 export function HeroCharacterRow() {
@@ -7,7 +7,7 @@ export function HeroCharacterRow() {
       className="relative z-10 mx-auto flex max-w-5xl justify-center px-4 pb-10 sm:px-6 sm:pb-12"
       aria-label="Creators at work"
     >
-      <Image
+      <OptimizedImage
         src={heroCharacterGroup.src}
         alt={heroCharacterGroup.alt}
         width={1588}

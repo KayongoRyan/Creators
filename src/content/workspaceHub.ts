@@ -1,3 +1,5 @@
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
+
 export const hubCreatorProfiles = [
   { name: "Amara N.", handle: "@amara.films", followers: "128K", platform: "TikTok" },
   { name: "Leo M.", handle: "@leomakes", followers: "84K", platform: "Instagram" },
@@ -18,23 +20,19 @@ export const hubBrandLogos = [
 export const hubNicheTiles = [
   {
     tag: "#beauty",
-    image:
-      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+    image: unsplashPhoto("photo-1522335789203-aabd1fc54bc9", unsplashWidths.thumb, 70),
   },
   {
     tag: "#travel",
-    image:
-      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80",
+    image: unsplashPhoto("photo-1488646953014-85cb44e25828", unsplashWidths.thumb, 70),
   },
   {
     tag: "#tech",
-    image:
-      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=600&q=80",
+    image: unsplashPhoto("photo-1516321497487-e288fb19713f", unsplashWidths.thumb, 70),
   },
   {
     tag: "#food",
-    image:
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+    image: unsplashPhoto("photo-1504674900247-0877df9cc836", unsplashWidths.thumb, 70),
   },
 ] as const;
 

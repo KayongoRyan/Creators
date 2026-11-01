@@ -10,8 +10,12 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-    // Dev: load Unsplash directly — avoids /_next/image cache writes (ENOSPC on Windows).
-    unoptimized: process.env.NODE_ENV === "development",
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Dev: direct URLs unless NEXT_IMAGE_OPTIMIZE=1 (avoids ENOSPC from image cache on Windows).
+    unoptimized:
+      process.env.NODE_ENV === "development" && process.env.NEXT_IMAGE_OPTIMIZE !== "1",
   },
   webpack: (config, { dev }) => {
     // Avoid corrupted pack cache when .next is removed while dev is running (common on Windows).

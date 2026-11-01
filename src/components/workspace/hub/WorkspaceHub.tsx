@@ -1,13 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { hubNicheTiles, hubSteps, hubTestimonials } from "@/content/workspaceHub";
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
 import { BrandPartnersStrip } from "@/components/workspace/hub/BrandPartnersStrip";
 import { BrandTrendingCampaigns } from "@/components/workspace/hub/BrandTrendingCampaigns";
 import { CreatorSpotlightStrip } from "@/components/workspace/hub/CreatorSpotlightStrip";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
+
+const hubHeroImage = {
+  creator: unsplashPhoto("photo-1516321497487-e288fb19713f", unsplashWidths.card, 70),
+  brand: unsplashPhoto("photo-1552664730-d307ca884978", unsplashWidths.card, 70),
+} as const;
 
 function HubArrowButton({
   href,
@@ -106,12 +112,8 @@ export function WorkspaceHub({
           </div>
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
             <div className="relative aspect-square max-h-[22rem] w-full overflow-hidden rounded-[2rem] bg-neutral-100 lg:max-h-none">
-              <Image
-                src={
-                  isCreator
-                    ? "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=80"
-                    : "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80"
-                }
+              <OptimizedImage
+                src={isCreator ? hubHeroImage.creator : hubHeroImage.brand}
                 alt=""
                 fill
                 className="object-cover"
@@ -149,7 +151,14 @@ export function WorkspaceHub({
                   key={tile.tag}
                   className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-200"
                 >
-                  <Image src={tile.image} alt="" fill className="object-cover" sizes="25vw" />
+                  <OptimizedImage
+                    src={tile.image}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="25vw"
+                    loading="lazy"
+                  />
                   <figcaption className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-neutral-900">
                     {tile.tag}
                   </figcaption>

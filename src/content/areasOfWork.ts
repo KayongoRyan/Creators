@@ -1,3 +1,5 @@
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
+
 /** Unsplash photos per area (verified CDN URLs). */
 export type AreaOfWork = {
   /** Screen-reader / control label (descriptive). */
@@ -7,8 +9,7 @@ export type AreaOfWork = {
   images: string[];
 };
 
-const unsplash = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
+const unsplash = (id: string) => unsplashPhoto(id, unsplashWidths.tile, 70);
 
 export const areasOfWork: AreaOfWork[] = [
   {

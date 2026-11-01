@@ -182,6 +182,7 @@ html[data-marketing-theme="light"],
     stroke: var(--m-footer-logo-stroke);
   }
   .hero-character-art {
+    background-color: transparent;
     filter: contrast(1.08);
   }
 }

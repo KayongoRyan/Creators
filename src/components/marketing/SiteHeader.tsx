@@ -13,6 +13,11 @@ import {
   type DemoSession,
 } from "@/features/auth/demoSession";
 import type { UserRole } from "@/types";
+import {
+  marketingHeaderShellPadding,
+  marketingNavGroupClass,
+  marketingNavLinkClass,
+} from "./pillNavClasses";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils/cn";
 
@@ -27,12 +32,6 @@ const pillNav: NavItem[] = [
   { href: routes.creator.root, label: "Creators", workspaceRole: "creator" },
   { href: routes.brand.root, label: "Business", workspaceRole: "brand" },
 ];
-
-const navGroupClass =
-  "mkt-nav-group inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
-
-const navLinkClass =
-  "mkt-nav-link inline-flex shrink-0 items-center rounded-full px-5 py-3 font-mono text-sm font-semibold uppercase tracking-[0.1em] transition-colors";
 
 function JoinArrowIcon({ className }: { className?: string }) {
   return (
@@ -101,9 +100,6 @@ export function SiteHeader() {
     router.replace(routes.public.home);
   }
 
-  const shellPadding =
-    "px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] sm:px-8 lg:px-10";
-
   const headerOnDark =
     onHome && (contrast.logoOnDark || contrast.navOnDark || contrast.actionsOnDark);
 
@@ -120,7 +116,7 @@ export function SiteHeader() {
           : "bg-mkt-bg/90 backdrop-blur-md",
       )}
     >
-      <div className={cn("mx-auto w-full max-w-[90rem]", shellPadding)}>
+      <div className={cn("mx-auto w-full max-w-[90rem]", marketingHeaderShellPadding)}>
         <div className="relative flex min-h-[3.75rem] items-center justify-between gap-3 sm:min-h-[4.5rem]">
           <Logo
             variant="wordmark"
@@ -137,7 +133,7 @@ export function SiteHeader() {
           >
             <div
               className={cn(
-                navGroupClass,
+                marketingNavGroupClass,
                 "pointer-events-auto transition-[background-color] duration-300",
                 onHome && contrast.navOnDark && "bg-white/15",
               )}
@@ -145,8 +141,7 @@ export function SiteHeader() {
               <NavLinks
                 pathname={pathname}
                 linkClassName={cn(
-                  navLinkClass,
-                  "transition-colors duration-300",
+                  marketingNavLinkClass,
                   onHome && contrast.navOnDark && "text-white hover:bg-white/10",
                 )}
               />
@@ -219,7 +214,7 @@ export function SiteHeader() {
         <nav
           className={cn(
             "flex w-full pb-2 pt-0.5 transition-[background-color] duration-300 lg:hidden",
-            navGroupClass,
+            marketingNavGroupClass,
             onHome && (contrast.navOnDark || contrast.logoOnDark) && "bg-white/15",
           )}
           aria-label="Primary mobile"
@@ -227,8 +222,8 @@ export function SiteHeader() {
           <NavLinks
             pathname={pathname}
             linkClassName={cn(
-              navLinkClass,
-              "px-4 py-2.5 text-xs transition-colors duration-300",
+              marketingNavLinkClass,
+              "px-4 py-2.5 text-xs",
               onHome && (contrast.navOnDark || contrast.logoOnDark) && "text-white hover:bg-white/10",
             )}
           />

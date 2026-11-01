@@ -24,8 +24,6 @@ import type { UserRole } from "@/types";
 
 type NavItem = { href: string; label: string };
 
-const navActiveClass = "bg-mkt-accent text-mkt-on-accent hover:bg-mkt-accent-hi";
-
 function JoinArrowIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
@@ -88,7 +86,12 @@ export function WorkspaceAppHeader({
             className="pointer-events-none absolute inset-x-0 top-1/2 z-10 hidden -translate-y-1/2 justify-center lg:flex"
             aria-label="Workspace"
           >
-            <div className={cn(marketingNavGroupClass, "pointer-events-auto transition-[background-color] duration-300")}>
+            <div
+              className={cn(
+                marketingNavGroupClass,
+                "workspace-nav pointer-events-auto transition-[background-color] duration-300",
+              )}
+            >
               {nav.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -99,7 +102,7 @@ export function WorkspaceAppHeader({
                     key={item.href}
                     href={item.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={cn(workspaceLinkClass, isActive && navActiveClass)}
+                    className={workspaceLinkClass}
                   >
                     {item.label}
                   </Link>
@@ -157,7 +160,7 @@ export function WorkspaceAppHeader({
 
         <nav
           className={cn(
-            "flex w-full pb-2 pt-0.5 transition-[background-color] duration-300 lg:hidden",
+            "workspace-nav flex w-full pb-2 pt-0.5 transition-[background-color] duration-300 lg:hidden",
             marketingNavGroupClass,
           )}
           aria-label="Workspace mobile"
@@ -172,7 +175,7 @@ export function WorkspaceAppHeader({
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
-                className={cn(workspaceLinkClass, "px-4 py-2.5 text-xs", isActive && navActiveClass)}
+                className={cn(workspaceLinkClass, "px-4 py-2.5 text-xs")}
               >
                 {item.label}
               </Link>

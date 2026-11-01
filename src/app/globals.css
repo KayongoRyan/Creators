@@ -79,6 +79,17 @@ html[data-marketing-theme="light"],
   .mkt-nav-link[aria-current="page"]:hover {
     background-color: var(--m-accent-hi);
   }
+  /* Creator / brand workspace nav: grey pill group only — no black link fill */
+  .workspace-nav .mkt-nav-link:hover,
+  .workspace-nav .mkt-nav-link:active,
+  .workspace-nav .mkt-nav-link[aria-current="page"],
+  .workspace-nav .mkt-nav-link[aria-current="page"]:hover {
+    color: var(--m-nav-pill-fg);
+    background-color: var(--m-nav-pill-hover);
+  }
+  .workspace-nav .mkt-nav-link[aria-current="page"] {
+    font-weight: 700;
+  }
   .shadow-mkt-cta {
     box-shadow: 0 6px 0 0 var(--m-cta-shadow);
   }

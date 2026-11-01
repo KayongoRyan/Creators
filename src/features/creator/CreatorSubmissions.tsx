@@ -1,55 +1,56 @@
 "use client";
 
 import {
-  Card,
-  Meta,
-  PageIntro,
-  Tag,
-} from "@/components/workspace/primitives";
-import { EmptyState } from "@/components/shared/EmptyState";
+  CreatorWorkspacePageShell,
+} from "@/components/workspace/creator/CreatorWorkspacePageShell";
+import {
+  CreatorEmptyBlock,
+  CreatorStatusPill,
+  assignmentStatusPill,
+} from "@/components/workspace/creator/creatorWorkspaceUi";
 import { useCreatorStore } from "@/features/creator/store";
-
-function statusTag(status: string) {
-  if (status === "approved") return <Tag tone="green">Approved</Tag>;
-  if (status === "pending") return <Tag tone="amber">Under review</Tag>;
-  if (status === "revision") return <Tag tone="blue">Revision</Tag>;
-  if (status === "rejected") return <Tag tone="red">Rejected</Tag>;
-  return <Tag tone="gray">Draft</Tag>;
-}
 
 export function CreatorSubmissions() {
   const { state } = useCreatorStore();
   const rows = state.assignments.filter((a) => a.postUrl || a.status !== "not_submitted");
 
   return (
-    <>
-      <PageIntro title="Submissions" subtitle="Post links sent for review" />
+    <CreatorWorkspacePageShell
+      eyebrow="Submissions"
+      title="Post links"
+      subtitle="Everything you have sent for brand review"
+    >
       {rows.length === 0 ? (
-        <EmptyState message="No submissions yet." />
+        <CreatorEmptyBlock message="No submissions yet." />
       ) : (
-        rows.map((row) => (
-          <Card key={row.id}>
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-[#141413]">{row.title}</p>
-              {statusTag(row.status)}
-            </div>
-            {row.postUrl ? (
-              <Meta>
-                <a
-                  href={row.postUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#3266ad]"
-                >
-                  {row.postUrl}
-                </a>
-              </Meta>
-            ) : (
-              <Meta>Awaiting resubmit after revision.</Meta>
-            )}
-          </Card>
-        ))
+        <ul className="space-y-2">
+          {rows.map((row) => {
+            const pill = assignmentStatusPill(row.status);
+            return (
+              <li key={row.id}>
+                <div className="rounded-2xl border border-black/10 bg-white px-4 py-4 sm:px-5">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="font-medium text-neutral-900">{row.title}</p>
+                    <CreatorStatusPill label={pill.label} variant={pill.variant} />
+                  </div>
+                  {row.postUrl ? (
+                    <a
+                      href={row.postUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 block truncate text-sm text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+                    >
+                      {row.postUrl}
+                    </a>
+                  ) : (
+                    <p className="mt-3 text-sm text-neutral-500">Awaiting resubmit after revision.</p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </>
+    </CreatorWorkspacePageShell>
   );
 }

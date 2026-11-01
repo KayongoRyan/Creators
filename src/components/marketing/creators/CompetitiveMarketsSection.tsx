@@ -253,10 +253,10 @@ export function CompetitiveMarketsSection() {
             </div>
 
             <Link
-              href={`${routes.auth.join}?role=creator&mode=signup`}
+              href={routes.public.apply}
               className="hidden text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:inline-flex lg:ml-auto lg:mb-2"
             >
-              Start on Creators
+              Niche Profits
             </Link>
           </div>
         </div>
@@ -275,10 +275,10 @@ export function CompetitiveMarketsSection() {
         </div>
 
         <Link
-          href={`${routes.auth.join}?role=creator&mode=signup`}
+          href={routes.public.apply}
           className="mt-8 inline-flex text-sm text-mkt-fg underline decoration-1 underline-offset-[6px] transition hover:opacity-70 sm:hidden"
         >
-          Start on Creators
+          Niche Profits
         </Link>
       </div>
     </section>

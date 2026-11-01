@@ -67,13 +67,20 @@ export function WorkspaceMarketingShell({
   return (
     <MarketingThemeProvider>
       <WorkspaceAppHeader nav={nav} role={role} />
-      <main className={cn("min-h-[calc(100vh-4.5rem)] bg-mkt-bg text-mkt-fg", className)}>
+      <main
+        className={cn(
+          "min-h-screen bg-mkt-bg text-mkt-fg",
+          /* Clear fixed header (logo row + mobile pill row) */
+          "pt-[calc(7.25rem+env(safe-area-inset-top,0px))] lg:pt-[calc(4.5rem+env(safe-area-inset-top,0px))]",
+          className,
+        )}
+      >
         {guestMode ? (
-          <div className="mx-auto w-full max-w-[90rem] px-[max(1.25rem,env(safe-area-inset-left,0px))] pt-7 sm:px-8">
+          <div className="mx-auto w-full max-w-[90rem] px-[max(1.25rem,env(safe-area-inset-left,0px))] pt-4 sm:px-8">
             <GuestModeBanner role={role} />
           </div>
         ) : null}
-        <div className="mx-auto w-full max-w-[90rem] px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-9 pt-4 sm:px-8 sm:pt-6">
+        <div className="mx-auto w-full max-w-[90rem] px-[max(1.25rem,env(safe-area-inset-left,0px))] pb-9 pt-2 sm:px-8 sm:pt-4">
           {children}
         </div>
       </main>

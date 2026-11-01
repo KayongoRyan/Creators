@@ -55,7 +55,7 @@ export const creatorsLanding = {
         panel: "chartreuse",
         tab: "workflow",
         image:
-          "https://images.unsplash.com/photo-1611162616472-9673feb421f5?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
         imageAlt: "Creator filming short-form content on a phone",
       },
       {

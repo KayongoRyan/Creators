@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { marketingType } from "@/lib/marketing";
+import {
+  InspiredChoice,
+  InspiredChoiceGroup,
+  InspiredField,
+  InspiredSubmit,
+  underlineInputClassName,
+} from "@/components/shared/inspiredForm";
 import { creatorNicheGroups } from "../data/creatorNiches";
 
 export function CreatorApplicationForm() {
@@ -22,134 +28,113 @@ export function CreatorApplicationForm() {
 
   return (
     <form
-      className="mt-8 flex flex-col gap-5"
+      className="flex flex-col gap-6 sm:gap-7"
       onSubmit={(e) => {
         e.preventDefault();
         setShowNicheError(selectedNiches.length === 0);
       }}
     >
-      <label className={marketingType.formLabel}>
-        Full name
-        <input name="fullName" required className={marketingType.formInput} />
-      </label>
-      <fieldset
-        aria-describedby="niche-help niche-selection-count"
-        aria-required="true"
-        className="flex flex-col gap-4"
-      >
-        <legend className="text-sm font-medium text-gray-900">
-          Choose your niches
-        </legend>
-        <label className={marketingType.formLabel}>
-          Search niches
+      <div className="grid gap-6 sm:grid-cols-2">
+        <InspiredField id="fullName" label="Full name" required>
+          <input id="fullName" name="fullName" required className={underlineInputClassName} />
+        </InspiredField>
+        <InspiredField id="email" label="Email" required>
           <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Try food, travel, skincare..."
-            className={marketingType.formInput}
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className={underlineInputClassName}
           />
-        </label>
-        <p id="niche-help" className="-mt-3 text-sm leading-5 text-gray-600">
-          Select every topic you create content about. The examples can help you
-          find the best fit.
-        </p>
-        <p
-          id="niche-selection-count"
-          aria-live="polite"
-          className="text-sm font-medium text-gray-700"
-        >
-          {selectedNiches.length} selected
-        </p>
-        {selectedNiches.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedNiches.map((niche) => (
-              <button
-                key={niche}
-                type="button"
-                onClick={() =>
-                  setSelectedNiches((current) =>
-                    current.filter((value) => value !== niche),
-                  )
-                }
-                className="rounded-full border border-emerald-700/20 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900 hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
-                aria-label={`Remove ${niche} from selected niches`}
-              >
-                {niche} <span aria-hidden="true">×</span>
-              </button>
-            ))}
-          </div>
-        )}
-        {showNicheError && selectedNiches.length === 0 && (
-          <p role="alert" className="-mt-3 text-sm text-red-700">
-            Choose at least one niche to continue.
-          </p>
-        )}
-        <div className="flex flex-col gap-5">
-          {visibleNicheGroups.map((group) => (
-            <section key={group.label} aria-label={group.label}>
-              <h2 className="mb-2 text-sm font-semibold text-gray-800">
-                {group.label}
-              </h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {group.niches.map((niche) => {
-                  const isSelected = selectedNiches.includes(niche.label);
+        </InspiredField>
+      </div>
 
-                  return (
-                    <label
-                      key={niche.label}
-                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${isSelected
-                        ? "border-emerald-500 bg-emerald-50"
-                        : "border-black/10 bg-white hover:border-black/25"
-                        }`}
-                    >
-                      <input
-                        type="checkbox"
-                        name="niches"
-                        value={niche.label}
-                        checked={isSelected}
-                        onChange={(event) => {
-                          setSelectedNiches((current) =>
-                            event.target.checked
-                              ? [...current, niche.label]
-                              : current.filter((value) => value !== niche.label),
-                          );
-                          setShowNicheError(false);
-                        }}
-                        className="mt-1 size-4 shrink-0 accent-emerald-600"
-                      />
-                      <span className="flex flex-col gap-1">
-                        <span className="text-sm font-medium text-gray-900">
-                          {niche.label}
-                        </span>
-                        <span className="text-xs leading-5 text-gray-600">
-                          {niche.examples}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </section>
-          ))}
-          {visibleNicheGroups.length === 0 && (
-            <p className="rounded-lg border border-dashed border-black/20 px-4 py-6 text-sm text-gray-600">
-              No niches match that search. Try another word or browse all topics.
-            </p>
-          )}
-        </div>
-      </fieldset>
-      <label className={marketingType.formLabel}>
-        Portfolio URL
+      <InspiredField
+        id="nicheSearch"
+        label="Search niches"
+        hint="Select every topic you create content about."
+      >
         <input
-          name="portfolio"
-          type="url"
-          className={marketingType.formInput}
+          id="nicheSearch"
+          type="search"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Try food, travel, skincare..."
+          className={underlineInputClassName}
         />
-      </label>
-      <button type="submit" className={`${marketingType.ctaPrimary} w-fit`}>
-        Submit application
-      </button>
+      </InspiredField>
+
+      <InspiredChoiceGroup
+        legend="Your niches"
+        required
+        error={showNicheError && selectedNiches.length === 0 ? "Choose at least one niche." : undefined}
+      >
+        {selectedNiches.map((niche) => (
+          <InspiredChoice
+            key={niche}
+            selected
+            onSelect={() =>
+              setSelectedNiches((current) => current.filter((value) => value !== niche))
+            }
+          >
+            {niche} ×
+          </InspiredChoice>
+        ))}
+        {selectedNiches.length === 0 ? (
+          <span className="text-sm text-gray-500">Pick topics below</span>
+        ) : null}
+      </InspiredChoiceGroup>
+
+      <p aria-live="polite" className="-mt-2 text-sm font-medium text-gray-700">
+        {selectedNiches.length} selected
+      </p>
+
+      <div className="max-h-[min(22rem,50vh)] space-y-5 overflow-y-auto pr-1">
+        {visibleNicheGroups.map((group) => (
+          <section key={group.label} aria-label={group.label}>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              {group.label}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {group.niches.map((niche) => {
+                const isSelected = selectedNiches.includes(niche.label);
+                return (
+                  <InspiredChoice
+                    key={niche.label}
+                    selected={isSelected}
+                    onSelect={() => {
+                      setSelectedNiches((current) =>
+                        isSelected
+                          ? current.filter((value) => value !== niche.label)
+                          : [...current, niche.label],
+                      );
+                      setShowNicheError(false);
+                    }}
+                  >
+                    {niche.label}
+                  </InspiredChoice>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        {visibleNicheGroups.length === 0 ? (
+          <p className="text-sm text-gray-600">
+            No niches match that search. Try another word or browse all topics.
+          </p>
+        ) : null}
+      </div>
+
+      {selectedNiches.map((niche) => (
+        <input key={niche} type="hidden" name="niches" value={niche} />
+      ))}
+
+      <InspiredField id="portfolio" label="Portfolio URL">
+        <input id="portfolio" name="portfolio" type="url" className={underlineInputClassName} />
+      </InspiredField>
+
+      <InspiredSubmit>Submit application</InspiredSubmit>
     </form>
   );
 }

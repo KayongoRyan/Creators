@@ -4,7 +4,7 @@ export type NavItem = { href: string; label: string };
 
 /** Public marketing header */
 export const marketingJoinCta = {
-  href: routes.auth.login,
+  href: routes.auth.join,
   label: "Join",
 } as const;
 

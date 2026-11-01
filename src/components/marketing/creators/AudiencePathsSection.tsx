@@ -21,10 +21,10 @@ const paths: PathCard[] = [
     eyebrow: "For creators",
     title: "Make your work your next opportunity.",
     body: "Share your niches, find briefs that fit your style, and keep applications, deliverables, and payouts together.",
-    href: `${routes.auth.register}?role=creator`,
+    href: `${routes.auth.join}?role=creator&mode=signup`,
     cta: "Join as a creator",
     image:
-      "https://images.unsplash.com/photo-1611162616472-9673feb421f5?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Creator filming content",
   },
   {
@@ -32,7 +32,7 @@ const paths: PathCard[] = [
     eyebrow: "For brands",
     title: "Brief the work. Meet the right creators.",
     body: "Launch a campaign, review creator applications, and manage content from the first brief through final delivery.",
-    href: `${routes.auth.register}?role=brand`,
+    href: `${routes.auth.join}?role=brand&mode=signup`,
     cta: "Create a brand account",
     image:
       "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
@@ -113,7 +113,7 @@ export function AudiencePathsSection() {
         </h2>
       </div>
 
-      <div className="bg-black text-white">
+      <div className="bg-black text-white" data-mkt-header-dark>
         <div
           className={cn(
             mktContainer,

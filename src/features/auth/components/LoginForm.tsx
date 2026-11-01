@@ -6,8 +6,11 @@ import { routes } from "@/config/routes";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { saveDemoSession } from "@/features/auth/demoSession";
 import type { UserRole } from "@/types";
-import { marketingType } from "@/lib/marketing";
-import { cn } from "@/lib/utils/cn";
+import {
+  InspiredField,
+  InspiredSubmit,
+  underlineInputClassName,
+} from "@/components/shared/inspiredForm";
 import { isValidEmail } from "@/lib/validators";
 
 type LoginFormProps = {
@@ -22,7 +25,7 @@ export function LoginForm({ initialRole }: LoginFormProps) {
   return (
     <form
       noValidate
-      className="mt-8 flex flex-col gap-5"
+      className="flex flex-col gap-6"
       onSubmit={(e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
@@ -47,50 +50,40 @@ export function LoginForm({ initialRole }: LoginFormProps) {
         router.replace(routes.public.home);
       }}
     >
-      <DemoRolePicker
-        value={role}
-        onChange={setRole}
-        excludedRoles={["admin"]}
-      />
-      <label className={cn(marketingType.formLabel, "text-mkt-fg")}>
-        Email
+      <DemoRolePicker value={role} onChange={setRole} excludedRoles={["admin"]} />
+
+      <InspiredField id="email" label="Email" required>
         <input
+          id="email"
           name="email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
           required
-          className={cn(
-            marketingType.formInput,
-            "border-mkt-border bg-mkt-bg-muted text-mkt-fg placeholder:text-mkt-fg-subtle focus:border-mkt-accent",
-          )}
+          className={underlineInputClassName}
         />
-      </label>
-      <label className={cn(marketingType.formLabel, "text-mkt-fg")}>
-        Password
+      </InspiredField>
+
+      <InspiredField id="password" label="Password" required>
         <input
+          id="password"
           name="password"
           type="password"
           autoComplete="current-password"
           required
-          className={cn(
-            marketingType.formInput,
-            "border-mkt-border bg-mkt-bg-muted text-mkt-fg placeholder:text-mkt-fg-subtle focus:border-mkt-accent",
-          )}
+          className={underlineInputClassName}
         />
-      </label>
-      {error && (
-        <p role="alert" className="text-sm font-medium text-mkt-error">
+      </InspiredField>
+
+      {error ? (
+        <p role="alert" className="text-sm font-medium text-red-600">
           {error}
         </p>
-      )}
-      <button
-        type="submit"
-        className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-mkt-accent px-5 text-sm font-semibold text-mkt-on-accent transition-colors hover:bg-mkt-accent-hi focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mkt-accent"
-      >
-        Sign in
-      </button>
-      <p className="text-xs leading-5 text-mkt-fg-muted">
+      ) : null}
+
+      <InspiredSubmit>Sign in</InspiredSubmit>
+
+      <p className="text-xs leading-5 text-gray-500">
         Frontend demo only. Any password is accepted and is not stored.
       </p>
     </form>

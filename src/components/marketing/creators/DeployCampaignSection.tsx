@@ -22,7 +22,7 @@ const collageItems = [
     className: "right-[5%] top-[6%] z-20 h-[36%] w-[40%]",
   },
   {
-    src: "https://images.unsplash.com/photo-1611162616472-9673feb421f5?auto=format&fit=crop&w=900&q=80",
+    src: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80",
     alt: "Creator filming content",
     className: "left-[26%] top-[28%] z-30 h-[52%] w-[48%]",
   },
@@ -96,6 +96,7 @@ export function DeployCampaignSection() {
         <div
           ref={collageRef}
           className="relative min-h-[24rem] border-t border-mkt-border bg-black sm:min-h-[28rem] lg:min-h-full lg:border-l lg:border-t-0 lg:border-white/10 xl:min-h-[36rem]"
+          data-mkt-header-dark
         >
           {collageItems.map((item) => (
             <div

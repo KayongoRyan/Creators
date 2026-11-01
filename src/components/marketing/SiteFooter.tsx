@@ -125,7 +125,10 @@ export function SiteFooter() {
 
   return (
     <footer ref={footerRef} className="mt-auto overflow-hidden">
-      <div className="mkt-footer-shell relative overflow-hidden rounded-t-[3rem] sm:rounded-t-[4.5rem] lg:rounded-t-[5.5rem]">
+      <div
+        className="mkt-footer-shell relative overflow-hidden rounded-t-[3rem] sm:rounded-t-[4.5rem] lg:rounded-t-[5.5rem]"
+        data-mkt-header-dark
+      >
         <div
           ref={patternRef}
           className="mkt-footer-pattern pointer-events-none absolute inset-0 will-change-transform"

@@ -310,6 +310,7 @@ export function AreasOfWorkGallery() {
       onPointerMove={moveTiles}
       onPointerLeave={resetTiles}
       className="relative min-h-[min(88svh,44rem)] w-full overflow-hidden bg-[#09090b] text-white sm:min-h-[min(88svh,680px)] lg:min-h-[min(92svh,720px)]"
+      data-mkt-header-dark
     >
       <div className="relative mx-auto min-h-[min(88svh,44rem)] w-full max-w-[1400px] px-[max(1rem,env(safe-area-inset-left,0px))] sm:min-h-[min(88svh,680px)] sm:px-6 lg:min-h-[min(92svh,720px)] lg:px-8">
         <h2

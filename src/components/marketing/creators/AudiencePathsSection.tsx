@@ -24,7 +24,7 @@ const paths: PathCard[] = [
     href: `${routes.auth.register}?role=creator`,
     cta: "Join as a creator",
     image:
-      "https://images.unsplash.com/photo-1611162616472-9673feb421f5?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Creator filming content",
   },
   {
@@ -113,7 +113,7 @@ export function AudiencePathsSection() {
         </h2>
       </div>
 
-      <div className="bg-black text-white">
+      <div className="bg-black text-white" data-mkt-header-dark>
         <div
           className={cn(
             mktContainer,

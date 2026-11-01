@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useMarketingHeaderContrast } from "@/hooks/useMarketingHeaderContrast";
 import { marketingJoinCta } from "@/config/navigation";
 import { routes } from "@/config/routes";
 import {
@@ -81,6 +82,8 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const onHome = pathname === "/";
+  const headerRef = useRef<HTMLElement>(null);
+  const contrast = useMarketingHeaderContrast(onHome, headerRef);
   const [session, setSession] = useState<DemoSession | null>(null);
 
   useEffect(() => {
@@ -108,26 +111,50 @@ export function SiteHeader() {
   const shellPadding =
     "px-[max(1.25rem,env(safe-area-inset-left,0px))] pr-[max(1.25rem,env(safe-area-inset-right,0px))] sm:px-8 lg:px-10";
 
+  const headerOnDark =
+    onHome && (contrast.logoOnDark || contrast.navOnDark || contrast.actionsOnDark);
+
   return (
     <header
+      ref={headerRef}
       className={cn(
-        "left-0 right-0 top-0 z-40",
+        "left-0 right-0 top-0 z-40 transition-[background-color,color] duration-300",
         onHome ? "fixed" : "sticky",
-        "bg-mkt-bg/90 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none",
+        onHome
+          ? headerOnDark
+            ? "bg-black/25 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none"
+            : "bg-mkt-bg/90 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none"
+          : "bg-mkt-bg/90 backdrop-blur-md",
       )}
     >
       <div className={cn("mx-auto w-full max-w-[90rem]", shellPadding)}>
         <div className="relative flex min-h-[3.75rem] items-center justify-between gap-3 sm:min-h-[4.5rem]">
-          <Logo variant="wordmark" className="relative z-20 shrink-0 text-mkt-fg" />
+          <Logo
+            variant="wordmark"
+            className={cn(
+              "relative z-20 shrink-0 transition-colors duration-300",
+              onHome && contrast.logoOnDark ? "text-white" : "text-mkt-fg",
+            )}
+          />
 
           {/* Desktop: single centered pill (hidden on mobile/tablet) */}
           <nav
             className="pointer-events-none absolute inset-x-0 top-1/2 z-10 hidden -translate-y-1/2 justify-center lg:flex"
             aria-label="Primary"
           >
-            <div className={cn(navGroupClass, "pointer-events-auto")}>
+            <div
+              className={cn(
+                navGroupClass,
+                "pointer-events-auto transition-[background-color] duration-300",
+                onHome && contrast.navOnDark && "bg-white/15",
+              )}
+            >
               <NavLinks
-                linkClassName={navLinkClass}
+                linkClassName={cn(
+                  navLinkClass,
+                  "transition-colors duration-300",
+                  onHome && contrast.navOnDark && "text-white hover:bg-white/10",
+                )}
                 onWorkspaceClick={handleWorkspaceClick}
               />
             </div>
@@ -179,16 +206,23 @@ export function SiteHeader() {
               <>
                 <Link
                   href={routes.auth.login}
-                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-mkt-fg-muted hover:text-mkt-fg sm:inline-flex"
+                  className={cn(
+                    "hidden rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-300 sm:inline-flex",
+                    onHome && contrast.actionsOnDark
+                      ? "text-white/75 hover:text-white"
+                      : "text-mkt-fg-muted hover:text-mkt-fg",
+                  )}
                 >
                   Sign in
                 </Link>
                 <Link
                   href={marketingJoinCta.href}
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-2 rounded-full bg-mkt-nav-join px-5 py-3 sm:px-7 sm:py-3.5",
-                    "font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--m-nav-join-fg)]",
-                    "transition hover:bg-mkt-nav-join-hi active:scale-[0.98]",
+                    "inline-flex shrink-0 items-center gap-2 rounded-full px-5 py-3 sm:px-7 sm:py-3.5",
+                    "font-mono text-xs font-bold uppercase tracking-[0.14em] transition-colors duration-300 active:scale-[0.98]",
+                    onHome && contrast.actionsOnDark
+                      ? "bg-white text-black hover:bg-white/90"
+                      : "bg-mkt-nav-join text-[var(--m-nav-join-fg)] hover:bg-mkt-nav-join-hi",
                   )}
                 >
                   {marketingJoinCta.label}
@@ -201,11 +235,19 @@ export function SiteHeader() {
 
         {/* Mobile / tablet: one scroll row — never shown at lg+ */}
         <nav
-          className={cn("flex w-full pb-2 pt-0.5 lg:hidden", navGroupClass)}
+          className={cn(
+            "flex w-full pb-2 pt-0.5 transition-[background-color] duration-300 lg:hidden",
+            navGroupClass,
+            onHome && (contrast.navOnDark || contrast.logoOnDark) && "bg-white/15",
+          )}
           aria-label="Primary mobile"
         >
           <NavLinks
-            linkClassName={cn(navLinkClass, "px-4 py-2.5 text-xs")}
+            linkClassName={cn(
+              navLinkClass,
+              "px-4 py-2.5 text-xs transition-colors duration-300",
+              onHome && (contrast.navOnDark || contrast.logoOnDark) && "text-white hover:bg-white/10",
+            )}
             onWorkspaceClick={handleWorkspaceClick}
           />
         </nav>

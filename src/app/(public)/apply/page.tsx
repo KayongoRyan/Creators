@@ -17,9 +17,7 @@ export default function ApplyPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
                 Creator application
               </p>
-              <h1 className={`mt-3 ${marketingType.pageTitle}`}>
-                Help the right brands find you.
-              </h1>
+              <h1 className={`mt-3 ${marketingType.pageTitle}`}>Niche Profits</h1>
               <p className={`${marketingType.sectionLead} max-w-md`}>
                 Tell us what you create, choose the topics that fit, and share a sample of your
                 work. Our team reviews every profile.

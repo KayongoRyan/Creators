@@ -44,12 +44,6 @@ export function EarnByNicheSection() {
             >
               Apply with your niche
             </Link>
-            <Link
-              href={routes.creator.campaigns}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-mkt-border px-6 text-sm font-semibold text-mkt-fg transition hover:bg-mkt-muted"
-            >
-              Browse open campaigns
-            </Link>
           </div>
         </div>
       </section>

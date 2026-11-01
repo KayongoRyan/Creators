@@ -39,12 +39,6 @@ export function BrandCampaignCardsSection() {
           >
             View all campaigns
           </Link>
-          <Link
-            href={`${routes.auth.join}?role=brand&mode=signup`}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-mkt-border px-6 text-sm font-semibold text-mkt-fg transition hover:bg-mkt-card"
-          >
-            Apply as a creator
-          </Link>
         </div>
       </div>
     </section>

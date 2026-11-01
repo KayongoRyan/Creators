@@ -46,6 +46,12 @@ export function getRoleHome(role: UserRole) {
     return roleHome[role];
 }
 
+/** Signed out, or signed in as a different portal role (preview as guest). */
+export function isPortalGuest(portal: Extract<UserRole, "creator" | "brand">): boolean {
+    const session = readDemoSession();
+    return !session || session.role !== portal;
+}
+
 export function readDemoSession(): DemoSession | null {
     if (typeof window === "undefined") return null;
 

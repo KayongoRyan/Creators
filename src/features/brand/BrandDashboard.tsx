@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -11,7 +12,7 @@ import {
   Tag,
 } from "@/components/workspace/primitives";
 import { WorkspaceHub } from "@/components/workspace/hub/WorkspaceHub";
-import { readDemoSession } from "@/features/auth/demoSession";
+import { isPortalGuest } from "@/features/auth/demoSession";
 import { routes } from "@/config/routes";
 import { selectBrandDashboard, useBrandStore } from "@/features/brand/store";
 import { formatRwf } from "@/lib/format/money";
@@ -29,9 +30,11 @@ export function BrandDashboard() {
   const featured = state.campaigns.find((c) => c.status === "active");
   const [guest, setGuest] = useState(true);
 
+  const pathname = usePathname();
+
   useEffect(() => {
-    setGuest(!readDemoSession());
-  }, []);
+    setGuest(isPortalGuest("brand"));
+  }, [pathname]);
 
   return (
     <>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { GuestModeBanner } from "@/components/layout/GuestModeBanner";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -161,9 +160,6 @@ export function DashboardShell({
         </div>
       </aside>
       <main className="min-w-0 flex-1 bg-white px-5 py-7 sm:px-8 sm:py-9 lg:ml-64">
-        {guestMode && (role === "creator" || role === "brand") ? (
-          <GuestModeBanner role={role} />
-        ) : null}
         {children}
       </main>
     </div>

@@ -2,37 +2,43 @@
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { creatorsLanding } from "@/content/creatorsLanding";
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
 import { routes } from "@/config/routes";
 import { mktSafeXWide, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
 const collageItems = [
   {
-    src: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80",
+    id: "planning",
+    src: unsplashPhoto("photo-1557804506-669a67965ba0", unsplashWidths.card, 70),
     alt: "Team planning a campaign",
     className: "left-[4%] top-[10%] z-10 h-[34%] w-[38%]",
   },
   {
-    src: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=800&q=80",
+    id: "motion",
+    src: unsplashPhoto("photo-1571019614242-c5c5dee9f50b", unsplashWidths.card, 70),
     alt: "Creator in motion",
     className: "right-[5%] top-[6%] z-20 h-[36%] w-[40%]",
   },
   {
-    src: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=900&q=80",
+    id: "filming",
+    src: unsplashPhoto("photo-1516321497487-e288fb19713f", unsplashWidths.section, 70),
     alt: "Creator filming content",
     className: "left-[26%] top-[28%] z-30 h-[52%] w-[48%]",
   },
   {
-    src: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80",
+    id: "global",
+    src: unsplashPhoto("photo-1451187580459-43490279c0fa", unsplashWidths.card, 70),
     alt: "Global reach",
     className: "left-[2%] bottom-[8%] z-20 h-[32%] w-[36%]",
   },
   {
-    src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
+    id: "collab",
+    src: unsplashPhoto("photo-1522202176988-66273c2fd55f", unsplashWidths.card, 70),
     alt: "Collaborative workspace",
     className: "right-[4%] bottom-[6%] z-10 h-[34%] w-[38%]",
   },
@@ -100,11 +106,18 @@ export function DeployCampaignSection() {
         >
           {collageItems.map((item) => (
             <div
-              key={item.src}
+              key={item.id}
               data-deploy-tile
               className={cn("absolute overflow-hidden rounded-2xl sm:rounded-[1.1rem]", item.className)}
             >
-              <Image src={item.src} alt={item.alt} fill className="object-cover" sizes="(min-width: 1024px) 28vw, 45vw" />
+              <OptimizedImage
+                src={item.src}
+                alt={item.alt}
+                fill
+                className="object-cover"
+                sizes="(min-width: 1024px) 28vw, 45vw"
+                loading="lazy"
+              />
             </div>
           ))}
         </div>

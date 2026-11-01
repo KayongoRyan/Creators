@@ -2,8 +2,8 @@
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import Image from "next/image";
 import Link from "next/link";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { useMemo, useRef, useState } from "react";
 import { creatorsLanding } from "@/content/creatorsLanding";
 import { routes } from "@/config/routes";
@@ -136,12 +136,13 @@ function MarketCard({ item }: { item: MarketItem }) {
   return (
     <article className="group flex h-full min-h-0 flex-col" data-market-card>
       <div className="relative min-h-[14rem] flex-1 overflow-hidden bg-neutral-900 sm:min-h-[16rem] lg:min-h-[22rem] xl:min-h-[26rem]">
-        <Image
+        <OptimizedImage
           src={item.image}
           alt={item.imageAlt}
           fill
           className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
           sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 92vw"
+          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/10" aria-hidden="true" />
         <AnimatedWordOverlay item={item} />

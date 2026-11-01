@@ -1,6 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { routes } from "@/config/routes";
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
 import { mktContainer, mktSafeXWide, mktSectionTitle } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
@@ -23,8 +24,7 @@ const paths: PathCard[] = [
     body: "Share your niches, find briefs that fit your style, and keep applications, deliverables, and payouts together.",
     href: `${routes.auth.join}?role=creator&mode=signup`,
     cta: "Join as a creator",
-    image:
-      "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+    image: unsplashPhoto("photo-1516321497487-e288fb19713f", unsplashWidths.section, 70),
     imageAlt: "Creator filming content",
   },
   {
@@ -34,15 +34,22 @@ const paths: PathCard[] = [
     body: "Launch a campaign, review creator applications, and manage content from the first brief through final delivery.",
     href: `${routes.auth.join}?role=brand&mode=signup`,
     cta: "Create a brand account",
-    image:
-      "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+    image: unsplashPhoto("photo-1552664730-d307ca884978", unsplashWidths.section, 70),
     imageAlt: "Brand team planning a campaign",
   },
 ];
 
 const CARD_WIDTH = "w-full max-w-[min(100%,24rem)] sm:max-w-[26rem]";
 
-function PathVisual({ image, imageAlt }: { image: string; imageAlt: string }) {
+function PathVisual({
+  image,
+  imageAlt,
+  priority,
+}: {
+  image: string;
+  imageAlt: string;
+  priority?: boolean;
+}) {
   return (
     <div className={cn("relative mx-auto", CARD_WIDTH)}>
       <div className="relative aspect-[3/4] w-full max-h-[min(58vh,34rem)]">
@@ -55,13 +62,14 @@ function PathVisual({ image, imageAlt }: { image: string; imageAlt: string }) {
           aria-hidden="true"
         />
         <div className="absolute inset-0 z-10 overflow-hidden rounded-2xl bg-neutral-900 sm:rounded-[1.15rem]">
-          <Image
+          <OptimizedImage
             src={image}
             alt={imageAlt}
             fill
             className="object-cover"
             sizes="(min-width: 1024px) 416px, 85vw"
-            priority
+            priority={priority}
+            loading={priority ? undefined : "lazy"}
           />
         </div>
       </div>
@@ -84,7 +92,7 @@ function PathCardBlock({ card }: { card: PathCard }) {
         </h3>
       </header>
 
-      <PathVisual image={card.image} imageAlt={card.imageAlt} />
+      <PathVisual image={card.image} imageAlt={card.imageAlt} priority={card.step === "1."} />
 
       <div className="mt-8 flex flex-col gap-5 sm:mt-10">
         <p className="text-pretty text-base leading-7 text-white/65 sm:text-lg sm:leading-8">

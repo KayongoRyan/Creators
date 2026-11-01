@@ -27,6 +27,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link
+          rel="preload"
+          href="/marketing/hero-characters-group.png"
+          as="image"
+          type="image/png"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{document.documentElement.setAttribute("data-marketing-theme","light");document.documentElement.style.colorScheme="light";localStorage.setItem("creators-marketing-theme","light");}catch(e){}})();`,

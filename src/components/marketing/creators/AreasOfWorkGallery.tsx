@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { areasOfWork } from "@/content/areasOfWork";
@@ -351,13 +351,14 @@ export function AreasOfWorkGallery() {
                       onPointerLeave={onTilePointerLeave}
                       className={`pointer-events-auto absolute aspect-[4/3] cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-[#151515] shadow-2xl will-change-transform ${placement.className}`}
                     >
-                      <Image
+                      <OptimizedImage
                         src={src}
                         alt=""
                         fill
                         sizes="(max-width: 640px) 32vw, 18vw"
                         className="object-cover will-change-transform"
                         style={{ objectPosition: placement.objectPosition }}
+                        loading="lazy"
                       />
                     </figure>
                   );

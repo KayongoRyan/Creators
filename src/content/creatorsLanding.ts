@@ -1,3 +1,8 @@
+import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
+
+const marketImage = (photoId: string) =>
+  unsplashPhoto(photoId, unsplashWidths.section, 70);
+
 /** Public landing copy for Creators. */
 
 export const creatorsLanding = {
@@ -32,8 +37,7 @@ export const creatorsLanding = {
         pillColor: "#c7cfd1",
         panel: "ink",
         tab: "workflow",
-        image:
-          "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1552664730-d307ca884978"),
         imageAlt: "Team reviewing a campaign brief together",
       },
       {
@@ -43,8 +47,7 @@ export const creatorsLanding = {
         pillColor: "#eeefba",
         panel: "paper",
         tab: "workflow",
-        image:
-          "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1529156069898-49953e39b3ac"),
         imageAlt: "Creators collaborating on content ideas",
       },
       {
@@ -54,8 +57,7 @@ export const creatorsLanding = {
         pillColor: "#beee98",
         panel: "chartreuse",
         tab: "workflow",
-        image:
-          "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1516321497487-e288fb19713f"),
         imageAlt: "Creator filming short-form content on a phone",
       },
       {
@@ -65,8 +67,7 @@ export const creatorsLanding = {
         pillColor: "#9c98ef",
         panel: "lilac",
         tab: "platform",
-        image:
-          "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1563013544-824ae1b704d3"),
         imageAlt: "Mobile payment and wallet on a smartphone",
       },
       {
@@ -76,8 +77,7 @@ export const creatorsLanding = {
         pillColor: "#eeefba",
         panel: "sand",
         tab: "platform",
-        image:
-          "https://images.unsplash.com/photo-1497215847824-d856c707eb7a?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1497215847824-d856c707eb7a"),
         imageAlt: "Clean workspace with laptop and notes",
       },
       {
@@ -87,8 +87,7 @@ export const creatorsLanding = {
         pillColor: "#c7cfd1",
         panel: "slate",
         tab: "platform",
-        image:
-          "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80",
+        image: marketImage("photo-1454165804606-c3d57bc86b40"),
         imageAlt: "Planning and verification at a desk",
       },
     ],

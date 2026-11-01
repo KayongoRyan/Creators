@@ -3,7 +3,7 @@ export const heroCharacterGroup = {
   src: "/marketing/hero-characters-group.png",
   alt: "Creators filming, producing, designing, and shooting photos together",
   width: 1588,
-  height: 795,
+  height: 839,
 } as const;
 
 export const heroCharacters = [

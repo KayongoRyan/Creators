@@ -2,12 +2,10 @@
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import Link from "next/link";
 import { useRef } from "react";
 import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import { creatorsLanding } from "@/content/creatorsLanding";
 import { unsplashPhoto, unsplashWidths } from "@/lib/images/unsplash";
-import { routes } from "@/config/routes";
 import { mktSafeXWide, mktSectionY } from "@/lib/marketing/layout";
 import { cn } from "@/lib/utils/cn";
 
@@ -70,9 +68,9 @@ export function DeployCampaignSection() {
 
   return (
     <section
-      id="start-campaign"
-      className="overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg"
-      aria-labelledby="deploy-campaign-heading"
+      id="mission"
+      className="overflow-hidden border-t border-mkt-border bg-mkt-bg pb-4 text-mkt-fg sm:pb-6"
+      aria-labelledby="mission-heading"
     >
       <div className="grid lg:grid-cols-2 lg:items-stretch">
         <div
@@ -83,20 +81,14 @@ export function DeployCampaignSection() {
           )}
         >
           <h2
-            id="deploy-campaign-heading"
+            id="mission-heading"
             className="max-w-lg text-balance text-[clamp(1.75rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-mkt-fg"
           >
-            {creatorsLanding.deploy.title}
+            {creatorsLanding.mission.title}
           </h2>
           <p className="mt-8 max-w-md text-base leading-7 text-mkt-fg-muted sm:text-[1.05rem]">
-            {creatorsLanding.deploy.body}
+            {creatorsLanding.mission.body}
           </p>
-          <Link
-            href={`${routes.auth.join}?role=brand&mode=signup`}
-            className="mt-10 inline-flex w-fit text-sm font-medium text-mkt-fg underline decoration-1 underline-offset-[7px] transition hover:opacity-70 sm:mt-12 sm:text-base"
-          >
-            {creatorsLanding.deploy.cta}
-          </Link>
         </div>
 
         <div

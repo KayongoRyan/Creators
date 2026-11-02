@@ -103,4 +103,32 @@ export const creatorsLanding = {
     press: "press@creators.rw",
     support: "support@creators.rw",
   },
+  testimonialsSection: {
+    title: "What our customers say",
+    lead: "Real feedback from creators and brand teams running campaigns, reviews, and MoMo payouts on Creators.",
+    cta: "View more",
+  },
+  testimonials: [
+    {
+      quote:
+        "I stopped juggling DMs and spreadsheets — every brief and payout lives here.",
+      name: "Amara N.",
+      role: "Creator · Beauty",
+    },
+    {
+      quote: "Revision notes are finally attached to the task, not lost in WhatsApp.",
+      name: "Leo M.",
+      role: "Creator · Tech",
+    },
+    {
+      quote: "We see who applied, who delivered, and what we approved without a shared doc.",
+      name: "Marketing lead",
+      role: "Primus Beer",
+    },
+    {
+      quote: "The review queue alone saved our team hours every launch week.",
+      name: "Brand manager",
+      role: "Kigali Co.",
+    },
+  ],
 } as const;

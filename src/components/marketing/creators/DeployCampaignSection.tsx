@@ -69,7 +69,7 @@ export function DeployCampaignSection() {
   return (
     <section
       id="mission"
-      className="overflow-hidden border-t border-mkt-border bg-mkt-bg pb-4 text-mkt-fg sm:pb-6"
+      className="overflow-hidden bg-white pb-0 text-black"
       aria-labelledby="mission-heading"
     >
       <div className="grid lg:grid-cols-2 lg:items-stretch">
@@ -77,23 +77,23 @@ export function DeployCampaignSection() {
           className={cn(
             mktSafeXWide,
             mktSectionY,
-            "flex flex-col justify-center bg-mkt-bg lg:max-w-xl lg:pl-[max(2.5rem,8vw)]",
+            "flex flex-col justify-center bg-white lg:max-w-xl lg:pl-[max(2.5rem,8vw)]",
           )}
         >
           <h2
             id="mission-heading"
-            className="max-w-lg text-balance text-[clamp(1.75rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-mkt-fg"
+            className="max-w-lg text-balance text-[clamp(1.75rem,4.5vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-black"
           >
             {creatorsLanding.mission.title}
           </h2>
-          <p className="mt-8 max-w-md text-base leading-7 text-mkt-fg-muted sm:text-[1.05rem]">
+          <p className="mt-8 max-w-md text-base leading-7 text-black/65 sm:text-[1.05rem]">
             {creatorsLanding.mission.body}
           </p>
         </div>
 
         <div
           ref={collageRef}
-          className="relative min-h-[24rem] border-t border-mkt-border bg-black sm:min-h-[28rem] lg:min-h-full lg:border-l lg:border-t-0 lg:border-white/10 xl:min-h-[36rem]"
+          className="relative min-h-[24rem] border-t border-black/10 bg-black sm:min-h-[28rem] lg:min-h-full lg:border-l lg:border-t-0 lg:border-white/15 xl:min-h-[36rem]"
           data-mkt-header-dark
         >
           {collageItems.map((item) => (

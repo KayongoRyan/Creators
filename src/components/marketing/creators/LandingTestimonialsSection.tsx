@@ -19,10 +19,7 @@ function QuoteMark({ featured }: { featured?: boolean }) {
   return (
     <svg
       aria-hidden
-      className={cn(
-        "size-9 shrink-0",
-        featured ? "text-mkt-fg" : "text-mkt-fg-subtle/40",
-      )}
+      className={cn("size-9 shrink-0", featured ? "text-black" : "text-black/25")}
       viewBox="0 0 36 28"
       fill="currentColor"
     >
@@ -43,7 +40,7 @@ function TestimonialCard({
   return (
     <blockquote
       className={cn(
-        "relative max-w-md rounded-2xl bg-white p-5 shadow-[0_12px_40px_rgba(0,0,0,0.07)] ring-1 ring-black/[0.06] sm:p-6",
+        "relative max-w-md rounded-2xl bg-white p-5 text-black shadow-[0_18px_50px_rgba(0,0,0,0.35)] ring-1 ring-white sm:p-6",
         featured && "border-l-4 border-black pl-4 sm:pl-5",
         align === "end" ? "ml-auto lg:mr-4" : "lg:ml-0 lg:mr-8",
       )}
@@ -51,19 +48,19 @@ function TestimonialCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-neutral-100 text-sm font-semibold text-neutral-800 ring-1 ring-black/10"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-black text-sm font-semibold text-white"
             aria-hidden
           >
             {initials(item.name)}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-mkt-fg">{item.name}</p>
-            <p className="truncate text-xs text-mkt-fg-muted">{item.role}</p>
+            <p className="truncate text-sm font-semibold text-black">{item.name}</p>
+            <p className="truncate text-xs text-black/55">{item.role}</p>
           </div>
         </div>
         <QuoteMark featured={featured} />
       </div>
-      <p className="mt-4 text-sm leading-6 text-mkt-fg-muted sm:text-[0.9375rem] sm:leading-7">
+      <p className="mt-4 text-sm leading-6 text-black/70 sm:text-[0.9375rem] sm:leading-7">
         {item.quote}
       </p>
     </blockquote>
@@ -73,10 +70,10 @@ function TestimonialCard({
 function SectionAccent() {
   return (
     <div
-      className="pointer-events-none absolute left-1/2 top-6 hidden -translate-x-1/2 lg:block"
+      className="pointer-events-none absolute left-1/2 top-8 hidden -translate-x-1/2 lg:block"
       aria-hidden
     >
-      <svg width="120" height="48" viewBox="0 0 120 48" fill="none" className="text-mkt-fg">
+      <svg width="120" height="48" viewBox="0 0 120 48" fill="none" className="text-white/40">
         <path
           d="M10 38C28 8 52 4 72 18c8 6 14 4 22-6"
           stroke="currentColor"
@@ -103,29 +100,47 @@ export function LandingTestimonialsSection() {
 
   return (
     <section
-      className="relative overflow-hidden border-t border-mkt-border bg-mkt-bg text-mkt-fg"
+      className="relative overflow-hidden bg-black text-white"
       aria-labelledby="landing-testimonials-heading"
+      data-mkt-header-dark
     >
+      <div
+        className="mkt-footer-pattern pointer-events-none absolute inset-0 opacity-90"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" aria-hidden />
+
       <SectionAccent />
-      <div className={cn(mktContainer, mktSafeXWide, mktSectionY, "relative pb-24 pt-16 lg:pt-20")}>
+
+      <div
+        className={cn(
+          mktContainer,
+          mktSafeXWide,
+          mktSectionY,
+          "relative pb-20 pt-14 sm:pb-24 sm:pt-16 lg:pb-28 lg:pt-20",
+        )}
+      >
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16 xl:gap-20">
           <div className="max-w-md lg:max-w-lg">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+              Testimonials
+            </p>
             <h2
               id="landing-testimonials-heading"
-              className="text-balance text-[clamp(1.75rem,4vw,2.75rem)] font-semibold leading-[1.12] tracking-tight"
+              className="mt-4 text-balance text-[clamp(1.75rem,4vw,2.75rem)] font-semibold leading-[1.12] tracking-tight text-white"
             >
               {title}
             </h2>
-            <p className="mt-5 text-base leading-7 text-mkt-fg-muted">{lead}</p>
+            <p className="mt-5 text-base leading-7 text-white/65">{lead}</p>
             <Link
               href={routes.creator.root}
-              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full bg-white px-7 text-sm font-semibold text-black shadow-[0_4px_0_0_#ffffff] transition hover:translate-y-0.5 hover:bg-white/90 hover:shadow-[0_2px_0_0_#ffffff]"
             >
               {cta}
             </Link>
           </div>
 
-          <div className="flex flex-col gap-5 sm:gap-6 lg:py-4">
+          <div className="flex flex-col gap-5 sm:gap-6 lg:py-2">
             {cards.map((item, index) => (
               <TestimonialCard
                 key={`${item.name}-${item.role}`}
@@ -137,6 +152,7 @@ export function LandingTestimonialsSection() {
           </div>
         </div>
       </div>
+
     </section>
   );
 }

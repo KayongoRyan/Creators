@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { routes } from "@/config/routes";
 import { saveDemoSession } from "@/features/auth/demoSession";
+import { loginWithPassword } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
 import type { UserRole } from "@/types";
+
+const DEMO_PASSWORD = "CreatorsDemo1!";
 
 const views: { id: UserRole | "apply"; label: string; href: string }[] = [
   { id: "admin", label: "Admin", href: routes.admin.root },
@@ -16,27 +20,38 @@ const views: { id: UserRole | "apply"; label: string; href: string }[] = [
 
 export function ViewSwitcher({ active }: { active: UserRole | "apply" }) {
   const router = useRouter();
+  const [error, setError] = useState("");
 
-  function open(id: UserRole | "apply", href: string) {
-    if (id !== "apply") {
-      saveDemoSession({
-        role: id,
-        displayName: id[0].toUpperCase() + id.slice(1),
-        email: `${id}@ubunifu.dev`,
-      });
+  async function open(id: UserRole | "apply", href: string) {
+    if (id === "apply") {
       router.push(href);
       return;
     }
-    router.push(href);
+    setError("");
+    try {
+      const result = await loginWithPassword({
+        email: `${id}@ubunifu.dev`,
+        password: DEMO_PASSWORD,
+        role: id,
+      });
+      saveDemoSession({
+        role: result.role as UserRole,
+        displayName: id[0].toUpperCase() + id.slice(1),
+        email: result.email,
+      });
+      router.push(href);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not switch view.");
+    }
   }
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       {views.map((view) => (
         <button
           key={view.id}
           type="button"
-          onClick={() => open(view.id, view.href)}
+          onClick={() => void open(view.id, view.href)}
           className={cn(
             "rounded-full border border-[rgba(31,30,29,0.15)] px-3 py-[5px] text-xs",
             active === view.id
@@ -50,6 +65,7 @@ export function ViewSwitcher({ active }: { active: UserRole | "apply" }) {
       <Link href={routes.public.home} className="sr-only">
         Home
       </Link>
+      {error ? <span className="ml-2 text-xs text-red-600">{error}</span> : null}
     </div>
   );
 }

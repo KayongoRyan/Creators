@@ -16,6 +16,9 @@ export const apiEndpoints = {
     submissionRevision: (id: string) => `/admin/submissions/${id}/revision`,
     payoutMarkPaid: (id: string) => `/admin/payouts/${id}/mark-paid`,
     payoutsMarkAllPaid: "/admin/payouts/mark-all-paid",
+    campaignFund: (id: string) => `/admin/campaigns/${id}/fund`,
+    campaignSnapshot: (id: string) => `/admin/campaigns/${id}/snapshot`,
+    campaignReport: (id: string) => `/admin/campaigns/${id}/report`,
   },
   brand: {
     state: "/brand/state",
@@ -25,5 +28,13 @@ export const apiEndpoints = {
     applications: "/creator/applications",
     assignmentSubmit: (id: string) => `/creator/assignments/${id}/submit`,
     profile: "/creator/profile",
+  },
+  public: {
+    creatorApplications: "/public/creator-applications",
+  },
+  auth: {
+    devToken: "/auth/dev-token",
+    login: "/auth/login",
+    signup: "/auth/signup",
   },
 } as const;

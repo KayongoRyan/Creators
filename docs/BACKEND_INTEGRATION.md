@@ -1,24 +1,27 @@
 # Backend integration (frontend contract)
 
-No backend lives in this repo. The frontend is ready to call your API when `NEXT_PUBLIC_USE_MOCK=0`.
+The API is the FastAPI modular monolith in [`apps/api`](../apps/api). The frontend calls it when `NEXT_PUBLIC_USE_MOCK=0`.
 
 ## Configuration
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_API_URL` | Base URL for REST calls (default `http://localhost:3000/api`) |
+| `NEXT_PUBLIC_API_URL` | Base URL for REST calls (default `/api` via Next rewrite, or `http://localhost:4000/api`) |
 | `NEXT_PUBLIC_USE_MOCK` | Unset or anything except `0` → mock/localStorage. `0` → live API |
+| `NEXT_PUBLIC_ACCESS_TOKEN` | Optional static bearer token |
 
 Implementation: `src/config/site.ts`, `src/lib/api/client.ts`, `src/lib/api/portalApi.ts`, `src/lib/api/endpoints.ts`.
 
-## Auth (demo → real)
+## Auth
 
-Today the client sends optional demo headers on every request (replace with real auth when ready):
+The browser sends `Authorization: Bearer <access_token>`.
 
-- `X-Demo-Role`: `admin` \| `brand` \| `creator`
-- `X-Demo-Email`: session email from login demo
-
-Suggested production: `Authorization: Bearer <token>` and role/scoping on the server. Update `src/lib/api/client.ts` when tokens exist.
+- `POST /auth/signup` `{ email, password, role, displayName }` — creates a Supabase Auth user (`app_metadata.role`) and a `profiles` row with `id = auth.uid()`. Returns `{ accessToken }`.
+- `POST /auth/login` `{ email, password, role }` — password grant against Supabase Auth, then requires an existing `profiles` row with that role. **Never creates a profile.** Wrong email/password/role → 401.
+- Stored token: `localStorage["creators.access_token"]`. Join/login store it; the client does not invent users from a demo session.
+- Demo accounts: `admin@ubunifu.dev`, `brand@ubunifu.dev`, `creator@ubunifu.dev` with password `CreatorsDemo1!`.
+- `POST /auth/dev-token` is lookup-only when `AUTH_DEV=1` (tests/scripts). It does not create profiles.
+- `AUTH_DEV=1` still accepts `X-Demo-Role` / `X-Demo-Email` for scripts when the profile already exists.
 
 ## Legacy read endpoints (already wired via `fetchResource`)
 
@@ -76,13 +79,31 @@ Read-only in the UI today. Brand portal uses Primus demo persona.
 
 Browser calls use `fetch` from the Next.js origin. Allow the dev origin and send `Content-Type: application/json`.
 
+## PRD endpoints (admin, not wired in the UI yet)
+
+| Method | Path | Body | Notes |
+|---|---|---|---|
+| POST | `/admin/campaigns/{id}/fund` | — | Marks the brand invoice paid and opens an `open` campaign |
+| POST | `/admin/campaigns/{id}/snapshot` | `{ views: [{ submissionId, views }] }` | Manual view snapshot. Honors `Idempotency-Key` |
+| GET | `/admin/campaigns/{id}/report` | — | Brand report JSON |
+
+`POST /admin/campaigns` still accepts `{ title, brandName, campaignType, budgetRwf, deadline }` and optional `platformFeePercent`, `rpmRwf`, `minViews`, `minPayoutRwf`, `maxPayoutRwf`, `setupFeeRwf`, `assignmentMode`, `brief`, `spotsLeft`, `flatPayoutRwf`. Pool = budget − platform fee − setup fee. New campaigns stay draft until funded.
+
+Approve/reject/revision and payout mark-paid accept `Idempotency-Key`.
+
+## Public apply
+
+| Method | Path | Body |
+|---|---|---|
+| POST | `/public/creator-applications` | multipart: `fullName`, `momo`, `tiktokHandle`, `instagramHandle`, `niche`, `whyJoin`, optional `screenshot` |
+
+Screenshot bytes go to Supabase Storage bucket `creator-screenshots` when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set, otherwise `apps/api/uploads/`.
+
 ## Not implemented on frontend (unfinished)
 
-- Real JWT/session refresh
-- Cross-portal sync (admin approve → creator earnings) without shared backend
-- Public `/apply` form → API (still standalone)
-- Pagination, filters, file uploads for source assets
-- Webhooks / MoMo payout provider
+- Supabase login UI (dev token stands in)
+- Pagination, filters, file uploads for clipping source assets
+- Automated MoMo disbursement
 - E2E automated tests in CI
 
 See `docs/PHASE4_QA.md` for manual QA checklist.

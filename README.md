@@ -2,7 +2,7 @@
 
 Workspace for brands and creators. Brands post campaigns. Creators apply. Submissions and payouts run on the same brief.
 
-Frontend-only demo today: interactive **admin**, **brand**, and **creator** portals with mock data in the browser. A real API can be plugged in without changing page routes (see [Backend integration](#backend-integration)).
+Interactive **admin**, **brand**, and **creator** portals. Mock data is the default. The FastAPI modular monolith in `apps/api` serves the same routes when mock mode is off (see [Backend integration](#backend-integration)).
 
 ## Stack
 
@@ -19,6 +19,7 @@ npm run dev          # http://localhost:3000  (.next)
 npm run dev:admin    # http://localhost:3001/admin  (.next-admin)
 npm run dev:brand    # http://localhost:3002/brand  (.next-brand)
 npm run dev:creator  # http://localhost:3003/creator (.next-creator)
+npm run dev:api      # FastAPI http://localhost:4000
 ```
 
 Role dev scripts use **separate ports and `.next-*` folders** so you can run admin + brand + creator at once without corrupting the cache.
@@ -81,13 +82,14 @@ Copy [`.env.example`](.env.example) to `.env.local` when overriding defaults.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3000/api` | REST base URL |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api` | REST base URL |
 | `NEXT_PUBLIC_USE_MOCK` | on (anything except `0`) | `0` = call real API |
+| `NEXT_PUBLIC_AUTH_DEV` | on | `0` = do not exchange the demo session for a dev JWT |
 | `NEXT_PUBLIC_DEMO_ROLE` | — | Set by `dev:*` scripts; optional |
 
 ## Backend integration
 
-There is **no backend in this repo**. The frontend expects REST endpoints documented here:
+Backend lives in [`apps/api`](apps/api) (FastAPI, SQLite locally, Supabase Postgres when `DATABASE_URL` is set). Contract:
 
 - [`docs/BACKEND_INTEGRATION.md`](docs/BACKEND_INTEGRATION.md) — routes, request/response shapes (`AdminState`, `BrandState`, `CreatorState`), demo headers
 - [`docs/PHASE4_QA.md`](docs/PHASE4_QA.md) — manual QA checklist, responsive breakpoints, known gaps

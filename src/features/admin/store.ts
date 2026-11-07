@@ -12,12 +12,15 @@ import { siteConfig } from "@/config/site";
 import { adminSeed } from "@/lib/api/fixtures";
 import {
   apiApproveSubmission,
+  apiCampaignReport,
   apiCreateCampaign,
+  apiFundCampaign,
   apiMarkAllPayoutsPaid,
   apiMarkPayoutPaid,
   apiRejectCreator,
   apiRejectSubmission,
   apiRequestRevision,
+  apiSnapshotCampaign,
   apiVerifyCreator,
   fetchAdminState,
 } from "@/lib/api/portalApi";
@@ -30,6 +33,7 @@ import type {
   AdminState,
   AdminSubmission,
   Campaign,
+  CampaignReport,
   CreateCampaignInput,
   CreatorApplication,
   PayoutRecord,
@@ -248,6 +252,73 @@ function useAdminStoreController() {
     [notifyMutationFailure, persist],
   );
 
+  const refreshQuietly = useCallback(async () => {
+    if (siteConfig.useMockData) return;
+    const result = await hydrateFromApi(fetchAdminState, writeState);
+    if (result.ok) setState(result.data);
+  }, []);
+
+  const fundCampaign = useCallback(
+    (campaignId: string) => {
+      persist((s) => ({
+        ...s,
+        campaigns: s.campaigns.map((campaign) =>
+          campaign.id === campaignId
+            ? { ...campaign, status: "active" as const, fundedAt: new Date().toISOString() }
+            : campaign,
+        ),
+      }));
+      void (async () => {
+        const result = await runApiMutation(() => apiFundCampaign(campaignId));
+        if (!result.ok) {
+          setActionError(result.error);
+          return;
+        }
+        await refreshQuietly();
+      })();
+    },
+    [persist, refreshQuietly],
+  );
+
+  const snapshotCampaign = useCallback(
+    (campaignId: string, views: { submissionId: string; views: number }[]) => {
+      void (async () => {
+        const result = await runApiMutation(() => apiSnapshotCampaign(campaignId, views));
+        if (!result.ok) {
+          setActionError(result.error);
+          return;
+        }
+        await refreshQuietly();
+      })();
+    },
+    [refreshQuietly],
+  );
+
+  const loadCampaignReport = useCallback(async (campaignId: string) => {
+    if (siteConfig.useMockData) {
+      const campaign = state.campaigns.find((item) => item.id === campaignId);
+      const creators = state.submissions
+        .filter((submission) => submission.campaignId === campaignId)
+        .map((submission) => ({
+          creatorName: submission.creatorName,
+          postUrl: submission.postUrl,
+          views: 0,
+          payoutRwf: 0,
+          status: submission.status,
+        }));
+      return {
+        campaignId,
+        title: campaign?.title ?? campaignId,
+        creators,
+        totalReach: 0,
+        totalPayoutRwf: 0,
+        creatorPoolRwf: campaign?.creatorPoolRwf ?? 0,
+        poolRemainingRwf: campaign?.poolRemainingRwf ?? 0,
+      } satisfies CampaignReport;
+    }
+    return apiCampaignReport(campaignId);
+  }, [state.campaigns, state.submissions]);
+
   const markAllDuePayoutsPaid = useCallback(() => {
     persist((s) => ({
       ...s,
@@ -273,6 +344,9 @@ function useAdminStoreController() {
     requestRevision,
     markPayoutPaid,
     markAllDuePayoutsPaid,
+    fundCampaign,
+    snapshotCampaign,
+    loadCampaignReport,
   };
 }
 

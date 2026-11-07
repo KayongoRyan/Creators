@@ -23,6 +23,27 @@ export type Campaign = {
   assignedCreators?: number;
   submissionsReceived?: number;
   submissionsApproved?: number;
+  poolRemainingRwf?: number;
+  creatorPoolRwf?: number;
+  fundedAt?: string | null;
+};
+
+export type CampaignReportLine = {
+  creatorName: string;
+  postUrl?: string | null;
+  views: number;
+  payoutRwf: number;
+  status: string;
+};
+
+export type CampaignReport = {
+  campaignId: string;
+  title: string;
+  creators: CampaignReportLine[];
+  totalReach: number;
+  totalPayoutRwf: number;
+  creatorPoolRwf: number;
+  poolRemainingRwf: number;
 };
 
 export type SubmissionStatus =
@@ -187,6 +208,7 @@ export type DiscoverCampaign = {
   deadline: string;
   spotsLeft: number;
   open: boolean;
+  poolRemainingRwf?: number;
 };
 
 export type CreatorAssignment = {

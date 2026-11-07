@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
-import { saveDemoSession } from "@/features/auth/demoSession";
+import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
+import { loginWithPassword } from "@/lib/api";
 import type { UserRole } from "@/types";
 import {
   InspiredField,
@@ -21,6 +22,7 @@ export function LoginForm({ initialRole }: LoginFormProps) {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>(initialRole);
   const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
 
   return (
     <form
@@ -32,22 +34,26 @@ export function LoginForm({ initialRole }: LoginFormProps) {
         const email = String(data.get("email") ?? "");
         const password = String(data.get("password") ?? "");
 
-        if (!isValidEmail(email)) {
-          setError("Enter a valid email address.");
+        if (!isValidEmail(email) || !password) {
+          setError("Wrong password");
           return;
         }
 
-        if (!password) {
-          setError("Enter a password to continue.");
-          return;
-        }
-
-        saveDemoSession({
-          role,
-          displayName: email.split("@")[0] || "Creator",
-          email,
-        });
-        router.replace(routes.public.home);
+        setPending(true);
+        setError("");
+        void loginWithPassword({ email, password, role })
+          .then((result) => {
+            saveDemoSession({
+              role: result.role as UserRole,
+              displayName: email.split("@")[0] || "Creator",
+              email: result.email,
+            });
+            router.replace(getRoleHome(result.role as UserRole));
+          })
+          .catch(() => {
+            setError("Wrong password");
+          })
+          .finally(() => setPending(false));
       }}
     >
       <DemoRolePicker value={role} onChange={setRole} excludedRoles={["admin"]} />
@@ -81,10 +87,12 @@ export function LoginForm({ initialRole }: LoginFormProps) {
         </p>
       ) : null}
 
-      <InspiredSubmit>Sign in</InspiredSubmit>
+      <InspiredSubmit disabled={pending}>
+        {pending ? "Signing in…" : "Sign in"}
+      </InspiredSubmit>
 
       <p className="text-xs leading-5 text-gray-500">
-        Frontend demo only. Any password is accepted and is not stored.
+        Demo: creator@ubunifu.dev / CreatorsDemo1!
       </p>
     </form>
   );

@@ -98,10 +98,14 @@ export function readDemoSession(): DemoSession | null {
     }
 }
 
+const accessTokenKey = "creators.access_token";
+
 export function saveDemoSession(session: DemoSession) {
+    // Keep creators.access_token — login/signup write it first; clearing here caused 401s on portal load.
     window.localStorage.setItem(demoSessionKey, JSON.stringify(session));
 }
 
 export function clearDemoSession() {
     window.localStorage.removeItem(demoSessionKey);
+    window.localStorage.removeItem(accessTokenKey);
 }

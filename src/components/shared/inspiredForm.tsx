@@ -137,15 +137,18 @@ export function InspiredChoice({ selected, onSelect, children }: InspiredChoiceP
 export function InspiredSubmit({
   children,
   className,
+  disabled,
 }: {
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="submit"
+      disabled={disabled}
       className={cn(
-        "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#00EC97] px-8 text-base font-semibold text-gray-900 sm:w-fit",
+        "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#00EC97] px-8 text-base font-semibold text-gray-900 disabled:opacity-60 sm:w-fit",
         className,
       )}
     >

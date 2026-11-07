@@ -6,6 +6,7 @@ import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
 import { routes } from "@/config/routes";
+import { loginWithPassword, signupWithPassword } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
 import { isValidEmail } from "@/lib/validators";
 import type { UserRole } from "@/types";
@@ -48,6 +49,7 @@ export function JoinWizard() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [pending, setPending] = useState(false);
 
   const stepLabels = STEP_LABELS[role];
   const totalSteps = stepLabels.length;
@@ -61,24 +63,33 @@ export function JoinWizard() {
     return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
   }, [isLogin, role, step]);
 
-  function completeLogin() {
-    if (!isValidEmail(email)) {
-      setError("Enter a valid email address.");
+  async function completeLogin() {
+    if (!isValidEmail(email) || !password) {
+      setError("Wrong password");
       return;
     }
-    if (!password) {
-      setError("Enter your password.");
-      return;
+    setPending(true);
+    setError("");
+    try {
+      const result = await loginWithPassword({
+        email: email.trim(),
+        password,
+        role,
+      });
+      saveDemoSession({
+        role: result.role as UserRole,
+        displayName: displayName.trim() || email.split("@")[0] || "User",
+        email: result.email,
+      });
+      router.replace(getRoleHome(result.role as UserRole));
+    } catch {
+      setError("Wrong password");
+    } finally {
+      setPending(false);
     }
-    saveDemoSession({
-      role,
-      displayName: displayName.trim() || email.split("@")[0] || "User",
-      email,
-    });
-    router.replace(getRoleHome(role));
   }
 
-  function completeSignup() {
+  async function completeSignup() {
     if (password.length < 8) {
       setError("Use a password with at least 8 characters.");
       return;
@@ -92,18 +103,31 @@ export function JoinWizard() {
       return;
     }
 
-    saveDemoSession({
-      role,
-      displayName:
-        role === "brand" ? businessName.trim() || displayName.trim() : displayName.trim(),
-      email,
-      address,
-      phone,
-      ...(role === "creator"
-        ? { birthDate, niches: selectedNiches }
-        : {}),
-    });
-    router.replace(getRoleHome(role));
+    const name =
+      role === "brand" ? businessName.trim() || displayName.trim() : displayName.trim();
+    setPending(true);
+    setError("");
+    try {
+      const result = await signupWithPassword({
+        email: email.trim(),
+        password,
+        role,
+        displayName: name,
+      });
+      saveDemoSession({
+        role: result.role as UserRole,
+        displayName: name,
+        email: result.email,
+        address,
+        phone,
+        ...(role === "creator" ? { birthDate, niches: selectedNiches } : {}),
+      });
+      router.replace(getRoleHome(result.role as UserRole));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not create that account.");
+    } finally {
+      setPending(false);
+    }
   }
 
   function validateStep(): boolean {
@@ -155,10 +179,10 @@ export function JoinWizard() {
     return true;
   }
 
-  function onNext() {
+  async function onNext() {
     if (!validateStep()) return;
     if (step >= totalSteps - 1) {
-      completeSignup();
+      await completeSignup();
       return;
     }
     setStep((s) => s + 1);
@@ -246,7 +270,7 @@ export function JoinWizard() {
           </p>
           <p className="mt-1 text-sm text-gray-600">
             {isLogin
-              ? "Use your demo workspace credentials. Any password works in this preview."
+              ? "Sign in with an existing account. Email and password are checked on the server."
               : "Provide the details below to set up your workspace."}
           </p>
 
@@ -466,16 +490,31 @@ export function JoinWizard() {
             )}
             <button
               type="button"
-              onClick={() => (isLogin ? completeLogin() : onNext())}
-              className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white"
+              disabled={pending}
+              onClick={() => {
+                if (pending) return;
+                if (isLogin) {
+                  void completeLogin();
+                  return;
+                }
+                void onNext();
+              }}
+              className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {isLogin ? "Log in ›" : step === totalSteps - 1 ? "Finish ›" : "Next ›"}
+              {pending
+                ? "Working…"
+                : isLogin
+                  ? "Log in ›"
+                  : step === totalSteps - 1
+                    ? "Finish ›"
+                    : "Next ›"}
             </button>
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
-            Frontend demo only. Credentials stay in this browser; passwords are not stored on a
-            server.
+            {isLogin
+              ? "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
+              : "Creates a real account. Email and password are checked on the server."}
           </p>
         </div>
       </div>

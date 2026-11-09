@@ -17,6 +17,7 @@ export function CreatorPortalGate({ children }: { children: React.ReactNode }) {
       status={status}
       error={error}
       onRetry={retryHydration}
+      loginRole="creator"
       actionError={actionError}
       onDismissActionError={clearActionError}
     >

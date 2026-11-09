@@ -84,7 +84,6 @@ Copy [`.env.example`](.env.example) to `.env.local` when overriding defaults.
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:4000/api` | REST base URL |
 | `NEXT_PUBLIC_USE_MOCK` | on (anything except `0`) | `0` = call real API |
-| `NEXT_PUBLIC_AUTH_DEV` | on | `0` = do not exchange the demo session for a dev JWT |
 | `NEXT_PUBLIC_DEMO_ROLE` | — | Set by `dev:*` scripts; optional |
 
 ## Backend integration

@@ -1,5 +1,6 @@
 import { siteConfig } from "@/config/site";
 import { apiEndpoints } from "./endpoints";
+import { ApiRequestError, classifyHttpFailure } from "./errors";
 
 const accessTokenKey = "creators.access_token";
 
@@ -44,6 +45,7 @@ export function clearAccessToken() {
 }
 
 export async function resolveAccessToken() {
+  // Password login/signup write the token. Never invent users via /auth/dev-token.
   return readAccessToken();
 }
 
@@ -109,25 +111,34 @@ export async function apiClient<T>(
   path: string,
   { params, retryOnUnauthorized = true, ...init }: RequestOptions = {},
 ): Promise<T> {
-  const token = await resolveAccessToken();
-  const headers = new Headers(init.headers);
-  if (!headers.has("Content-Type") && init.body) {
-    headers.set("Content-Type", "application/json");
+  let res: Response;
+  try {
+    const token = await resolveAccessToken();
+    const headers = new Headers(init.headers);
+    if (!headers.has("Content-Type") && init.body) {
+      headers.set("Content-Type", "application/json");
+    }
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+
+    res = await fetch(buildUrl(path, params), {
+      ...init,
+      headers,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new ApiRequestError(0, path, "api_down");
+    }
+    throw error;
   }
-  if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const res = await fetch(buildUrl(path, params), {
-    ...init,
-    headers,
-  });
-
-  if (res.status === 401 && retryOnUnauthorized && typeof window !== "undefined") {
-    clearAccessToken();
-    return apiClient<T>(path, { params, ...init, retryOnUnauthorized: false });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") clearAccessToken();
+    throw new ApiRequestError(401, path, "unauthenticated");
   }
 
   if (!res.ok) {
-    throw new Error(`API ${res.status}: ${path}`);
+    const kind = classifyHttpFailure(res.status, path);
+    throw new ApiRequestError(res.status, path, kind);
   }
 
   return res.json() as Promise<T>;

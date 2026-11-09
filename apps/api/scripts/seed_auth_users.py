@@ -107,6 +107,64 @@ def main() -> None:
     out.write_text(json.dumps(created, indent=2), encoding="utf-8")
     print("wrote", out)
 
+    database_url = env.get("DATABASE_URL", "").strip()
+    if database_url:
+        remap_profiles(database_url, created)
+    else:
+        print("DATABASE_URL unset — skip profile remap / orphan cleanup")
+
+
+def remap_profiles(database_url: str, auth_ids: dict[str, str]) -> None:
+    """Point demo profiles.id at auth.users.id and drop slug invent leftovers."""
+    from sqlalchemy import create_engine, text
+
+    engine = create_engine(database_url)
+    with engine.begin() as conn:
+        for email, auth_id in auth_ids.items():
+            row = conn.execute(
+                text(
+                    "select id, role, brand_id, creator_id, display_name "
+                    "from profiles where email = :email"
+                ),
+                {"email": email},
+            ).mappings().first()
+            if row is None:
+                print("missing profile for", email)
+                continue
+            if row["id"] == auth_id:
+                print("profile already mapped", email, auth_id)
+                continue
+            conn.execute(
+                text(
+                    "insert into profiles (id, email, role, display_name, brand_id, creator_id) "
+                    "values (:id, :email, :role, :display_name, :brand_id, :creator_id) "
+                    "on conflict (id) do update set "
+                    "email = excluded.email, role = excluded.role, "
+                    "display_name = excluded.display_name, "
+                    "brand_id = excluded.brand_id, creator_id = excluded.creator_id"
+                ),
+                {
+                    "id": auth_id,
+                    "email": email,
+                    "role": row["role"],
+                    "display_name": row["display_name"],
+                    "brand_id": row["brand_id"],
+                    "creator_id": row["creator_id"],
+                },
+            )
+            conn.execute(
+                text("delete from profiles where id = :old_id"),
+                {"old_id": row["id"]},
+            )
+            print("remapped", email, row["id"], "->", auth_id)
+
+        orphans = conn.execute(
+            text("select id, email from profiles where id like 'profile_%'")
+        ).all()
+        for profile_id, email in orphans:
+            conn.execute(text("delete from profiles where id = :id"), {"id": profile_id})
+            print("deleted orphan", email, profile_id)
+
 
 if __name__ == "__main__":
     main()

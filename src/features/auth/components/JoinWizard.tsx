@@ -24,15 +24,16 @@ type JoinMode = "signup" | "login";
 export function JoinWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialRole =
-    searchParams.get("role") === "brand" ? "brand" : "creator";
+  const roleParam = searchParams.get("role");
+  const initialRole: UserRole =
+    roleParam === "brand" || roleParam === "admin" || roleParam === "creator"
+      ? roleParam
+      : "creator";
   const initialMode: JoinMode =
     searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [mode, setMode] = useState<JoinMode>(initialMode);
-  const [role, setRole] = useState<Extract<UserRole, "creator" | "brand">>(
-    initialRole,
-  );
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
 
@@ -51,17 +52,19 @@ export function JoinWizard() {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
-  const stepLabels = STEP_LABELS[role];
+  const signupRole: Extract<UserRole, "creator" | "brand"> =
+    role === "brand" ? "brand" : "creator";
+  const stepLabels = STEP_LABELS[signupRole];
   const totalSteps = stepLabels.length;
   const isLogin = mode === "login";
 
   const sectionTitle = useMemo(() => {
     if (isLogin) return "Welcome back";
-    if (role === "brand") {
+    if (signupRole === "brand") {
       return ["Profile details", "Location", "Business information", "Payout details", "Verify account"][step];
     }
     return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
-  }, [isLogin, role, step]);
+  }, [isLogin, signupRole, step]);
 
   async function completeLogin() {
     if (!isValidEmail(email) || !password) {
@@ -82,8 +85,8 @@ export function JoinWizard() {
         email: result.email,
       });
       router.replace(getRoleHome(result.role as UserRole));
-    } catch {
-      setError("Wrong password");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Wrong password");
     } finally {
       setPending(false);
     }
@@ -98,20 +101,22 @@ export function JoinWizard() {
       setError("Passwords do not match.");
       return;
     }
-    if (role === "creator" && selectedNiches.length === 0) {
+    if (signupRole === "creator" && selectedNiches.length === 0) {
       setError("Choose at least one niche.");
       return;
     }
 
     const name =
-      role === "brand" ? businessName.trim() || displayName.trim() : displayName.trim();
+      signupRole === "brand"
+        ? businessName.trim() || displayName.trim()
+        : displayName.trim();
     setPending(true);
     setError("");
     try {
       const result = await signupWithPassword({
         email: email.trim(),
         password,
-        role,
+        role: signupRole,
         displayName: name,
       });
       saveDemoSession({
@@ -120,7 +125,7 @@ export function JoinWizard() {
         email: result.email,
         address,
         phone,
-        ...(role === "creator" ? { birthDate, niches: selectedNiches } : {}),
+        ...(signupRole === "creator" ? { birthDate, niches: selectedNiches } : {}),
       });
       router.replace(getRoleHome(result.role as UserRole));
     } catch (reason) {
@@ -136,7 +141,7 @@ export function JoinWizard() {
 
     if (step === 0) {
       if (!displayName.trim()) {
-        setError(role === "brand" ? "Enter your name." : "Enter your full name.");
+        setError(signupRole === "brand" ? "Enter your name." : "Enter your full name.");
         return false;
       }
       if (!isValidEmail(email)) {
@@ -149,12 +154,12 @@ export function JoinWizard() {
         setError("Complete your location and phone number.");
         return false;
       }
-      if (role === "creator" && !birthDate) {
+      if (signupRole === "creator" && !birthDate) {
         setError("Enter your date of birth.");
         return false;
       }
     }
-    if (step === 2 && role === "brand") {
+    if (step === 2 && signupRole === "brand") {
       if (
         !businessName.trim() ||
         !businessType.trim() ||
@@ -164,7 +169,7 @@ export function JoinWizard() {
         return false;
       }
     }
-    if (step === 2 && role === "creator") {
+    if (step === 2 && signupRole === "creator") {
       if (selectedNiches.length === 0) {
         setError("Choose at least one niche.");
         return false;
@@ -208,6 +213,7 @@ export function JoinWizard() {
                 setMode("signup");
                 setStep(0);
                 setError("");
+                if (role === "admin") setRole("creator");
               }}
               className={cn(
                 "min-h-10 px-4 text-sm font-semibold",
@@ -279,19 +285,19 @@ export function JoinWizard() {
               <>
                 <DemoRolePicker
                   value={role}
-                  onChange={(next) => {
-                    if (next === "creator" || next === "brand") setRole(next);
-                  }}
-                  excludedRoles={["admin"]}
+                  onChange={setRole}
+                  excludedRoles={isLogin ? [] : ["admin"]}
                 />
                 {!isLogin ? (
                   <label className="block text-sm font-medium text-gray-700">
-                    {role === "brand" ? "Your name" : "Full name"}
+                    {signupRole === "brand" ? "Your name" : "Full name"}
                     <input
                       className={inputClass}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder={role === "brand" ? "Contact name" : "First and last name"}
+                      placeholder={
+                        signupRole === "brand" ? "Contact name" : "First and last name"
+                      }
                     />
                   </label>
                 ) : (
@@ -338,7 +344,7 @@ export function JoinWizard() {
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </label>
-                {role === "creator" ? (
+                {signupRole === "creator" ? (
                   <label className="block text-sm font-medium text-gray-700">
                     Date of birth
                     <input
@@ -352,7 +358,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {!isLogin && step === 2 && role === "brand" ? (
+            {!isLogin && step === 2 && signupRole === "brand" ? (
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Business name
@@ -389,7 +395,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {!isLogin && step === 2 && role === "creator" ? (
+            {!isLogin && step === 2 && signupRole === "creator" ? (
               <fieldset className="space-y-3">
                 <legend className="text-sm font-medium text-gray-700">Your niches</legend>
                 <div className="flex flex-wrap gap-2">

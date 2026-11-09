@@ -50,8 +50,8 @@ export function LoginForm({ initialRole }: LoginFormProps) {
             });
             router.replace(getRoleHome(result.role as UserRole));
           })
-          .catch(() => {
-            setError("Wrong password");
+          .catch((reason) => {
+            setError(reason instanceof Error ? reason.message : "Wrong password");
           })
           .finally(() => setPending(false));
       }}

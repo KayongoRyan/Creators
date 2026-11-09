@@ -13,7 +13,7 @@ import {
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
-import { routes } from "@/config/routes";
+import { signupWithPassword } from "@/lib/api";
 import { isValidEmail } from "@/lib/validators";
 import type { UserRole } from "@/types";
 
@@ -40,6 +40,7 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
   const [error, setError] = useState("");
   const [avatarDataUrl, setAvatarDataUrl] = useState<string>();
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [pending, setPending] = useState(false);
 
   return (
     <form
@@ -47,6 +48,7 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
       className="flex flex-col gap-6"
       onSubmit={(e) => {
         e.preventDefault();
+        if (pending) return;
         const data = new FormData(e.currentTarget);
         const displayName = String(data.get("displayName") ?? "").trim();
         const email = String(data.get("email") ?? "");
@@ -71,10 +73,13 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
           return;
         }
 
+        let address = "";
+        let birthDate = "";
+        let phone = "";
         if (role === "creator") {
-          const address = String(data.get("address") ?? "").trim();
-          const birthDate = String(data.get("birthDate") ?? "");
-          const phone = String(data.get("phone") ?? "").trim();
+          address = String(data.get("address") ?? "").trim();
+          birthDate = String(data.get("birthDate") ?? "");
+          phone = String(data.get("phone") ?? "").trim();
 
           if (!address || !birthDate || !phone || selectedNiches.length === 0) {
             setError("Complete your contact details and choose at least one niche.");
@@ -86,22 +91,37 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
             setError("Choose a profile picture smaller than 2 MB.");
             return;
           }
-
-          saveDemoSession({
-            role,
-            displayName,
-            email,
-            address,
-            birthDate,
-            phone,
-            niches: selectedNiches,
-            ...(avatarDataUrl ? { avatarDataUrl } : {}),
-          });
-        } else {
-          saveDemoSession({ role, displayName, email });
         }
 
-        router.replace(routes.public.home);
+        setPending(true);
+        setError("");
+        void signupWithPassword({
+          email,
+          password,
+          role,
+          displayName,
+        })
+          .then((result) => {
+            saveDemoSession({
+              role: result.role as UserRole,
+              displayName,
+              email: result.email,
+              ...(role === "creator"
+                ? {
+                    address,
+                    birthDate,
+                    phone,
+                    niches: selectedNiches,
+                    ...(avatarDataUrl ? { avatarDataUrl } : {}),
+                  }
+                : {}),
+            });
+            router.replace(getRoleHome(result.role as UserRole));
+          })
+          .catch((reason) => {
+            setError(reason instanceof Error ? reason.message : "Could not create that account.");
+          })
+          .finally(() => setPending(false));
       }}
     >
       <DemoRolePicker value={role} onChange={setRole} excludedRoles={["admin"]} />
@@ -266,7 +286,9 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
         </p>
       ) : null}
 
-      <InspiredSubmit>Create {role} account</InspiredSubmit>
+      <InspiredSubmit disabled={pending}>
+        {pending ? "Working…" : `Create ${role} account`}
+      </InspiredSubmit>
 
       <p className="text-xs leading-5 text-gray-500">
         Frontend demo only. Account details stay in this browser; passwords are not stored.

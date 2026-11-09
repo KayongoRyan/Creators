@@ -101,7 +101,6 @@ Screenshot bytes go to Supabase Storage bucket `creator-screenshots` when `SUPAB
 
 ## Not implemented on frontend (unfinished)
 
-- Supabase login UI (dev token stands in)
 - Pagination, filters, file uploads for clipping source assets
 - Automated MoMo disbursement
 - E2E automated tests in CI

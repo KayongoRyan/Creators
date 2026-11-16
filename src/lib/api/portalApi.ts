@@ -1,5 +1,11 @@
 import { siteConfig } from "@/config/site";
-import type { AdminState, BrandState, CreatorProfile, CreatorState } from "@/types";
+import type {
+  AdminState,
+  BrandState,
+  CampaignReport,
+  CreatorProfile,
+  CreatorState,
+} from "@/types";
 import { apiClient } from "./client";
 import { apiEndpoints } from "./endpoints";
 import type { CreateCampaignInput } from "@/types";
@@ -18,6 +24,25 @@ export async function fetchBrandState(): Promise<BrandState> {
 
 export async function fetchCreatorState(): Promise<CreatorState> {
   return apiClient<CreatorState>(apiEndpoints.creator.state);
+}
+
+export async function apiFundCampaign(campaignId: string): Promise<void> {
+  await apiClient(apiEndpoints.admin.campaignFund(campaignId), { method: "POST" });
+}
+
+export async function apiSnapshotCampaign(
+  campaignId: string,
+  views: { submissionId: string; views: number }[],
+): Promise<void> {
+  await apiClient(apiEndpoints.admin.campaignSnapshot(campaignId), {
+    method: "POST",
+    headers: { "Idempotency-Key": crypto.randomUUID() },
+    body: JSON.stringify({ views }),
+  });
+}
+
+export async function apiCampaignReport(campaignId: string): Promise<CampaignReport> {
+  return apiClient<CampaignReport>(apiEndpoints.admin.campaignReport(campaignId));
 }
 
 export async function apiCreateCampaign(input: CreateCampaignInput): Promise<void> {

@@ -94,7 +94,13 @@ function useCreatorStoreController() {
     }
     setState(readState());
     setError(result.error);
-    setStatus("error");
+    setStatus(
+      result.kind === "unauthenticated"
+        ? "unauthenticated"
+        : result.kind === "forbidden"
+          ? "forbidden"
+          : "error",
+    );
   }, []);
 
   useEffect(() => {

@@ -7,7 +7,12 @@ export function BrandPortalGate({ children }: { children: React.ReactNode }) {
   const { status, error, retryHydration } = useBrandStore();
 
   return (
-    <PortalGate status={status} error={error} onRetry={retryHydration}>
+    <PortalGate
+      status={status}
+      error={error}
+      onRetry={retryHydration}
+      loginRole="brand"
+    >
       {children}
     </PortalGate>
   );

@@ -37,6 +37,8 @@ export const demoRoleOptions: {
 
 const demoSessionKey = "creators.demo-session.v2";
 
+const accessTokenKey = "creators.access_token";
+
 const roleHome: Record<UserRole, string> = {
     admin: routes.admin.root,
     brand: routes.brand.root,
@@ -103,6 +105,7 @@ export function saveDemoSession(
     session: DemoSession,
     options?: { method?: "login" | "register" },
 ) {
+    // Keep creators.access_token — login/signup write it first; clearing here caused 401s on portal load.
     window.localStorage.setItem(demoSessionKey, JSON.stringify(session));
     const method = options?.method ?? "login";
     recordPlatformEvent({
@@ -121,6 +124,7 @@ export function saveDemoSession(
 export function clearDemoSession() {
     const session = readDemoSession();
     window.localStorage.removeItem(demoSessionKey);
+    window.localStorage.removeItem(accessTokenKey);
     if (session) {
         recordPlatformEvent({
             actorName: session.displayName,

@@ -12,6 +12,7 @@ export function AdminPortalGate({ children }: { children: React.ReactNode }) {
       status={status}
       error={error}
       onRetry={retryHydration}
+      loginRole="admin"
       actionError={actionError}
       onDismissActionError={clearActionError}
     >

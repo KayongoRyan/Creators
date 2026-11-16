@@ -70,4 +70,4 @@ Test at ~390px (mobile), ~768px (tablet), ≥1280px (desktop):
 - Admin, brand, and creator state are not synced in mock mode (separate stores)
 - Legacy `getCampaigns()` services not used by portal pages
 - No automated Playwright/Cypress suite yet
-- Auth is demo localStorage only
+- Live auth uses `/auth/login` + `/auth/signup` (password-verified); mock mode still uses localStorage portals

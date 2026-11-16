@@ -6,6 +6,7 @@ import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
 import { routes } from "@/config/routes";
+import { loginWithPassword, signupWithPassword } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
 import { isValidEmail } from "@/lib/validators";
 import type { UserRole } from "@/types";
@@ -23,15 +24,16 @@ type JoinMode = "signup" | "login";
 export function JoinWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialRole =
-    searchParams.get("role") === "brand" ? "brand" : "creator";
+  const roleParam = searchParams.get("role");
+  const initialRole: UserRole =
+    roleParam === "brand" || roleParam === "admin" || roleParam === "creator"
+      ? roleParam
+      : "creator";
   const initialMode: JoinMode =
     searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [mode, setMode] = useState<JoinMode>(initialMode);
-  const [role, setRole] = useState<Extract<UserRole, "creator" | "brand">>(
-    initialRole,
-  );
+  const [role, setRole] = useState<UserRole>(initialRole);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
 
@@ -48,37 +50,49 @@ export function JoinWizard() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [pending, setPending] = useState(false);
 
-  const stepLabels = STEP_LABELS[role];
+  const signupRole: Extract<UserRole, "creator" | "brand"> =
+    role === "brand" ? "brand" : "creator";
+  const stepLabels = STEP_LABELS[signupRole];
   const totalSteps = stepLabels.length;
   const isLogin = mode === "login";
 
   const sectionTitle = useMemo(() => {
     if (isLogin) return "Welcome back";
-    if (role === "brand") {
+    if (signupRole === "brand") {
       return ["Profile details", "Location", "Business information", "Payout details", "Verify account"][step];
     }
     return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
-  }, [isLogin, role, step]);
+  }, [isLogin, signupRole, step]);
 
-  function completeLogin() {
-    if (!isValidEmail(email)) {
-      setError("Enter a valid email address.");
+  async function completeLogin() {
+    if (!isValidEmail(email) || !password) {
+      setError("Wrong password");
       return;
     }
-    if (!password) {
-      setError("Enter your password.");
-      return;
+    setPending(true);
+    setError("");
+    try {
+      const result = await loginWithPassword({
+        email: email.trim(),
+        password,
+        role,
+      });
+      saveDemoSession({
+        role: result.role as UserRole,
+        displayName: displayName.trim() || email.split("@")[0] || "User",
+        email: result.email,
+      });
+      router.replace(getRoleHome(result.role as UserRole));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Wrong password");
+    } finally {
+      setPending(false);
     }
-    saveDemoSession({
-      role,
-      displayName: displayName.trim() || email.split("@")[0] || "User",
-      email,
-    });
-    router.replace(getRoleHome(role));
   }
 
-  function completeSignup() {
+  async function completeSignup() {
     if (password.length < 8) {
       setError("Use a password with at least 8 characters.");
       return;
@@ -87,23 +101,41 @@ export function JoinWizard() {
       setError("Passwords do not match.");
       return;
     }
-    if (role === "creator" && selectedNiches.length === 0) {
+    if (signupRole === "creator" && selectedNiches.length === 0) {
       setError("Choose at least one niche.");
       return;
     }
 
-    saveDemoSession({
-      role,
-      displayName:
-        role === "brand" ? businessName.trim() || displayName.trim() : displayName.trim(),
-      email,
-      address,
-      phone,
-      ...(role === "creator"
-        ? { birthDate, niches: selectedNiches }
-        : {}),
-    }, { method: "register" });
-    router.replace(getRoleHome(role));
+    const name =
+      signupRole === "brand"
+        ? businessName.trim() || displayName.trim()
+        : displayName.trim();
+    setPending(true);
+    setError("");
+    try {
+      const result = await signupWithPassword({
+        email: email.trim(),
+        password,
+        role: signupRole,
+        displayName: name,
+      });
+      saveDemoSession(
+        {
+          role: result.role as UserRole,
+          displayName: name,
+          email: result.email,
+          address,
+          phone,
+          ...(signupRole === "creator" ? { birthDate, niches: selectedNiches } : {}),
+        },
+        { method: "register" },
+      );
+      router.replace(getRoleHome(result.role as UserRole));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not create that account.");
+    } finally {
+      setPending(false);
+    }
   }
 
   function validateStep(): boolean {
@@ -112,7 +144,7 @@ export function JoinWizard() {
 
     if (step === 0) {
       if (!displayName.trim()) {
-        setError(role === "brand" ? "Enter your name." : "Enter your full name.");
+        setError(signupRole === "brand" ? "Enter your name." : "Enter your full name.");
         return false;
       }
       if (!isValidEmail(email)) {
@@ -125,12 +157,12 @@ export function JoinWizard() {
         setError("Complete your location and phone number.");
         return false;
       }
-      if (role === "creator" && !birthDate) {
+      if (signupRole === "creator" && !birthDate) {
         setError("Enter your date of birth.");
         return false;
       }
     }
-    if (step === 2 && role === "brand") {
+    if (step === 2 && signupRole === "brand") {
       if (
         !businessName.trim() ||
         !businessType.trim() ||
@@ -140,7 +172,7 @@ export function JoinWizard() {
         return false;
       }
     }
-    if (step === 2 && role === "creator") {
+    if (step === 2 && signupRole === "creator") {
       if (selectedNiches.length === 0) {
         setError("Choose at least one niche.");
         return false;
@@ -155,10 +187,10 @@ export function JoinWizard() {
     return true;
   }
 
-  function onNext() {
+  async function onNext() {
     if (!validateStep()) return;
     if (step >= totalSteps - 1) {
-      completeSignup();
+      await completeSignup();
       return;
     }
     setStep((s) => s + 1);
@@ -184,6 +216,7 @@ export function JoinWizard() {
                 setMode("signup");
                 setStep(0);
                 setError("");
+                if (role === "admin") setRole("creator");
               }}
               className={cn(
                 "min-h-10 px-4 text-sm font-semibold",
@@ -246,7 +279,7 @@ export function JoinWizard() {
           </p>
           <p className="mt-1 text-sm text-gray-600">
             {isLogin
-              ? "Use your demo workspace credentials. Any password works in this preview."
+              ? "Sign in with an existing account. Email and password are checked on the server."
               : "Provide the details below to set up your workspace."}
           </p>
 
@@ -255,19 +288,19 @@ export function JoinWizard() {
               <>
                 <DemoRolePicker
                   value={role}
-                  onChange={(next) => {
-                    if (next === "creator" || next === "brand") setRole(next);
-                  }}
-                  excludedRoles={["admin"]}
+                  onChange={setRole}
+                  excludedRoles={isLogin ? [] : ["admin"]}
                 />
                 {!isLogin ? (
                   <label className="block text-sm font-medium text-gray-700">
-                    {role === "brand" ? "Your name" : "Full name"}
+                    {signupRole === "brand" ? "Your name" : "Full name"}
                     <input
                       className={inputClass}
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder={role === "brand" ? "Contact name" : "First and last name"}
+                      placeholder={
+                        signupRole === "brand" ? "Contact name" : "First and last name"
+                      }
                     />
                   </label>
                 ) : (
@@ -314,7 +347,7 @@ export function JoinWizard() {
                     onChange={(e) => setPhone(e.target.value)}
                   />
                 </label>
-                {role === "creator" ? (
+                {signupRole === "creator" ? (
                   <label className="block text-sm font-medium text-gray-700">
                     Date of birth
                     <input
@@ -328,7 +361,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {!isLogin && step === 2 && role === "brand" ? (
+            {!isLogin && step === 2 && signupRole === "brand" ? (
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Business name
@@ -365,7 +398,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {!isLogin && step === 2 && role === "creator" ? (
+            {!isLogin && step === 2 && signupRole === "creator" ? (
               <fieldset className="space-y-3">
                 <legend className="text-sm font-medium text-gray-700">Your niches</legend>
                 <div className="flex flex-wrap gap-2">
@@ -466,16 +499,31 @@ export function JoinWizard() {
             )}
             <button
               type="button"
-              onClick={() => (isLogin ? completeLogin() : onNext())}
-              className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white"
+              disabled={pending}
+              onClick={() => {
+                if (pending) return;
+                if (isLogin) {
+                  void completeLogin();
+                  return;
+                }
+                void onNext();
+              }}
+              className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {isLogin ? "Log in ›" : step === totalSteps - 1 ? "Finish ›" : "Next ›"}
+              {pending
+                ? "Working…"
+                : isLogin
+                  ? "Log in ›"
+                  : step === totalSteps - 1
+                    ? "Finish ›"
+                    : "Next ›"}
             </button>
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
-            Frontend demo only. Credentials stay in this browser; passwords are not stored on a
-            server.
+            {isLogin
+              ? "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
+              : "Creates a real account. Email and password are checked on the server."}
           </p>
         </div>
       </div>

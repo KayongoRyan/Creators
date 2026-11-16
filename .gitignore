@@ -21,7 +21,9 @@
 # misc
 .DS_Store
 *.pem
+.env
 .env*.local
+apps/api/.env
 
 # debug
 npm-debug.log*
@@ -31,6 +33,15 @@ yarn-error.log*
 # typescript
 next-env.d.ts
 *.tsbuildinfo
+
+# python api
+apps/api/.data/
+apps/api/uploads/
+apps/api/.venv/
+apps/api/scripts/.demo_auth_ids.json
+apps/api/**/__pycache__/
+apps/api/.pytest_cache/
+*.pyc
 
 # vercel
 .vercel

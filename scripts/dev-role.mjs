@@ -66,6 +66,7 @@ const child = spawn("npx", ["next", "dev", "-p", port], {
   env: {
     ...process.env,
     NEXT_PUBLIC_DEMO_ROLE: role,
+    NEXT_PUBLIC_PORTAL_SCOPE: distDir,
     NEXT_DIST_DIR: distDir,
   },
   shell: true,

@@ -13,6 +13,7 @@ import { readDemoSession } from "@/features/auth/demoSession";
 import { adminSeed } from "@/lib/api/fixtures";
 import {
   PLATFORM_EVENTS_UPDATE,
+  fetchPlatformEventsFromHub,
   readPlatformEvents,
   recordPlatformEvent,
 } from "@/lib/analytics/platformEvents";
@@ -201,13 +202,31 @@ function useAdminStoreController() {
   }, []);
 
   useEffect(() => {
-    const sync = () => setLiveEvents(readPlatformEvents());
-    sync();
-    window.addEventListener(PLATFORM_EVENTS_UPDATE, sync);
-    window.addEventListener("storage", sync);
+    let cancelled = false;
+    const sync = async () => {
+      const events =
+        process.env.NODE_ENV === "development"
+          ? await fetchPlatformEventsFromHub()
+          : readPlatformEvents();
+      if (!cancelled) setLiveEvents(events);
+    };
+    void sync();
+    const interval =
+      process.env.NODE_ENV === "development"
+        ? window.setInterval(() => {
+            void sync();
+          }, 2500)
+        : undefined;
+    const onSignal = () => {
+      void sync();
+    };
+    window.addEventListener(PLATFORM_EVENTS_UPDATE, onSignal);
+    window.addEventListener("storage", onSignal);
     return () => {
-      window.removeEventListener(PLATFORM_EVENTS_UPDATE, sync);
-      window.removeEventListener("storage", sync);
+      cancelled = true;
+      if (interval) window.clearInterval(interval);
+      window.removeEventListener(PLATFORM_EVENTS_UPDATE, onSignal);
+      window.removeEventListener("storage", onSignal);
     };
   }, []);
 

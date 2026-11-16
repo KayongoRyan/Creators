@@ -1,5 +1,7 @@
 import { routes } from "@/config/routes";
 import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
+import { isAdminOnlyPortal } from "@/lib/portal/devScope";
+import { siteConfig } from "@/config/site";
 import type { UserRole } from "@/types";
 
 export type DemoSession = {
@@ -47,6 +49,40 @@ const roleHome: Record<UserRole, string> = {
 
 export function getRoleHome(role: UserRole) {
     return roleHome[role];
+}
+
+const adminDevSession: DemoSession = {
+    role: "admin",
+    displayName: "Platform Admin",
+    email: "admin@ubunifu.dev",
+};
+
+const adminSkipAutoKey = "creators.admin-skip-auto-session";
+
+/** `dev:admin` + mock mode: seed session before DashboardShell redirects to /join. */
+export function ensureAdminDevSession(options?: { method?: "login" | "register" }) {
+    if (typeof window === "undefined") return;
+    if (!siteConfig.useMockData || !isAdminOnlyPortal()) return;
+    if (window.sessionStorage.getItem(adminSkipAutoKey) === "1") return;
+    if (readDemoSession()?.role === "admin") return;
+    saveDemoSession(adminDevSession, options);
+}
+
+export function markAdminManualSignIn() {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem(adminSkipAutoKey, "1");
+}
+
+export function clearAdminManualSignIn() {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.removeItem(adminSkipAutoKey);
+}
+
+export function adminJoinUrl() {
+    return `${routes.auth.join}?${new URLSearchParams({
+        mode: "login",
+        role: "admin",
+    }).toString()}`;
 }
 
 /** Signed out, or signed in as a different portal role (preview as guest). */
@@ -107,6 +143,9 @@ export function saveDemoSession(
 ) {
     // Keep creators.access_token — login/signup write it first; clearing here caused 401s on portal load.
     window.localStorage.setItem(demoSessionKey, JSON.stringify(session));
+    if (session.role === "admin") {
+        clearAdminManualSignIn();
+    }
     const method = options?.method ?? "login";
     recordPlatformEvent({
         actorName: session.displayName,

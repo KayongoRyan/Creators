@@ -1,5 +1,5 @@
-import { AdminDashboard } from "@/features/admin/AdminDashboard";
+import { AdminWebActivity } from "@/features/admin/AdminWebActivity";
 
 export default function AdminHomePage() {
-  return <AdminDashboard />;
+  return <AdminWebActivity />;
 }

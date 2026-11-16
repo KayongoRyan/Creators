@@ -18,6 +18,9 @@
 # production
 /build
 
+# dev activity hub (cross-port analytics in role dev)
+.data/
+
 # misc
 .DS_Store
 *.pem

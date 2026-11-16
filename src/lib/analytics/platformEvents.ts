@@ -1,6 +1,7 @@
 import type { AuditEvent } from "@/types";
 
 const STORAGE_KEY = "creators_platform_events_v1";
+const HUB_PATH = "/platform-event-hub";
 const MAX_EVENTS = 600;
 const UPDATE_EVENT = "platform-events-updated";
 
@@ -56,8 +57,41 @@ export function recordPlatformEvent(input: RecordPlatformEventInput): void {
     const next = [event, ...readPlatformEvents()].slice(0, MAX_EVENTS);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     window.dispatchEvent(new CustomEvent(UPDATE_EVENT));
+    if (process.env.NODE_ENV === "development") {
+      void fetch(HUB_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(event),
+      }).catch(() => {});
+    }
   } catch {
     // Analytics logging must never break a user action.
+  }
+}
+
+function mergeEventLists(...lists: AuditEvent[][]): AuditEvent[] {
+  const seen = new Set<string>();
+  const merged: AuditEvent[] = [];
+  for (const list of lists) {
+    for (const event of list) {
+      if (seen.has(event.id)) continue;
+      seen.add(event.id);
+      merged.push(event);
+    }
+  }
+  return merged.sort((a, b) => b.at.localeCompare(a.at)).slice(0, MAX_EVENTS);
+}
+
+/** Dev: merge local storage with the shared on-disk hub (all role dev ports). */
+export async function fetchPlatformEventsFromHub(): Promise<AuditEvent[]> {
+  if (typeof window === "undefined") return [];
+  try {
+    const res = await fetch(HUB_PATH, { cache: "no-store" });
+    if (!res.ok) return readPlatformEvents();
+    const hub = (await res.json()) as AuditEvent[];
+    return mergeEventLists(readPlatformEvents(), Array.isArray(hub) ? hub : []);
+  } catch {
+    return readPlatformEvents();
   }
 }
 

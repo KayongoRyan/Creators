@@ -9,7 +9,8 @@ export const marketingJoinCta = {
 } as const;
 
 export const adminNav: NavItem[] = [
-  { href: routes.admin.root, label: "Dashboard" },
+  { href: routes.admin.root, label: "Web activity" },
+  { href: routes.admin.operations, label: "Dashboard" },
   { href: routes.admin.analytics, label: "Analytics" },
   { href: routes.admin.campaigns, label: "Campaigns" },
   { href: routes.admin.creators, label: "Creators" },

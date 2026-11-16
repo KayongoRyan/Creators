@@ -6,11 +6,15 @@ import { useEffect, useState } from "react";
 import { routes } from "@/config/routes";
 import { cn } from "@/lib/utils/cn";
 import {
+  adminJoinUrl,
   clearDemoSession,
+  ensureAdminDevSession,
   getRoleHome,
+  markAdminManualSignIn,
   readDemoSession,
   type DemoSession,
 } from "@/features/auth/demoSession";
+import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import type { UserRole } from "@/types";
 
 type NavItem = { href: string; label: string };
@@ -37,11 +41,14 @@ export function DashboardShell({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    if (role === "admin") {
+      ensureAdminDevSession();
+    }
     const currentSession = readDemoSession();
 
     if (!currentSession) {
       if (role === "admin") {
-        router.replace(routes.auth.join);
+        router.replace(adminJoinUrl());
         return;
       }
       setGuestMode(true);
@@ -61,8 +68,15 @@ export function DashboardShell({
   }, [role, router]);
 
   function handleSignOut() {
+    if (role === "admin" && isAdminOnlyPortal()) {
+      markAdminManualSignIn();
+    }
     clearDemoSession();
     setSession(null);
+    if (role === "admin" && isAdminOnlyPortal()) {
+      router.replace(adminJoinUrl());
+      return;
+    }
     router.replace(routes.public.home);
   }
 

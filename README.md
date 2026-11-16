@@ -24,6 +24,8 @@ npm run dev:api      # FastAPI http://localhost:4000
 
 Role dev scripts use **separate ports and `.next-*` folders** so you can run admin + brand + creator at once without corrupting the cache.
 
+**Cross-port web activity (admin):** With `dev:admin`, `dev:brand`, and `dev:creator` running together, page views and actions from :3002/:3003 POST to a shared hub (`.data/platform-events.json`). Open **Web activity** on :3001 — the feed polls every ~2.5s. `dev:admin` also auto-seeds an admin demo session and redirects `/` → `/admin`.
+
 If you see `Cannot find module './611.js'`, missing `vendor-chunks`, or `reading '/_app'` errors — corrupted `.next` from old parallel dev or running `build` while dev is up:
 
 ```bash

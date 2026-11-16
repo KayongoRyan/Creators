@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
 import {
+  adminJoinUrl,
   clearDemoSession,
   getRoleHome,
   readDemoSession,
@@ -98,8 +99,7 @@ function PortalAuthRedirect({ role }: { role: UserRole }) {
   useEffect(() => {
     clearAccessToken();
     clearDemoSession();
-    const params = new URLSearchParams({ mode: "login", role });
-    router.replace(`${routes.auth.join}?${params.toString()}`);
+    router.replace(role === "admin" ? adminJoinUrl() : `${routes.auth.join}?${new URLSearchParams({ mode: "login", role }).toString()}`);
   }, [role, router]);
 
   return <PortalLoadingState label="Redirecting to sign in…" />;
@@ -117,8 +117,11 @@ function PortalForbiddenRedirect({ portalRole }: { portalRole: UserRole }) {
     }
     clearAccessToken();
     clearDemoSession();
-    const params = new URLSearchParams({ mode: "login", role: portalRole });
-    router.replace(`${routes.auth.join}?${params.toString()}`);
+    router.replace(
+      portalRole === "admin"
+        ? adminJoinUrl()
+        : `${routes.auth.join}?${new URLSearchParams({ mode: "login", role: portalRole }).toString()}`,
+    );
   }, [portalRole, router]);
 
   return <PortalLoadingState label="Switching workspace…" />;

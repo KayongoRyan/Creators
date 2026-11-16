@@ -4,6 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
+import { lookupMockCredential } from "@/lib/auth/mockCredentials";
+import { siteConfig } from "@/config/site";
+import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
 import { routes } from "@/config/routes";
 import { loginWithPassword, signupWithPassword } from "@/lib/api";
@@ -79,9 +82,16 @@ export function JoinWizard() {
         password,
         role,
       });
+      const mockProfile =
+        siteConfig.useMockData &&
+        lookupMockCredential(result.email, result.role as UserRole);
       saveDemoSession({
         role: result.role as UserRole,
-        displayName: displayName.trim() || email.split("@")[0] || "User",
+        displayName:
+          displayName.trim() ||
+          mockProfile?.displayName ||
+          email.split("@")[0] ||
+          "User",
         email: result.email,
       });
       router.replace(getRoleHome(result.role as UserRole));
@@ -522,8 +532,14 @@ export function JoinWizard() {
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
             {isLogin
-              ? "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
-              : "Creates a real account. Email and password are checked on the server."}
+              ? siteConfig.useMockData
+                ? "Mock mode: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1! (API optional)"
+                : "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
+              : isAdminOnlyPortal()
+                ? "Admin console: sign up is for brand/creator only. Pick Admin + Log in for platform staff."
+                : siteConfig.useMockData
+                  ? "Mock mode: new brand/creator accounts stay in this browser (API optional)."
+                  : "Creates a real account. Email and password are checked on the server."}
           </p>
         </div>
       </div>

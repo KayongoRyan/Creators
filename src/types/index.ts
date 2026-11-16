@@ -312,12 +312,18 @@ export type BrandCampaignView = {
 
 export type BrandInvoice = {
   id: string;
+  /** Matches BrandCampaignView.id when tied to a live brief */
+  campaignId?: string;
   label: string;
   creatorBudgetRwf: number;
   feeRwf: number;
   totalRwf: number;
   status: "paid" | "pending";
+  /** Used for ordering within each finance bucket */
+  issuedAt?: string;
 };
+
+export type BrandInvoiceBucket = "unfinished" | "new" | "closed";
 
 export type BrandState = {
   brandName: string;

@@ -16,14 +16,33 @@ import type { BrandState } from "@/types";
 
 const STORAGE_KEY = "creators_brand_state_v1";
 
+function withBrandDemoFallback(data: BrandState): BrandState {
+  const seed = structuredClone(brandSeed);
+  const campaignsMissing = !data.campaigns?.length;
+  const invoicesNeedSeed =
+    !data.invoices?.length || data.invoices.some((inv) => !inv.campaignId);
+
+  if (!campaignsMissing && !invoicesNeedSeed) return data;
+
+  return {
+    ...data,
+    brandName: data.brandName?.trim() ? data.brandName : seed.brandName,
+    companyLine: data.companyLine?.trim() ? data.companyLine : seed.companyLine,
+    campaigns: campaignsMissing ? seed.campaigns : data.campaigns,
+    invoices: invoicesNeedSeed ? seed.invoices : data.invoices,
+  };
+}
+
 function readState(): BrandState {
-  if (typeof window === "undefined") return brandSeed;
+  if (typeof window === "undefined") return structuredClone(brandSeed);
+  const seed = structuredClone(brandSeed);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(brandSeed);
-    return JSON.parse(raw) as BrandState;
+    if (!raw) return seed;
+    const parsed = JSON.parse(raw) as BrandState;
+    return withBrandDemoFallback(parsed);
   } catch {
-    return structuredClone(brandSeed);
+    return seed;
   }
 }
 
@@ -67,7 +86,7 @@ function useBrandStoreController() {
     setError(null);
     const result = await hydrateFromApi(fetchBrandState, writeState);
     if (result.ok) {
-      setState(result.data);
+      setState(withBrandDemoFallback(result.data));
       setStatus("ready");
       return;
     }

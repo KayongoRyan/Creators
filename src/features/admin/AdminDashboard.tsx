@@ -31,6 +31,8 @@ const activityTone: Record<AdminActivityKind, string> = {
   payout_paid: "bg-black text-white",
   brand_payment: "bg-neutral-800 text-white",
   brand_status: "bg-neutral-100 text-black",
+  brand_registered: "bg-black text-white",
+  creator_registered: "bg-neutral-800 text-white",
 };
 
 function activityLabel(kind: AdminActivityKind) {
@@ -46,6 +48,24 @@ export function AdminDashboard() {
   const [confirmPaid, setConfirmPaid] = useState(false);
 
   const pendingActions = [
+    metrics.newBrands > 0
+      ? {
+          title: "New businesses",
+          status: `${metrics.newBrands} this week`,
+          body: "Recently registered brand accounts — confirm status and first payment.",
+          href: routes.admin.brands,
+          action: "Review businesses",
+        }
+      : null,
+    metrics.newCreators > 0
+      ? {
+          title: "New creators",
+          status: `${metrics.newCreators} this week`,
+          body: "Accounts from creator signup — verify handles and approve when ready.",
+          href: routes.admin.creators,
+          action: "Review creators",
+        }
+      : null,
     metrics.pendingApplications > 0
       ? {
           title: "Creator applications",

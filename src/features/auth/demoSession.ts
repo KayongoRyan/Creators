@@ -150,13 +150,14 @@ export function saveDemoSession(
     recordPlatformEvent({
         actorName: session.displayName,
         actorRole: session.role,
+        actorEmail: session.email,
         action: method === "register" ? "register" : "login",
         summary:
             method === "register"
                 ? `${session.displayName} created a ${session.role} account`
                 : `${session.displayName} signed in to the ${session.role} portal`,
         source: window.location.pathname,
-        severity: "info",
+        severity: method === "register" ? "success" : "info",
     });
 }
 

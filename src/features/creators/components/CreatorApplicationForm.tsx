@@ -8,6 +8,8 @@ import {
   InspiredSubmit,
   underlineInputClassName,
 } from "@/components/shared/inspiredForm";
+import { readDemoSession } from "@/features/auth/demoSession";
+import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
 import { siteConfig } from "@/config/site";
 import { apiEndpoints, joinApiUrl } from "@/lib/api";
 import { creatorNicheGroups } from "../data/creatorNiches";
@@ -51,6 +53,22 @@ export function CreatorApplicationForm() {
           return;
         }
         if (siteConfig.useMockData) {
+          const data = new FormData(event.currentTarget);
+          const session = readDemoSession();
+          const fullName = String(data.get("fullName") ?? session?.displayName ?? "Creator").trim();
+          const tiktok = String(data.get("tiktokHandle") ?? "@pending").trim();
+          const instagram = String(data.get("instagramHandle") ?? "@pending").trim();
+          const niche = selectedNiches.join(", ");
+          recordPlatformEvent({
+            actorName: fullName,
+            actorRole: "creator",
+            actorEmail: session?.email,
+            action: "creator_application",
+            summary: `${fullName} submitted a creator application`,
+            targetLabel: `${tiktok}|${instagram}|${niche}`,
+            source: "/apply",
+            severity: "success",
+          });
           setSubmitted(true);
           return;
         }

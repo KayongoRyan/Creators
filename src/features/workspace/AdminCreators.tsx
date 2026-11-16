@@ -8,6 +8,8 @@ import {
   selectPendingApplications,
   useAdminStore,
 } from "@/features/admin/store";
+import { isNewWithinWindow } from "@/lib/admin/registrationIntake";
+import { formatActivityWhen } from "@/lib/format/datetime";
 import type { CreatorApplication } from "@/types";
 
 type ConfirmKind = { type: "accept" | "reject"; id: string };
@@ -73,7 +75,19 @@ export function AdminCreators() {
                 >
                   <div>
                     <p className="font-medium text-gray-900">{person.fullName}</p>
-                    <p className="text-sm text-gray-600">{formatHandle(person)}</p>
+                    <p className="text-sm text-gray-600">
+                      {person.tiktokHandle === "@pending"
+                        ? "New account — complete profile on /apply"
+                        : formatHandle(person)}
+                    </p>
+                    {person.contactEmail ? (
+                      <p className="text-xs text-gray-500">{person.contactEmail}</p>
+                    ) : null}
+                    {person.appliedAt && isNewWithinWindow(person.appliedAt) ? (
+                      <p className="text-xs font-medium text-black">
+                        Joined {formatActivityWhen(person.appliedAt)}
+                      </p>
+                    ) : null}
                   </div>
                   <span className="text-xs font-medium uppercase tracking-wide text-black">
                     Review

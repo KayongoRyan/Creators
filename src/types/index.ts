@@ -83,6 +83,10 @@ export type CreatorApplication = {
   instagramFollowers: number;
   niche: string;
   status: CreatorApplicationStatus;
+  /** Account email when known (signup or session). */
+  contactEmail?: string;
+  /** ISO time the creator joined or applied. */
+  appliedAt?: string;
 };
 
 export type VerifiedCreator = {
@@ -106,6 +110,8 @@ export type BrandAccount = {
   campaignsRun: number;
   totalSpentRwf: number;
   lastActiveAt: string;
+  /** ISO time the business registered on the platform. */
+  joinedAt?: string;
 };
 
 export type AdminActivityKind =
@@ -121,7 +127,9 @@ export type AdminActivityKind =
   | "campaign_created"
   | "payout_paid"
   | "brand_payment"
-  | "brand_status";
+  | "brand_status"
+  | "brand_registered"
+  | "creator_registered";
 
 export type AdminActivityEvent = {
   id: string;
@@ -255,6 +263,8 @@ export type AuditEvent = {
   at: string;
   actorName: string;
   actorRole: AuditActorRole;
+  /** Populated on signup/login when available. */
+  actorEmail?: string;
   action: AuditAction;
   summary: string;
   targetLabel?: string;
@@ -277,6 +287,8 @@ export type AdminState = {
   activityLog: AdminActivityEvent[];
   analytics: PlatformAnalytics;
   auditLog: AuditEvent[];
+  /** Platform register / apply events already merged into roster lists. */
+  ingestedRegistrationEventIds?: string[];
 };
 
 export type BrandPostLink = {

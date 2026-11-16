@@ -7,6 +7,7 @@ import {
   selectBrandAccounts,
   useAdminStore,
 } from "@/features/admin/store";
+import { isNewWithinWindow } from "@/lib/admin/registrationIntake";
 import { formatActivityWhen } from "@/lib/format/datetime";
 import { formatRwf } from "@/lib/format/money";
 import type { BrandAccount, BrandAccountStatus } from "@/types";
@@ -27,7 +28,17 @@ function statusPill(status: BrandAccountStatus) {
 
 export function AdminBrands() {
   const { state, setBrandStatus } = useAdminStore();
-  const brands = useMemo(() => selectBrandAccounts(state), [state]);
+  const brands = useMemo(() => {
+    const list = selectBrandAccounts(state);
+    return [...list].sort((a, b) => {
+      const aNew = isNewWithinWindow(a.joinedAt);
+      const bNew = isNewWithinWindow(b.joinedAt);
+      if (aNew !== bNew) return aNew ? -1 : 1;
+      const atA = Date.parse(a.joinedAt ?? a.lastActiveAt);
+      const atB = Date.parse(b.joinedAt ?? b.lastActiveAt);
+      return atB - atA;
+    });
+  }, [state]);
   const [pending, setPending] = useState<PendingStatus | null>(null);
 
   const onConfirm = () => {
@@ -84,6 +95,11 @@ function BrandRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="font-semibold text-black">{brand.name}</h2>
+            {isNewWithinWindow(brand.joinedAt) ? (
+              <span className="rounded-full bg-black px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                New
+              </span>
+            ) : null}
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide ${statusPill(brand.status)}`}
             >
@@ -99,7 +115,9 @@ function BrandRow({
             {formatRwf(brand.totalSpentRwf)}
           </p>
           <p className="mt-1 text-xs text-neutral-500">
-            Last activity {formatActivityWhen(brand.lastActiveAt)}
+            {brand.joinedAt
+              ? `Joined ${formatActivityWhen(brand.joinedAt)} · Last activity ${formatActivityWhen(brand.lastActiveAt)}`
+              : `Last activity ${formatActivityWhen(brand.lastActiveAt)}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

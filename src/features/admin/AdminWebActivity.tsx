@@ -11,7 +11,11 @@ import {
   mergeAuditTrail,
   type AuditFilter,
 } from "@/features/admin/analytics/selectors";
-import { useAdminStore } from "@/features/admin/store";
+import {
+  selectRecentBrandSignups,
+  selectRecentCreatorSignups,
+  useAdminStore,
+} from "@/features/admin/store";
 import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import { formatActivityWhen } from "@/lib/format/datetime";
 import { workspaceFieldClass, workspaceSectionLabel } from "@/components/workspace/workspacePageUi";
@@ -68,6 +72,8 @@ export function AdminWebActivity() {
   }, [trail]);
 
   const devHint = isAdminOnlyPortal();
+  const newBrands = useMemo(() => selectRecentBrandSignups(state), [state]);
+  const newCreators = useMemo(() => selectRecentCreatorSignups(state), [state]);
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -86,6 +92,51 @@ export function AdminWebActivity() {
           syncs here every few seconds via{" "}
           <span className="font-mono text-xs">.data/platform-events.json</span>.
         </p>
+      ) : null}
+
+      {newBrands.length > 0 || newCreators.length > 0 ? (
+        <section
+          aria-labelledby="new-signups-heading"
+          className="mb-8 rounded-lg border border-black/10 bg-white p-5"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2
+                id="new-signups-heading"
+                className="text-xs font-semibold uppercase tracking-[0.12em] text-black"
+              >
+                New brands & creators
+              </h2>
+              <p className="mt-1 text-xs text-neutral-500">
+                Signups from brand/creator portals in the last 7 days — auto-synced from web
+                activity.
+              </p>
+            </div>
+            <SignupQuickLinks />
+          </div>
+          <div className="mt-5 grid gap-6 sm:grid-cols-2">
+            <NewMemberList
+              title="Businesses"
+              empty="No new businesses this week."
+              items={newBrands.map((b) => ({
+                id: b.id,
+                primary: b.name,
+                secondary: b.contactEmail,
+                at: b.joinedAt ?? b.lastActiveAt,
+              }))}
+            />
+            <NewMemberList
+              title="Creators"
+              empty="No new creators this week."
+              items={newCreators.map((c) => ({
+                id: c.id,
+                primary: c.fullName,
+                secondary: c.contactEmail ?? c.niche,
+                at: c.appliedAt,
+              }))}
+            />
+          </div>
+        </section>
       ) : null}
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -188,6 +239,67 @@ export function AdminWebActivity() {
         </Link>
         .
       </p>
+    </div>
+  );
+}
+
+function SignupQuickLinks() {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Link
+        href={routes.admin.brands}
+        className="inline-flex min-h-9 items-center rounded-full border border-black/15 px-4 text-sm font-medium text-black hover:bg-neutral-50"
+      >
+        All businesses
+      </Link>
+      <Link
+        href={routes.admin.creators}
+        className="inline-flex min-h-9 items-center rounded-full border border-black/15 px-4 text-sm font-medium text-black hover:bg-neutral-50"
+      >
+        Creator queue
+      </Link>
+    </div>
+  );
+}
+
+function NewMemberList({
+  title,
+  empty,
+  items,
+}: {
+  title: string;
+  empty: string;
+  items: { id: string; primary: string; secondary: string; at?: string }[];
+}) {
+  if (items.length === 0) {
+    return (
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{title}</p>
+        <p className="mt-2 text-sm text-neutral-600">{empty}</p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{title}</p>
+      <ul className="mt-2 divide-y divide-black/10 border-y border-black/10">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-start justify-between gap-3 py-3 text-sm">
+            <div className="min-w-0">
+              <p className="font-medium text-black">{item.primary}</p>
+              <p className="truncate text-neutral-600">{item.secondary}</p>
+            </div>
+            {item.at ? (
+              <time
+                dateTime={item.at}
+                className="shrink-0 text-xs tabular-nums text-neutral-500"
+              >
+                {formatActivityWhen(item.at)}
+              </time>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

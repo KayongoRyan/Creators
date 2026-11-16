@@ -37,6 +37,11 @@ import {
   runApiMutation,
   type PortalLoadStatus,
 } from "@/lib/portal/hydration";
+import {
+  selectRecentBrandSignups,
+  selectRecentCreatorSignups,
+  syncRegistrationsFromEvents,
+} from "@/lib/admin/registrationIntake";
 import type {
   AdminActivityEvent,
   AdminState,
@@ -72,6 +77,7 @@ function normalizeState(partial: Partial<AdminState>): AdminState {
       siteConfig.useMockData || !Array.isArray(partial.auditLog)
         ? seed.auditLog
         : partial.auditLog,
+    ingestedRegistrationEventIds: partial.ingestedRegistrationEventIds ?? [],
   };
 }
 
@@ -208,7 +214,14 @@ function useAdminStoreController() {
         process.env.NODE_ENV === "development"
           ? await fetchPlatformEventsFromHub()
           : readPlatformEvents();
-      if (!cancelled) setLiveEvents(events);
+      if (cancelled) return;
+      setLiveEvents(events);
+      setState((prev) => {
+        const merged = syncRegistrationsFromEvents(prev, events);
+        if (merged === prev) return prev;
+        writeState(merged);
+        return merged;
+      });
     };
     void sync();
     const interval =
@@ -736,8 +749,12 @@ export function selectOverviewMetrics(state: AdminState) {
     payoutsDueRwf,
     collectedRwf,
     totalBrands: state.brandAccounts.length,
+    newBrands: selectRecentBrandSignups(state).length,
+    newCreators: selectRecentCreatorSignups(state).length,
   };
 }
+
+export { selectRecentBrandSignups, selectRecentCreatorSignups } from "@/lib/admin/registrationIntake";
 
 export function selectActivityFeed(state: AdminState, limit = 12): AdminActivityEvent[] {
   return state.activityLog.slice(0, limit);

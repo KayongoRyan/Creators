@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  BrandCampaignCreatePanel,
+  BrandCampaignEmptyCta,
+} from "@/features/brand/BrandCampaignCreatePanel";
 import { WorkspacePageShell } from "@/components/workspace/WorkspacePageShell";
 import {
   WorkspaceEmptyBlock,
@@ -9,8 +14,10 @@ import {
   campaignStatusPill,
   workspaceFieldClass,
   workspaceInlineLink,
+  workspacePrimaryButton,
   workspaceSectionLabel,
 } from "@/components/workspace/workspacePageUi";
+import { cn } from "@/lib/utils/cn";
 import {
   brandCampaignBucketMeta,
   countCampaignBuckets,
@@ -55,8 +62,10 @@ function CampaignBucketSelect({
 }
 
 export function BrandCampaignList() {
-  const { state } = useBrandStore();
+  const router = useRouter();
+  const { state, createCampaign } = useBrandStore();
   const [filter, setFilter] = useState<CampaignFilter>("all");
+  const [showCreate, setShowCreate] = useState(false);
 
   const counts = useMemo(() => countCampaignBuckets(state.campaigns), [state.campaigns]);
 
@@ -103,10 +112,31 @@ export function BrandCampaignList() {
     >
       <p className="text-sm text-neutral-600 sm:max-w-xl">{filterHint}</p>
 
-      {state.campaigns.length === 0 ? (
-        <WorkspaceEmptyBlock message="No campaigns in the demo roster yet." />
+      {showCreate ? (
+        <BrandCampaignCreatePanel
+          onCancel={() => setShowCreate(false)}
+          onSubmit={(input) => {
+            const campaign = createCampaign(input);
+            setShowCreate(false);
+            setFilter("new");
+            router.push(`${routes.brand.campaigns}/${campaign.id}`);
+          }}
+        />
+      ) : state.campaigns.length === 0 ? (
+        <BrandCampaignEmptyCta onCreateClick={() => setShowCreate(true)} />
       ) : visible.length === 0 ? (
-        <WorkspaceEmptyBlock message="Nothing in this list. Try another option in the dropdown." />
+        <div className="space-y-4">
+          <WorkspaceEmptyBlock message="Nothing in this list. Try another option in the dropdown." />
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowCreate(true)}
+              className={cn(workspacePrimaryButton, "min-h-10")}
+            >
+              Create new campaign
+            </button>
+          </div>
+        </div>
       ) : (
         <ul className="space-y-2">
           {visible.map((campaign) => {
@@ -131,12 +161,30 @@ export function BrandCampaignList() {
           })}
         </ul>
       )}
-      <p className="text-sm text-neutral-500">
-        Need a new brief?{" "}
-        <Link href={routes.brand.root} className={workspaceInlineLink}>
-          Back to dashboard
-        </Link>
-      </p>
+      {!showCreate && state.campaigns.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/8 pt-6">
+          <p className="text-sm text-neutral-500">
+            Need a new brief?{" "}
+            <Link href={routes.brand.root} className={workspaceInlineLink}>
+              Back to dashboard
+            </Link>
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowCreate(true)}
+            className={cn(workspacePrimaryButton, "min-h-10")}
+          >
+            Create new campaign
+          </button>
+        </div>
+      ) : !showCreate ? (
+        <p className="text-sm text-neutral-500">
+          Need a new brief?{" "}
+          <Link href={routes.brand.root} className={workspaceInlineLink}>
+            Back to dashboard
+          </Link>
+        </p>
+      ) : null}
     </WorkspacePageShell>
   );
 }

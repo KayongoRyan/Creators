@@ -325,6 +325,14 @@ export type BrandInvoice = {
 
 export type BrandInvoiceBucket = "unfinished" | "new" | "closed";
 
+export type BrandCreateCampaignInput = {
+  title: string;
+  campaignType: string;
+  budgetRwf: number;
+  deadline: string;
+  brief: string;
+};
+
 export type BrandState = {
   brandName: string;
   companyLine: string;

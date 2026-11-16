@@ -1,5 +1,5 @@
-import { AdminOverview } from "@/features/workspace/MarkPaid";
+import { AdminDashboard } from "@/features/admin/AdminDashboard";
 
 export default function AdminHomePage() {
-  return <AdminOverview />;
+  return <AdminDashboard />;
 }

@@ -1,0 +1,3 @@
+{"sessionId":"e8d1bb","location":"scripts/dev-role.mjs","message":"dev-role starting","data":{"role":"admin","port":"3001","distDir":".next-admin","openRoute":"/admin","envPort":null},"hypothesisId":"C","timestamp":1793711339136,"runId":"post-fix"}
+{"sessionId":"e8d1bb","location":"scripts/dev-role.mjs","message":"port listen check before spawn","data":{"port":"3001","ownersBefore":[],"pid":28292},"hypothesisId":"A","timestamp":1793711347119,"runId":"post-fix"}
+{"sessionId":"e8d1bb","location":"scripts/dev-role.mjs","message":"next dev listening","data":{"port":"3001","role":"admin"},"hypothesisId":"B","timestamp":1793711359437,"runId":"post-fix"}

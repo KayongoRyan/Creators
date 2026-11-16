@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { RouteActivityTracker } from "@/components/analytics/RouteActivityTracker";
 import { figtree } from "@/lib/fonts";
 import "./globals.css";
 
@@ -41,7 +42,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <RouteActivityTracker />
+        {children}
+      </body>
     </html>
   );
 }

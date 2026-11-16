@@ -10,6 +10,7 @@ export const routes = {
   },
   admin: {
     root: "/admin",
+    analytics: "/admin/analytics",
     campaigns: "/admin/campaigns",
     creators: "/admin/creators",
     brands: "/admin/brands",

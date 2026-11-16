@@ -70,6 +70,45 @@ export type VerifiedCreator = {
   handle: string;
   campaignsCompleted: number;
   label: "Reliable" | "New";
+  status?: "active" | "suspended";
+};
+
+export type BrandAccountStatus = "active" | "suspended" | "pending_payment";
+
+export type BrandAccount = {
+  id: string;
+  name: string;
+  contactName: string;
+  contactEmail: string;
+  momoPhone?: string;
+  status: BrandAccountStatus;
+  campaignsRun: number;
+  totalSpentRwf: number;
+  lastActiveAt: string;
+};
+
+export type AdminActivityKind =
+  | "creator_application"
+  | "creator_verified"
+  | "creator_rejected"
+  | "creator_suspended"
+  | "creator_reactivated"
+  | "submission_pending"
+  | "submission_approved"
+  | "submission_rejected"
+  | "submission_revision"
+  | "campaign_created"
+  | "payout_paid"
+  | "brand_payment"
+  | "brand_status";
+
+export type AdminActivityEvent = {
+  id: string;
+  at: string;
+  kind: AdminActivityKind;
+  actorLabel: string;
+  summary: string;
+  href?: string;
 };
 
 export type AdminSubmission = {
@@ -108,13 +147,115 @@ export type CreateCampaignInput = {
   deadline: string;
 };
 
+/** One day of platform traffic and business activity (analytics series). */
+export type PlatformDailyMetric = {
+  /** UTC date, `YYYY-MM-DD`. */
+  date: string;
+  visitors: number;
+  pageViews: number;
+  signups: number;
+  activeUsers: number;
+  campaignsCreated: number;
+  creatorApplications: number;
+  campaignApplications: number;
+  submissions: number;
+  approvals: number;
+  collectionsRwf: number;
+  payoutsRwf: number;
+};
+
+/** Acquisition channel share, 0–100. */
+export type TrafficSource = {
+  label: string;
+  share: number;
+};
+
+/** Device share, 0–100. */
+export type DeviceShare = {
+  label: "Mobile" | "Desktop" | "Tablet";
+  share: number;
+};
+
+/** Most visited routes with average time on page. */
+export type TopPageMetric = {
+  path: string;
+  share: number;
+  avgSeconds: number;
+};
+
+export type ReviewSla = {
+  targetHours: number;
+  avgHours: number;
+  medianHours: number;
+  withinSlaPercent: number;
+};
+
+export type PlatformAnalytics = {
+  daily: PlatformDailyMetric[];
+  trafficSources: TrafficSource[];
+  devices: DeviceShare[];
+  topPages: TopPageMetric[];
+  reviewSla: ReviewSla;
+};
+
+export type AuditActorRole = UserRole | "guest" | "system";
+
+export type AuditAction =
+  | "page_view"
+  | "login"
+  | "logout"
+  | "register"
+  | "campaign_created"
+  | "campaign_updated"
+  | "campaign_paused"
+  | "creator_application"
+  | "creator_applied"
+  | "campaign_applied"
+  | "creator_approved"
+  | "creator_rejected"
+  | "creator_suspended"
+  | "creator_reactivated"
+  | "submission_created"
+  | "submission_approved"
+  | "submission_rejected"
+  | "submission_revision"
+  | "payout_paid"
+  | "payout_batch_paid"
+  | "collection_paid"
+  | "brand_status_updated"
+  | "profile_updated"
+  | "settings_updated";
+
+export type AuditSeverity = "info" | "success" | "warning" | "critical";
+
+/** A single action performed anywhere on the platform. */
+export type AuditEvent = {
+  id: string;
+  at: string;
+  actorName: string;
+  actorRole: AuditActorRole;
+  action: AuditAction;
+  summary: string;
+  targetLabel?: string;
+  href?: string;
+  /** Route or page where the action happened. */
+  source?: string;
+  severity: AuditSeverity;
+  device?: "mobile" | "desktop" | "tablet";
+  ip?: string;
+};
+
 export type AdminState = {
   campaigns: Campaign[];
   creatorApplications: CreatorApplication[];
   verifiedCreators: VerifiedCreator[];
   submissions: AdminSubmission[];
   brandCollections: BrandCollection[];
+  brandAccounts: BrandAccount[];
   payouts: PayoutRecord[];
+  activityLog: AdminActivityEvent[];
+  analytics: PlatformAnalytics;
+  auditLog: AuditEvent[];
 };
 
 export type BrandPostLink = {

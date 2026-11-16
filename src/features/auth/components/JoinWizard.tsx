@@ -102,7 +102,7 @@ export function JoinWizard() {
       ...(role === "creator"
         ? { birthDate, niches: selectedNiches }
         : {}),
-    });
+    }, { method: "register" });
     router.replace(getRoleHome(role));
   }
 

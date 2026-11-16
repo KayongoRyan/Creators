@@ -96,9 +96,9 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
             phone,
             niches: selectedNiches,
             ...(avatarDataUrl ? { avatarDataUrl } : {}),
-          });
+          }, { method: "register" });
         } else {
-          saveDemoSession({ role, displayName, email });
+          saveDemoSession({ role, displayName, email }, { method: "register" });
         }
 
         router.replace(routes.public.home);

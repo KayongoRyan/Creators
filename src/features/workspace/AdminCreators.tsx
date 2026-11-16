@@ -22,7 +22,7 @@ function formatFollowers(n: number) {
 }
 
 export function AdminCreators() {
-  const { state, verifyCreator, rejectCreator } = useAdminStore();
+  const { state, verifyCreator, rejectCreator, setCreatorSuspended } = useAdminStore();
   const pending = selectPendingApplications(state);
   const [selectedId, setSelectedId] = useState<string | null>(
     pending[0]?.id ?? null,
@@ -54,7 +54,7 @@ export function AdminCreators() {
         title="Creator roster"
         description="Vetted creators in the network"
       />
-      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black">
         Applications — pending review
       </p>
       {pending.length === 0 ? (
@@ -68,14 +68,14 @@ export function AdminCreators() {
                   type="button"
                   onClick={() => setSelectedId(person.id)}
                   className={`flex w-full flex-wrap items-center justify-between gap-4 py-4 text-left ${
-                    selected?.id === person.id ? "bg-emerald-50/60" : ""
+                    selected?.id === person.id ? "bg-neutral-100" : ""
                   }`}
                 >
                   <div>
                     <p className="font-medium text-gray-900">{person.fullName}</p>
                     <p className="text-sm text-gray-600">{formatHandle(person)}</p>
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  <span className="text-xs font-medium uppercase tracking-wide text-black">
                     Review
                   </span>
                 </button>
@@ -85,7 +85,7 @@ export function AdminCreators() {
 
           {selected ? (
             <aside className="rounded-lg border border-black/10 bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-black">
                 Verification
               </p>
               <h2 className="mt-2 text-lg font-semibold text-gray-900">
@@ -136,26 +136,45 @@ export function AdminCreators() {
         </div>
       )}
 
-      <p className="mt-10 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+      <p className="mt-10 text-xs font-semibold uppercase tracking-[0.12em] text-black">
         Active creators
       </p>
       <ul className="mt-4 divide-y divide-black/10 border-y border-black/10">
-        {state.verifiedCreators.map((creator) => (
-          <li
-            key={creator.id}
-            className="flex flex-wrap items-center justify-between gap-4 py-4"
-          >
-            <div>
-              <p className="font-medium text-gray-900">{creator.displayName}</p>
-              <p className="text-sm text-gray-600">{creator.handle}</p>
-            </div>
-            <p className="text-right text-sm text-gray-600">
-              {creator.campaignsCompleted} campaign
-              {creator.campaignsCompleted === 1 ? "" : "s"}
-              <span className="mt-1 block text-gray-500">{creator.label}</span>
-            </p>
-          </li>
-        ))}
+        {state.verifiedCreators.map((creator) => {
+          const suspended = creator.status === "suspended";
+          return (
+            <li
+              key={creator.id}
+              className="flex flex-wrap items-center justify-between gap-4 py-4"
+            >
+              <div>
+                <p className="font-medium text-gray-900">
+                  {creator.displayName}
+                  {suspended ? (
+                    <span className="ml-2 rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold uppercase text-black">
+                      Suspended
+                    </span>
+                  ) : null}
+                </p>
+                <p className="text-sm text-gray-600">{creator.handle}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-right text-sm text-gray-600">
+                  {creator.campaignsCompleted} campaign
+                  {creator.campaignsCompleted === 1 ? "" : "s"}
+                  <span className="mt-1 block text-gray-500">{creator.label}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCreatorSuspended(creator.id, !suspended)}
+                  className="inline-flex min-h-9 items-center justify-center rounded-full border border-black/15 px-3 text-sm font-medium text-black hover:bg-neutral-50"
+                >
+                  {suspended ? "Reactivate" : "Suspend"}
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
       <ConfirmDialog

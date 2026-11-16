@@ -72,6 +72,7 @@ Repo: [github.com/KayongoRyan/Creators](https://github.com/KayongoRyan/Creators)
 | `creators_admin_state_v1` | Admin |
 | `creators_brand_state_v1` | Brand |
 | `creators_creator_state_v1` | Creator |
+| `creators_platform_events_v1` | Live activity log shown in admin analytics |
 
 Login at `/login` or use `dev:admin` / `dev:brand` / `dev:creator` to seed the demo session.
 
@@ -96,7 +97,7 @@ Code entry points: `src/lib/api/endpoints.ts`, `src/lib/api/portalApi.ts`, `src/
 
 ## What each portal does
 
-**Admin** — Overview KPIs, campaign create, creator applications (verify/reject), submission review (approve/reject/revision), payout tracking.
+**Admin** — Platform analytics (traffic, sign-ups, revenue vs payouts, funnel, top creators/brands, operations health, full audit trail of every action), overview KPIs, campaign create, creator applications (verify/reject), submission review (approve/reject/revision), payout tracking.
 
 **Brand** — Dashboard, campaign list and detail (post links + performance), invoices, contact.
 
@@ -149,6 +150,6 @@ src/
 |---|---|
 | Public | `/`, `/apply` |
 | Auth | `/login`, `/register` |
-| Admin | `/admin`, `/admin/campaigns`, `/admin/creators`, `/admin/brands`, `/admin/submissions`, `/admin/payments` |
+| Admin | `/admin`, `/admin/analytics`, `/admin/campaigns`, `/admin/creators`, `/admin/brands`, `/admin/submissions`, `/admin/payments` |
 | Brand | `/brand`, `/brand/campaigns`, `/brand/campaigns/[id]`, `/brand/invoices`, `/brand/reports` |
 | Creator | `/creator`, `/creator/campaigns`, `/creator/campaigns/[id]`, `/creator/tasks`, `/creator/submissions`, `/creator/earnings`, `/creator/applications` |

@@ -1,4 +1,5 @@
 import { routes } from "@/config/routes";
+import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
 import type { UserRole } from "@/types";
 
 export type DemoSession = {
@@ -98,10 +99,36 @@ export function readDemoSession(): DemoSession | null {
     }
 }
 
-export function saveDemoSession(session: DemoSession) {
+export function saveDemoSession(
+    session: DemoSession,
+    options?: { method?: "login" | "register" },
+) {
     window.localStorage.setItem(demoSessionKey, JSON.stringify(session));
+    const method = options?.method ?? "login";
+    recordPlatformEvent({
+        actorName: session.displayName,
+        actorRole: session.role,
+        action: method === "register" ? "register" : "login",
+        summary:
+            method === "register"
+                ? `${session.displayName} created a ${session.role} account`
+                : `${session.displayName} signed in to the ${session.role} portal`,
+        source: window.location.pathname,
+        severity: "info",
+    });
 }
 
 export function clearDemoSession() {
+    const session = readDemoSession();
     window.localStorage.removeItem(demoSessionKey);
+    if (session) {
+        recordPlatformEvent({
+            actorName: session.displayName,
+            actorRole: session.role,
+            action: "logout",
+            summary: `${session.displayName} signed out`,
+            source: window.location.pathname,
+            severity: "info",
+        });
+    }
 }

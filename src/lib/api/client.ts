@@ -1,5 +1,6 @@
 import { siteConfig } from "@/config/site";
 import { lookupMockCredential } from "@/lib/auth/mockCredentials";
+import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import { apiEndpoints } from "./endpoints";
 import { ApiRequestError, classifyHttpFailure } from "./errors";
 
@@ -107,7 +108,7 @@ export async function signupWithPassword(input: {
   displayName?: string;
 }): Promise<AuthResult> {
   if (siteConfig.useMockData) {
-    if (input.role === "admin") {
+    if (input.role === "admin" && !isAdminOnlyPortal()) {
       throw new Error("Admin accounts are provisioned by the platform team.");
     }
     if (input.password.length < 8) {

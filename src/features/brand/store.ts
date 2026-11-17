@@ -12,18 +12,46 @@ import { siteConfig } from "@/config/site";
 import { fetchBrandState } from "@/lib/api/portalApi";
 import { hydrateFromApi, type PortalLoadStatus } from "@/lib/portal/hydration";
 import { brandSeed } from "@/lib/portalSeeds";
-import type { BrandState } from "@/types";
+import type {
+  BrandCampaignView,
+  BrandCreateCampaignInput,
+  BrandInvoice,
+  BrandState,
+} from "@/types";
+
+function nextId(prefix: string) {
+  return `${prefix}_${Date.now().toString(36)}`;
+}
 
 const STORAGE_KEY = "creators_brand_state_v1";
 
+function withBrandDemoFallback(data: BrandState): BrandState {
+  const seed = structuredClone(brandSeed);
+  const campaignsMissing = !data.campaigns?.length;
+  const invoicesNeedSeed =
+    !data.invoices?.length || data.invoices.some((inv) => !inv.campaignId);
+
+  if (!campaignsMissing && !invoicesNeedSeed) return data;
+
+  return {
+    ...data,
+    brandName: data.brandName?.trim() ? data.brandName : seed.brandName,
+    companyLine: data.companyLine?.trim() ? data.companyLine : seed.companyLine,
+    campaigns: campaignsMissing ? seed.campaigns : data.campaigns,
+    invoices: invoicesNeedSeed ? seed.invoices : data.invoices,
+  };
+}
+
 function readState(): BrandState {
-  if (typeof window === "undefined") return brandSeed;
+  if (typeof window === "undefined") return structuredClone(brandSeed);
+  const seed = structuredClone(brandSeed);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(brandSeed);
-    return JSON.parse(raw) as BrandState;
+    if (!raw) return seed;
+    const parsed = JSON.parse(raw) as BrandState;
+    return withBrandDemoFallback(parsed);
   } catch {
-    return structuredClone(brandSeed);
+    return seed;
   }
 }
 
@@ -67,7 +95,7 @@ function useBrandStoreController() {
     setError(null);
     const result = await hydrateFromApi(fetchBrandState, writeState);
     if (result.ok) {
-      setState(result.data);
+      setState(withBrandDemoFallback(result.data));
       setStatus("ready");
       return;
     }
@@ -96,11 +124,68 @@ function useBrandStoreController() {
     };
   }, []);
 
+  const persist = useCallback((updater: (prev: BrandState) => BrandState) => {
+    setState((prev) => {
+      const next = updater(prev);
+      writeState(next);
+      return next;
+    });
+  }, []);
+
+  const createCampaign = useCallback(
+    (input: BrandCreateCampaignInput) => {
+      const title = input.title.trim();
+      const feeRwf = Math.round(input.budgetRwf * 0.2);
+      const id = nextId("cmp");
+
+      const campaign: BrandCampaignView = {
+        id,
+        title,
+        status: "draft",
+        runPeriod: `Opens ${input.deadline}`,
+        budgetRwf: input.budgetRwf,
+        feeRwf,
+        campaignType: input.campaignType.trim(),
+        brief: input.brief.trim() || "Brief to be finalized with your team.",
+        assignedCreators: 0,
+        submitted: 0,
+        approved: 0,
+        posts: [],
+        performance: {
+          totalViews: 0,
+          engagementRate: "—",
+          spendRwf: 0,
+        },
+      };
+
+      const invoice: BrandInvoice = {
+        id: nextId("inv"),
+        campaignId: id,
+        label: title,
+        creatorBudgetRwf: input.budgetRwf,
+        feeRwf,
+        totalRwf: input.budgetRwf + feeRwf,
+        status: "pending",
+        issuedAt: new Date().toISOString(),
+      };
+
+      persist((s) => ({
+        ...s,
+        campaigns: [campaign, ...s.campaigns],
+        invoices: [invoice, ...s.invoices],
+      }));
+
+      return campaign;
+    },
+    [persist],
+  );
+
   return {
     state,
     status,
     error,
     retryHydration: hydrate,
+    createCampaign,
   };
 }
 

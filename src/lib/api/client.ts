@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { lookupMockCredential } from "@/lib/auth/mockCredentials";
 import { apiEndpoints } from "./endpoints";
 import { ApiRequestError, classifyHttpFailure } from "./errors";
 
@@ -67,11 +68,26 @@ async function readAuthError(response: Response) {
   return "Could not complete that request.";
 }
 
+function mockAccessToken(role: string) {
+  return `mock_${role}_${Date.now().toString(36)}`;
+}
+
 export async function loginWithPassword(input: {
   email: string;
   password: string;
   role: string;
 }): Promise<AuthResult> {
+  if (siteConfig.useMockData) {
+    const account = lookupMockCredential(input.email, input.role);
+    if (!account || account.password !== input.password) {
+      throw new Error("Wrong password");
+    }
+    const email = input.email.trim().toLowerCase();
+    const accessToken = mockAccessToken(account.role);
+    writeAccessToken(accessToken);
+    return { accessToken, role: account.role, email };
+  }
+
   const response = await fetch(joinApiUrl(apiEndpoints.auth.login), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -90,6 +106,22 @@ export async function signupWithPassword(input: {
   role: string;
   displayName?: string;
 }): Promise<AuthResult> {
+  if (siteConfig.useMockData) {
+    if (input.role === "admin") {
+      throw new Error("Admin accounts are provisioned by the platform team.");
+    }
+    if (input.password.length < 8) {
+      throw new Error("Use a password with at least 8 characters.");
+    }
+    const email = input.email.trim().toLowerCase();
+    if (lookupMockCredential(email, input.role)) {
+      throw new Error("Email is already registered.");
+    }
+    const accessToken = mockAccessToken(input.role);
+    writeAccessToken(accessToken);
+    return { accessToken, role: input.role, email };
+  }
+
   const response = await fetch(joinApiUrl(apiEndpoints.auth.signup), {
     method: "POST",
     headers: { "Content-Type": "application/json" },

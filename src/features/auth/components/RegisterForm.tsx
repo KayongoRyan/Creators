@@ -102,20 +102,23 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
           displayName,
         })
           .then((result) => {
-            saveDemoSession({
-              role: result.role as UserRole,
-              displayName,
-              email: result.email,
-              ...(role === "creator"
-                ? {
-                    address,
-                    birthDate,
-                    phone,
-                    niches: selectedNiches,
-                    ...(avatarDataUrl ? { avatarDataUrl } : {}),
-                  }
-                : {}),
-            });
+            saveDemoSession(
+              {
+                role: result.role as UserRole,
+                displayName,
+                email: result.email,
+                ...(role === "creator"
+                  ? {
+                      address,
+                      birthDate,
+                      phone,
+                      niches: selectedNiches,
+                      ...(avatarDataUrl ? { avatarDataUrl } : {}),
+                    }
+                  : {}),
+              },
+              { method: "register" },
+            );
             router.replace(getRoleHome(result.role as UserRole));
           })
           .catch((reason) => {

@@ -6,11 +6,14 @@ export function WorkspacePageShell({
   eyebrow,
   title,
   subtitle,
+  topRight,
   children,
 }: {
   eyebrow: string;
   title: string;
   subtitle?: string;
+  /** Renders top-right in the white content area (e.g. filter dropdown). */
+  topRight?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -23,7 +26,10 @@ export function WorkspacePageShell({
           <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
           {subtitle ? <p className="mt-2 text-sm text-white/65">{subtitle}</p> : null}
         </div>
-        <div className="space-y-6 p-6 sm:p-8">{children}</div>
+        <div className="space-y-6 p-6 sm:p-8">
+          {topRight ? <div className="flex justify-end">{topRight}</div> : null}
+          {children}
+        </div>
       </div>
     </div>
   );

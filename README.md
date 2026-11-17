@@ -24,6 +24,8 @@ npm run dev:api      # FastAPI http://localhost:4000
 
 Role dev scripts use **separate ports and `.next-*` folders** so you can run admin + brand + creator at once without corrupting the cache.
 
+**Cross-port web activity (admin):** With `dev:admin`, `dev:brand`, and `dev:creator` running together, page views and actions from :3002/:3003 POST to a shared hub (`.data/platform-events.json`). Open **Web activity** on :3001 — the feed polls every ~2.5s. `dev:admin` also auto-seeds an admin demo session and redirects `/` → `/admin`.
+
 If you see `Cannot find module './611.js'`, missing `vendor-chunks`, or `reading '/_app'` errors — corrupted `.next` from old parallel dev or running `build` while dev is up:
 
 ```bash
@@ -73,6 +75,7 @@ Repo: [github.com/KayongoRyan/Creators](https://github.com/KayongoRyan/Creators)
 | `creators_admin_state_v1` | Admin |
 | `creators_brand_state_v1` | Brand |
 | `creators_creator_state_v1` | Creator |
+| `creators_platform_events_v1` | Live activity log shown in admin analytics |
 
 Login at `/login` or use `dev:admin` / `dev:brand` / `dev:creator` to seed the demo session.
 
@@ -97,7 +100,7 @@ Code entry points: `src/lib/api/endpoints.ts`, `src/lib/api/portalApi.ts`, `src/
 
 ## What each portal does
 
-**Admin** — Overview KPIs, campaign create, creator applications (verify/reject), submission review (approve/reject/revision), payout tracking.
+**Admin** — Platform analytics (traffic, sign-ups, revenue vs payouts, funnel, top creators/brands, operations health, full audit trail of every action), overview KPIs, campaign create, creator applications (verify/reject), submission review (approve/reject/revision), payout tracking.
 
 **Brand** — Dashboard, campaign list and detail (post links + performance), invoices, contact.
 
@@ -150,6 +153,6 @@ src/
 |---|---|
 | Public | `/`, `/apply` |
 | Auth | `/login`, `/register` |
-| Admin | `/admin`, `/admin/campaigns`, `/admin/creators`, `/admin/brands`, `/admin/submissions`, `/admin/payments` |
+| Admin | `/admin`, `/admin/analytics`, `/admin/campaigns`, `/admin/creators`, `/admin/brands`, `/admin/submissions`, `/admin/payments` |
 | Brand | `/brand`, `/brand/campaigns`, `/brand/campaigns/[id]`, `/brand/invoices`, `/brand/reports` |
 | Creator | `/creator`, `/creator/campaigns`, `/creator/campaigns/[id]`, `/creator/tasks`, `/creator/submissions`, `/creator/earnings`, `/creator/applications` |

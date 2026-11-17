@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 import { siteConfig } from "@/config/site";
+import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
+import { severityForAction } from "@/lib/analytics/seed";
 import {
   apiApplyToCampaign,
   apiSubmitAssignment,
@@ -135,12 +137,22 @@ function useCreatorStoreController() {
         profile: { ...s.profile, ...patch },
       }));
       void notifyMutationFailure(() => apiUpdateCreatorProfile(patch));
+      recordPlatformEvent({
+        actorName: state.profile.displayName,
+        actorRole: "creator",
+        action: "profile_updated",
+        summary: `${state.profile.displayName} updated their creator profile`,
+        targetLabel: state.profile.displayName,
+        href: "/admin/creators",
+        severity: severityForAction("profile_updated"),
+      });
     },
-    [notifyMutationFailure, persist],
+    [notifyMutationFailure, persist, state.profile.displayName],
   );
 
   const applyToCampaign = useCallback(
     (campaignId: string, pitch?: string) => {
+      const campaign = state.discover.find((c) => c.id === campaignId);
       persist((s) => {
         if (s.applications.some((a) => a.campaignId === campaignId)) return s;
         const campaign = s.discover.find((c) => c.id === campaignId);
@@ -162,13 +174,25 @@ function useCreatorStoreController() {
         };
       });
       void notifyMutationFailure(() => apiApplyToCampaign(campaignId, pitch));
+      recordPlatformEvent({
+        actorName: state.profile.displayName,
+        actorRole: "creator",
+        action: "campaign_applied",
+        summary: campaign
+          ? `${state.profile.displayName} applied to ${campaign.title}`
+          : `${state.profile.displayName} applied to a campaign`,
+        targetLabel: campaign?.title,
+        href: "/admin/creators",
+        severity: severityForAction("campaign_applied"),
+      });
     },
-    [notifyMutationFailure, persist],
+    [notifyMutationFailure, persist, state.discover, state.profile.displayName],
   );
 
   const submitAssignment = useCallback(
     (assignmentId: string, postUrl: string) => {
       const url = postUrl.trim();
+      const assignment = state.assignments.find((a) => a.id === assignmentId);
       persist((s) => {
         const assignment = s.assignments.find((a) => a.id === assignmentId);
         if (!assignment) return s;
@@ -202,8 +226,19 @@ function useCreatorStoreController() {
         };
       });
       void notifyMutationFailure(() => apiSubmitAssignment(assignmentId, url));
+      recordPlatformEvent({
+        actorName: state.profile.displayName,
+        actorRole: "creator",
+        action: "submission_created",
+        summary: assignment
+          ? `${state.profile.displayName} submitted a post for ${assignment.title}`
+          : `${state.profile.displayName} submitted a post`,
+        targetLabel: assignment?.title,
+        href: "/admin/submissions",
+        severity: severityForAction("submission_created"),
+      });
     },
-    [notifyMutationFailure, persist],
+    [notifyMutationFailure, persist, state.assignments, state.profile.displayName],
   );
 
   return {

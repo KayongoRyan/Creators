@@ -57,15 +57,35 @@ type AuthResult = {
   email: string;
 };
 
+async function readResponseJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  const trimmed = text.trim();
+  if (!trimmed || trimmed.startsWith("<!") || trimmed.startsWith("<html")) {
+    throw new Error(
+      "API is not reachable (got HTML instead of JSON). Start npm run dev:api and keep Next running.",
+    );
+  }
+  try {
+    return JSON.parse(trimmed) as T;
+  } catch {
+    throw new Error(
+      "API returned a non-JSON response. Check NEXT_PUBLIC_API_URL and that FastAPI is up.",
+    );
+  }
+}
+
 async function readAuthError(response: Response) {
   try {
-    const body = (await response.json()) as { detail?: string };
+    const body = await readResponseJson<{ detail?: string }>(response);
     if (typeof body.detail === "string" && body.detail) return body.detail;
-  } catch {
-    // ignore
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("API")) return error.message;
   }
   if (response.status === 401) return "Wrong password";
   if (response.status === 409) return "Email is already registered.";
+  if (response.status === 500 || response.status === 502 || response.status === 503) {
+    return "API is not running. Start npm run dev:api, then try again.";
+  }
   return "Could not complete that request.";
 }
 
@@ -89,13 +109,20 @@ export async function loginWithPassword(input: {
     return { accessToken, role: account.role, email };
   }
 
-  const response = await fetch(joinApiUrl(apiEndpoints.auth.login), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+  let response: Response;
+  try {
+    response = await fetch(joinApiUrl(apiEndpoints.auth.login), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new Error(
+      "API is not reachable. Start npm run dev:api (and Next if using /api rewrite).",
+    );
+  }
   if (!response.ok) throw new Error(await readAuthError(response));
-  const body = (await response.json()) as AuthResult;
+  const body = await readResponseJson<AuthResult>(response);
   if (!body.accessToken) throw new Error("No access token returned.");
   writeAccessToken(body.accessToken);
   return body;
@@ -123,18 +150,25 @@ export async function signupWithPassword(input: {
     return { accessToken, role: input.role, email };
   }
 
-  const response = await fetch(joinApiUrl(apiEndpoints.auth.signup), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: input.email,
-      password: input.password,
-      role: input.role,
-      displayName: input.displayName,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(joinApiUrl(apiEndpoints.auth.signup), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: input.email,
+        password: input.password,
+        role: input.role,
+        displayName: input.displayName,
+      }),
+    });
+  } catch {
+    throw new Error(
+      "API is not reachable. Start npm run dev:api (and Next if using /api rewrite).",
+    );
+  }
   if (!response.ok) throw new Error(await readAuthError(response));
-  const body = (await response.json()) as AuthResult;
+  const body = await readResponseJson<AuthResult>(response);
   if (!body.accessToken) throw new Error("No access token returned.");
   writeAccessToken(body.accessToken);
   return body;
@@ -174,5 +208,5 @@ export async function apiClient<T>(
     throw new ApiRequestError(res.status, path, kind);
   }
 
-  return res.json() as Promise<T>;
+  return readResponseJson<T>(res);
 }

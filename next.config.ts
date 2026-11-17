@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Next 16 dev uses Turbopack by default; acknowledge it while keeping webpack for build.
   // LAN URL printed by `next dev` (172.22.192.1). Without this, dev JS is blocked and the signup buttons do nothing.
-  allowedDevOrigins: ["172.22.192.1"],
+  allowedDevOrigins: ["172.22.192.1", "172.25.160.1"],
   // Phone/LAN browsers call the site host. Proxy /api to the FastAPI process on this machine.
   async rewrites() {
     return [

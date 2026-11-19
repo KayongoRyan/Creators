@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.router import api_router
 from app.core.config import get_settings
+from app.core.security import warmup_supabase_jwks
 from app.core.db import session_factory
 from app.db.apply import apply_schema
 from app.db.models import Campaign
@@ -15,11 +16,15 @@ from app.db.seed import seed
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     apply_schema()
+    warmup_supabase_jwks()
     db: Session = session_factory()()
     try:
-        if db.query(Campaign).count() == 0:
+        from app.db.seed import ensure_demo_passwords, seed
+
+        if get_settings().seed_demo and db.query(Campaign).count() == 0:
             seed(db)
-            db.commit()
+        ensure_demo_passwords(db)
+        db.commit()
     finally:
         db.close()
     yield

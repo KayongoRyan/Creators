@@ -1,7 +1,6 @@
 import { routes } from "@/config/routes";
 import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
 import { isAdminOnlyPortal } from "@/lib/portal/devScope";
-import { siteConfig } from "@/config/site";
 import type { UserRole } from "@/types";
 
 export type DemoSession = {
@@ -51,22 +50,10 @@ export function getRoleHome(role: UserRole) {
     return roleHome[role];
 }
 
-const adminDevSession: DemoSession = {
-    role: "admin",
-    displayName: "Platform Admin",
-    email: "admin@ubunifu.dev",
-};
-
 const adminSkipAutoKey = "creators.admin-skip-auto-session";
 
-/** `dev:admin` + mock mode: seed session before DashboardShell redirects to /join. */
-export function ensureAdminDevSession(options?: { method?: "login" | "register" }) {
-    if (typeof window === "undefined") return;
-    if (!siteConfig.useMockData || !isAdminOnlyPortal()) return;
-    if (window.sessionStorage.getItem(adminSkipAutoKey) === "1") return;
-    if (readDemoSession()?.role === "admin") return;
-    saveDemoSession(adminDevSession, options);
-}
+/** No-op: admin portal requires API login. */
+export function ensureAdminDevSession(_options?: { method?: "login" | "register" }) {}
 
 export function markAdminManualSignIn() {
     if (typeof window === "undefined") return;

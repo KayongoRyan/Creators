@@ -11,6 +11,7 @@ from app.modules.campaigns.economics import (
     platform_fee_rwf,
     setup_fee_rwf,
 )
+from app.modules.storage.assets import save_campaign_source_asset
 
 
 def create_campaign(db: Session, actor: Actor, payload: dict) -> dict:
@@ -74,6 +75,106 @@ def create_campaign(db: Session, actor: Actor, payload: dict) -> dict:
         listed_in_brand=True,
     )
     db.add(campaign)
+    db.flush()
+    db.add(
+        BrandInvoice(
+            id=new_id("inv"),
+            brand_id=brand.id,
+            campaign_id=campaign_id,
+            label=title,
+            creator_budget_rwf=pool,
+            fee_rwf=fee + setup_fee,
+            setup_fee_rwf=setup_fee,
+            total_rwf=budget,
+            status="pending",
+        )
+    )
+    db.add(
+        BrandCollection(
+            id=new_id("col"),
+            brand_id=brand.id,
+            campaign_id=campaign_id,
+            label=title,
+            amount_rwf=budget,
+            status="pending",
+        )
+    )
+    audit(db, actor, "campaign.create", "campaign", campaign_id, title)
+    return {"id": campaign_id}
+
+
+def upload_campaign_source_asset(
+    db: Session,
+    actor: Actor,
+    campaign_id: str,
+    *,
+    filename: str,
+    data: bytes,
+    content_type: str,
+) -> dict:
+    campaign = db.get(Campaign, campaign_id)
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    if not data:
+        raise HTTPException(status_code=422, detail="Empty file")
+    path = save_campaign_source_asset(campaign_id, filename, data, content_type)
+    campaign.source_asset_path = path
+    # Surface on open assignments that lack a source URL.
+    from app.db.models import Assignment
+
+    for assignment in db.query(Assignment).filter(Assignment.campaign_id == campaign_id).all():
+        if not assignment.source_url:
+            assignment.source_url = path
+    audit(db, actor, "campaign.source_upload", "campaign", campaign_id, filename)
+    return {"sourceAssetPath": path}
+
+
+def create_brand_campaign(db: Session, actor: Actor, payload: dict) -> dict:
+    """Brand-scoped draft campaign + pending invoice for the actor's brand."""
+    from app.modules.portal.brand_access import load_brand_for_actor
+
+    brand = load_brand_for_actor(db, actor)
+    title = str(payload["title"]).strip()
+    campaign_type = str(payload["campaign_type"]).strip()
+    budget = int(payload["budget_rwf"])
+    deadline = str(payload["deadline"]).strip()
+    brief = str(payload.get("brief") or "").strip()
+    if budget <= 0 or not title or not campaign_type or not deadline:
+        raise HTTPException(status_code=422, detail="Campaign fields are incomplete")
+
+    fee_percent = 20
+    setup_fee = setup_fee_rwf(budget)
+    fee = platform_fee_rwf(budget, fee_percent)
+    pool = creator_pool_rwf(budget, fee_percent, setup_fee)
+    campaign_id = new_id("cmp")
+    campaign = Campaign(
+        id=campaign_id,
+        brand_id=brand.id,
+        title=title,
+        brand_portal_title=title,
+        status="draft",
+        budget_rwf=budget,
+        created_at=now_iso(),
+        campaign_type=campaign_type,
+        deadline=deadline,
+        fee_percent=fee_percent,
+        content_kind=content_kind_for(campaign_type),
+        setup_fee_rwf=setup_fee,
+        platform_fee_rwf=fee,
+        creator_pool_rwf=pool,
+        pool_remaining_rwf=pool,
+        rpm_rwf=1500,
+        brief=brief or "Brief to be finalized with your team.",
+        assignment_mode="open",
+        fee_rwf=fee,
+        run_period=f"Opens {deadline}",
+        is_open=False,
+        listed_in_admin=True,
+        listed_in_discover=True,
+        listed_in_brand=True,
+    )
+    db.add(campaign)
+    db.flush()
     db.add(
         BrandInvoice(
             id=new_id("inv"),

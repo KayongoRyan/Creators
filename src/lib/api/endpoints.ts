@@ -11,6 +11,8 @@ export const apiEndpoints = {
     campaigns: "/admin/campaigns",
     creatorsVerify: (id: string) => `/admin/creators/${id}/verify`,
     creatorsReject: (id: string) => `/admin/creators/${id}/reject`,
+    campaignApplicationAccept: (id: string) =>
+      `/admin/campaign-applications/${id}/accept`,
     submissionApprove: (id: string) => `/admin/submissions/${id}/approve`,
     submissionReject: (id: string) => `/admin/submissions/${id}/reject`,
     submissionRevision: (id: string) => `/admin/submissions/${id}/revision`,
@@ -19,9 +21,11 @@ export const apiEndpoints = {
     campaignFund: (id: string) => `/admin/campaigns/${id}/fund`,
     campaignSnapshot: (id: string) => `/admin/campaigns/${id}/snapshot`,
     campaignReport: (id: string) => `/admin/campaigns/${id}/report`,
+    campaignSourceAsset: (id: string) => `/admin/campaigns/${id}/source-asset`,
   },
   brand: {
     state: "/brand/state",
+    campaigns: "/brand/campaigns",
   },
   creator: {
     state: "/creator/state",
@@ -36,5 +40,8 @@ export const apiEndpoints = {
     devToken: "/auth/dev-token",
     login: "/auth/login",
     signup: "/auth/signup",
+    signupStart: "/auth/signup/start",
+    signupVerify: "/auth/signup/verify",
+    signupResend: "/auth/signup/resend",
   },
 } as const;

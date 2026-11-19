@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { AdminListControls } from "@/components/admin/AdminListControls";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useAdminStore } from "@/features/admin/store";
+import {
+  DEFAULT_LIST_QUERY,
+  paginateList,
+  type ListQuery,
+} from "@/lib/admin/listQuery";
 import type { AdminSubmission, CampaignReport } from "@/types";
 import {
   centsToRwf,
@@ -12,25 +18,53 @@ import {
 } from "@/lib/format/money";
 
 export function AdminCampaigns() {
-  const { state, fundCampaign, snapshotCampaign, loadCampaignReport } = useAdminStore();
+  const {
+    state,
+    fundCampaign,
+    snapshotCampaign,
+    loadCampaignReport,
+    uploadCampaignSourceAsset,
+  } = useAdminStore();
   const [viewDrafts, setViewDrafts] = useState<Record<string, Record<string, string>>>({});
   const [reports, setReports] = useState<Record<string, CampaignReport | "loading" | string>>(
     {},
+  );
+  const [query, setQuery] = useState<ListQuery>(DEFAULT_LIST_QUERY);
+
+  const page = useMemo(
+    () =>
+      paginateList(state.campaigns, query, (campaign, search, status) => {
+        if (status !== "all" && campaign.status !== status) return false;
+        if (!search) return true;
+        const hay = `${campaign.title} ${campaign.brandName ?? ""} ${campaign.campaignType ?? ""}`.toLowerCase();
+        return hay.includes(search);
+      }),
+    [query, state.campaigns],
   );
 
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="Campaigns" description="All active and past campaigns" />
-      <p className="mb-8 text-sm text-gray-600">
-        {state.campaigns.length}{" "}
-        {state.campaigns.length === 1 ? "campaign" : "campaigns"}
-      </p>
+      <AdminListControls
+        query={query}
+        onChange={setQuery}
+        total={page.total}
+        pageCount={page.pageCount}
+        searchPlaceholder="Title, brand, type…"
+        statusOptions={[
+          { value: "all", label: "All" },
+          { value: "draft", label: "Draft" },
+          { value: "active", label: "Active" },
+          { value: "paused", label: "Paused" },
+          { value: "completed", label: "Completed" },
+        ]}
+      />
 
-      {state.campaigns.length === 0 ? (
-        <EmptyState message="No campaigns yet." />
+      {page.rows.length === 0 ? (
+        <EmptyState message="No campaigns match these filters." />
       ) : (
         <ul className="divide-y divide-black/10 border-y border-black/10">
-          {state.campaigns.map((campaign) => {
+          {page.rows.map((campaign) => {
             const budget = centsToRwf(campaign.budgetCents);
             const fee = Math.round(budget * ((campaign.feePercent ?? 20) / 100));
             return (
@@ -62,6 +96,11 @@ export function AdminCampaigns() {
                       {formatRwf(campaign.poolRemainingRwf ?? 0)}
                     </p>
                   ) : null}
+                  {campaign.sourceAssetPath ? (
+                    <p className="truncate text-gray-500">
+                      Source asset: {campaign.sourceAssetPath}
+                    </p>
+                  ) : null}
                   {campaign.status === "draft" && !campaign.fundedAt ? (
                     <p className="text-gray-500">
                       Awaiting brand payment confirmation before going live.
@@ -78,6 +117,18 @@ export function AdminCampaigns() {
                       Confirm payment
                     </button>
                   ) : null}
+                  <label className="inline-flex min-h-10 cursor-pointer items-center rounded-full border border-black/15 px-4 text-sm font-medium">
+                    Upload source
+                    <input
+                      type="file"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) uploadCampaignSourceAsset(campaign.id, file);
+                        event.target.value = "";
+                      }}
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() => {

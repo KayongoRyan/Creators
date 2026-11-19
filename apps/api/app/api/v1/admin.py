@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, File, Header, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.deps import require
@@ -6,8 +6,16 @@ from app.api.idempotency import run_idempotent
 from app.api.schemas import CreateCampaignIn, RevisionIn, SnapshotIn
 from app.core.db import get_db
 from app.core.security import Actor
-from app.modules.campaigns.service import create_campaign, fund_campaign
-from app.modules.creators.service import reject_creator, verify_creator
+from app.modules.campaigns.service import (
+    create_campaign,
+    fund_campaign,
+    upload_campaign_source_asset,
+)
+from app.modules.creators.service import (
+    accept_campaign_application,
+    reject_creator,
+    verify_creator,
+)
 from app.modules.payouts.service import mark_all_payouts_paid, mark_payout_paid, snapshot_campaign
 from app.modules.portal.read_models import admin_state
 from app.modules.reporting.service import campaign_report
@@ -44,6 +52,24 @@ def post_fund(
     actor: Actor = Depends(require("admin")),
 ) -> dict:
     return fund_campaign(db, actor, campaign_id)
+
+
+@router.post("/campaigns/{campaign_id}/source-asset")
+async def post_source_asset(
+    campaign_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(require("admin")),
+) -> dict:
+    data = await file.read()
+    return upload_campaign_source_asset(
+        db,
+        actor,
+        campaign_id,
+        filename=file.filename or "source.bin",
+        data=data,
+        content_type=file.content_type or "application/octet-stream",
+    )
 
 
 @router.post("/campaigns/{campaign_id}/snapshot")
@@ -88,6 +114,15 @@ def post_reject_creator(
     actor: Actor = Depends(require("admin")),
 ) -> dict:
     return reject_creator(db, actor, application_id)
+
+
+@router.post("/campaign-applications/{application_id}/accept")
+def post_accept_campaign_application(
+    application_id: str,
+    db: Session = Depends(get_db),
+    actor: Actor = Depends(require("admin")),
+) -> dict:
+    return accept_campaign_application(db, actor, application_id)
 
 
 @router.post("/submissions/{submission_id}/approve")

@@ -7,6 +7,7 @@ export const routes = {
     join: "/join",
     login: "/login",
     register: "/register",
+    verify: "/verify",
   },
   admin: {
     root: "/admin",

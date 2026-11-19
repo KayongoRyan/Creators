@@ -2,6 +2,10 @@
 
 from sqlalchemy.orm import Session
 
+from app.core.passwords import DEMO_PASSWORD, hash_password
+
+_DEMO_HASH = hash_password(DEMO_PASSWORD)
+
 from app.db.models import (
     Assignment,
     Brand,
@@ -59,6 +63,7 @@ def seed(db: Session) -> None:
                 instagram_followers=9_000,
                 niche="Lifestyle",
                 momo="+250 788 222 333",
+                phone="+250 788 222 333",
                 label="Reliable",
                 campaigns_completed=4,
             ),
@@ -71,6 +76,7 @@ def seed(db: Session) -> None:
                 instagram_followers=4_000,
                 niche="Short-form",
                 momo="+250 788 000 111",
+                phone="+250 788 000 111",
                 label="New",
                 campaigns_completed=2,
             ),
@@ -83,6 +89,7 @@ def seed(db: Session) -> None:
                 instagram_followers=9_000,
                 niche="Fashion stills",
                 momo="+250 788 000 222",
+                phone="+250 788 000 222",
                 label="New",
                 campaigns_completed=1,
             ),
@@ -95,6 +102,14 @@ def seed(db: Session) -> None:
                 email="admin@ubunifu.dev",
                 role="admin",
                 display_name="Admin",
+                password_hash=_DEMO_HASH,
+            ),
+            Profile(
+                id="profile_admin_rw",
+                email="admin@creators.rw",
+                role="admin",
+                display_name="Platform Admin",
+                password_hash=_DEMO_HASH,
             ),
             Profile(
                 id="profile_brand",
@@ -102,6 +117,7 @@ def seed(db: Session) -> None:
                 role="brand",
                 display_name="Brand",
                 brand_id="br_primus",
+                password_hash=_DEMO_HASH,
             ),
             Profile(
                 id="profile_creator",
@@ -109,6 +125,7 @@ def seed(db: Session) -> None:
                 role="creator",
                 display_name="Creator",
                 creator_id="cr_marie",
+                password_hash=_DEMO_HASH,
             ),
         ]
     )
@@ -296,6 +313,7 @@ def seed(db: Session) -> None:
                 instagram_followers=8_000,
                 niche="Lifestyle",
                 momo_phone="+250 788 100 001",
+                phone="+250 788 100 001",
                 status="pending",
                 created_at="2026-05-18T08:00:00.000Z",
             ),
@@ -308,6 +326,7 @@ def seed(db: Session) -> None:
                 instagram_followers=3_000,
                 niche="Comedy",
                 momo_phone="+250 788 100 002",
+                phone="+250 788 100 002",
                 status="pending",
                 created_at="2026-05-18T09:00:00.000Z",
             ),
@@ -540,3 +559,19 @@ def seed(db: Session) -> None:
             ),
         ]
     )
+
+
+DEMO_EMAILS = (
+    "admin@ubunifu.dev",
+    "admin@creators.rw",
+    "brand@ubunifu.dev",
+    "creator@ubunifu.dev",
+)
+
+
+def ensure_demo_passwords(db: Session) -> None:
+    """Backfill bcrypt hashes for demo profiles (existing SQLite DBs without hashes)."""
+    for email in DEMO_EMAILS:
+        profile = db.query(Profile).filter(Profile.email == email).one_or_none()
+        if profile is not None and not profile.password_hash:
+            profile.password_hash = _DEMO_HASH

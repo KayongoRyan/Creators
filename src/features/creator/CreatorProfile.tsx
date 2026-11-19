@@ -59,12 +59,14 @@ export function CreatorProfile() {
             onChange={(e) => updateProfile({ niche: e.target.value })}
           />
         </Field>
-        <Field id="momo" label="MoMo number">
+        <Field id="phone" label="Phone number">
           <input
-            id="momo"
+            id="phone"
             className={creatorFieldClass}
-            value={state.profile.momo}
-            onChange={(e) => updateProfile({ momo: e.target.value })}
+            value={state.profile.phone ?? state.profile.momo}
+            onChange={(e) =>
+              updateProfile({ phone: e.target.value, momo: e.target.value })
+            }
           />
         </Field>
 

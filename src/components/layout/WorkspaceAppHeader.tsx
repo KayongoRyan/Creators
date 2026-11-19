@@ -70,6 +70,7 @@ export function WorkspaceAppHeader({
   }
 
   const joinHref = `${routes.auth.join}?role=${role}&mode=signup`;
+  const loginHref = `${routes.auth.join}?role=${role}&mode=login`;
   const compactNav = nav.length > 4;
   const workspaceLinkClass = cn(
     marketingNavLinkClass,
@@ -144,16 +145,24 @@ export function WorkspaceAppHeader({
                 </div>
               </details>
             ) : (
-              <Link
-                href={joinHref}
-                className={cn(
-                  "inline-flex shrink-0 items-center gap-2 rounded-full bg-mkt-nav-join px-5 py-3 sm:px-7 sm:py-3.5",
-                  "font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--m-nav-join-fg)] hover:bg-mkt-nav-join-hi",
-                )}
-              >
-                {marketingJoinCta.label}
-                <JoinArrowIcon className="size-4" />
-              </Link>
+              <div className="flex shrink-0 items-center gap-2">
+                <Link
+                  href={loginHref}
+                  className="hidden rounded-full border border-mkt-border px-4 py-2.5 text-xs font-semibold text-mkt-fg hover:bg-mkt-muted sm:inline-flex"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href={joinHref}
+                  className={cn(
+                    "inline-flex shrink-0 items-center gap-2 rounded-full bg-mkt-nav-join px-5 py-3 sm:px-7 sm:py-3.5",
+                    "font-mono text-xs font-bold uppercase tracking-[0.14em] text-[var(--m-nav-join-fg)] hover:bg-mkt-nav-join-hi",
+                  )}
+                >
+                  {marketingJoinCta.label}
+                  <JoinArrowIcon className="size-4" />
+                </Link>
+              </div>
             )}
           </div>
         </div>

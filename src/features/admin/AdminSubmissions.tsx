@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { AdminListControls } from "@/components/admin/AdminListControls";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field, inputClassName, inputErrorClassName } from "@/components/shared/formField";
 import { useAdminStore } from "@/features/admin/store";
 import { SubmissionStatusBadge } from "@/features/submissions/components/SubmissionStatusBadge";
+import {
+  DEFAULT_LIST_QUERY,
+  paginateList,
+  type ListQuery,
+} from "@/lib/admin/listQuery";
 import type { AdminSubmission } from "@/types";
 
 type PendingAction =
@@ -27,6 +33,19 @@ export function AdminSubmissions() {
   );
   const [revisionErrors, setRevisionErrors] = useState<Record<string, string>>(
     {},
+  );
+  const [query, setQuery] = useState<ListQuery>(DEFAULT_LIST_QUERY);
+
+  const page = useMemo(
+    () =>
+      paginateList(state.submissions, query, (sub, search, status) => {
+        if (status !== "all" && sub.status !== status) return false;
+        if (!search) return true;
+        const hay =
+          `${sub.creatorName} ${sub.handle} ${sub.campaignTitle}`.toLowerCase();
+        return hay.includes(search);
+      }),
+    [query, state.submissions],
   );
 
   const confirm = () => {
@@ -56,11 +75,25 @@ export function AdminSubmissions() {
         title="Submission review"
         description="Approve content before payouts are released"
       />
-      {state.submissions.length === 0 ? (
-        <EmptyState message="No submissions to review." />
+      <AdminListControls
+        query={query}
+        onChange={setQuery}
+        total={page.total}
+        pageCount={page.pageCount}
+        searchPlaceholder="Creator, handle, campaign…"
+        statusOptions={[
+          { value: "all", label: "All" },
+          { value: "pending", label: "Pending" },
+          { value: "approved", label: "Approved" },
+          { value: "rejected", label: "Rejected" },
+          { value: "revision", label: "Revision" },
+        ]}
+      />
+      {page.rows.length === 0 ? (
+        <EmptyState message="No submissions match these filters." />
       ) : (
         <ul className="divide-y divide-black/10 border-y border-black/10">
-          {state.submissions.map((sub) => (
+          {page.rows.map((sub) => (
             <li key={sub.id} className="py-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>

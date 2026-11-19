@@ -211,4 +211,5 @@ def submit_assignment(db: Session, actor: Actor, assignment_id: str, post_url: s
                 status="pending",
             )
         )
-    return {}
+    audit(db, actor, "submission.create", "submission", submission.id, url)
+    return {"id": submission.id, "assignmentId": assignment.id}

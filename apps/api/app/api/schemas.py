@@ -18,6 +18,37 @@ class AuthCredentialsIn(ApiModel):
     display_name: str | None = Field(default=None, alias="displayName")
 
 
+class SignupOnboardingIn(ApiModel):
+    address: str | None = None
+    phone: str | None = None
+    birth_date: str | None = Field(default=None, alias="birthDate")
+    niches: list[str] | None = None
+    business_name: str | None = Field(default=None, alias="businessName")
+    business_type: str | None = Field(default=None, alias="businessType")
+    identification_number: str | None = Field(default=None, alias="identificationNumber")
+    bank_name: str | None = Field(default=None, alias="bankName")
+    account_number: str | None = Field(default=None, alias="accountNumber")
+
+
+class SignupStartIn(ApiModel):
+    email: str
+    password: str
+    role: str
+    display_name: str | None = Field(default=None, alias="displayName")
+    onboarding: SignupOnboardingIn | None = None
+
+
+class SignupVerifyIn(ApiModel):
+    email: str
+    token: str
+    role: str
+
+
+class SignupResendIn(ApiModel):
+    email: str
+    role: str | None = None
+
+
 class CreateCampaignIn(ApiModel):
     title: str
     brand_name: str = Field(alias="brandName")
@@ -57,6 +88,7 @@ class ProfilePatch(ApiModel):
     instagram_followers: int | None = Field(default=None, alias="instagramFollowers")
     niche: str | None = None
     momo: str | None = None
+    phone: str | None = None
     label: str | None = None
     campaigns_completed: int | None = Field(default=None, alias="campaignsCompleted")
 
@@ -68,3 +100,11 @@ class SnapshotViewIn(ApiModel):
 
 class SnapshotIn(ApiModel):
     views: list[SnapshotViewIn]
+
+
+class BrandCreateCampaignIn(ApiModel):
+    title: str
+    campaign_type: str = Field(alias="campaignType")
+    budget_rwf: int = Field(alias="budgetRwf")
+    deadline: str
+    brief: str | None = None

@@ -10,11 +10,15 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  if (pathname === "/api" || pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   if (pathname === "/") {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  const publicPaths = ["/join", "/login", "/register"];
+  const publicPaths = ["/join", "/login", "/register", "/verify"];
   if (
     publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
   ) {

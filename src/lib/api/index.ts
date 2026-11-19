@@ -3,10 +3,14 @@ export {
   joinApiUrl,
   loginWithPassword,
   signupWithPassword,
+  signupStart,
+  signupVerify,
+  signupResend,
   writeAccessToken,
   clearAccessToken,
   readAccessToken,
 } from "./client";
+export type { SignupOnboarding, SignupStartResult } from "./client";
 export { ApiRequestError, classifyHttpFailure } from "./errors";
 export type { ApiErrorKind } from "./errors";
 export { fetchResource } from "./fetchResource";
@@ -16,4 +20,4 @@ export type {
   BrandRecord,
   CreatorRecord,
   EarningsSnapshot,
-} from "./fixtures";
+} from "./resourceTypes";

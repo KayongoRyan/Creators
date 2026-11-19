@@ -1,0 +1,10 @@
+.venv
+.data
+uploads
+tests
+**/__pycache__
+*.pyc
+.env
+ugc_api.egg-info
+.pytest_cache
+scripts/.demo_auth_ids.json

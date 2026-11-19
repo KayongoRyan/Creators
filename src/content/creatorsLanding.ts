@@ -13,7 +13,7 @@ export const creatorsLanding = {
   },
   economicIntelligence: {
     title: "The fastest path to your next payout",
-    lead: "See open briefs, track submissions, and know when payout hits your MoMo wallet.",
+    lead: "See open briefs, track submissions, and know when payout is approved.",
     suggestions: [
       "Apply with your niche and handles once",
       "Browse campaigns that match your audience",
@@ -62,8 +62,8 @@ export const creatorsLanding = {
       },
       {
         title: "Payouts",
-        body: "Flat fees and RPM models with MoMo payout when work is approved.",
-        tag: "MoMo",
+        body: "Flat fees and RPM models with clear payout status when work is approved.",
+        tag: "Paid",
         pillColor: "#9c98ef",
         panel: "lilac",
         tab: "platform",
@@ -94,7 +94,7 @@ export const creatorsLanding = {
   },
   deploy: {
     title: "Start your next campaign today.",
-    body: "Campaigns stall when briefs, applications, and payouts live in different threads. Creators keeps brands and creators on one path—from the first brief through MoMo payout.",
+    body: "Campaigns stall when briefs, applications, and payouts live in different threads. Creators keeps brands and creators on one path—from the first brief through payout.",
     cta: "Start on Creators",
   },
   mission: {
@@ -105,7 +105,7 @@ export const creatorsLanding = {
   },
   testimonialsSection: {
     title: "What our customers say",
-    lead: "Real feedback from creators and brand teams running campaigns, reviews, and MoMo payouts on Creators.",
+    lead: "Real feedback from creators and brand teams running campaigns, reviews, and payouts on Creators.",
     cta: "View more",
   },
   testimonials: [

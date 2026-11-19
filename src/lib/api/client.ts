@@ -1,5 +1,8 @@
 import { siteConfig } from "@/config/site";
+<<<<<<< Updated upstream
 import { lookupMockCredential } from "@/lib/auth/mockCredentials";
+=======
+>>>>>>> Stashed changes
 import { apiEndpoints } from "./endpoints";
 import { ApiRequestError, classifyHttpFailure } from "./errors";
 
@@ -8,6 +11,8 @@ const accessTokenKey = "creators.access_token";
 type RequestOptions = RequestInit & {
   params?: Record<string, string | number | boolean | undefined>;
   retryOnUnauthorized?: boolean;
+  /** Keep the stored token when the API returns 401 (portal hydrate retries). */
+  keepTokenOn401?: boolean;
 };
 
 export function joinApiUrl(path: string) {
@@ -88,26 +93,11 @@ async function readAuthError(response: Response) {
   return "Could not complete that request.";
 }
 
-function mockAccessToken(role: string) {
-  return `mock_${role}_${Date.now().toString(36)}`;
-}
-
 export async function loginWithPassword(input: {
   email: string;
   password: string;
   role: string;
 }): Promise<AuthResult> {
-  if (siteConfig.useMockData) {
-    const account = lookupMockCredential(input.email, input.role);
-    if (!account || account.password !== input.password) {
-      throw new Error("Wrong password");
-    }
-    const email = input.email.trim().toLowerCase();
-    const accessToken = mockAccessToken(account.role);
-    writeAccessToken(accessToken);
-    return { accessToken, role: account.role, email };
-  }
-
   let response: Response;
   try {
     response = await fetch(joinApiUrl(apiEndpoints.auth.login), {
@@ -133,6 +123,7 @@ export async function signupWithPassword(input: {
   role: string;
   displayName?: string;
 }): Promise<AuthResult> {
+<<<<<<< Updated upstream
   if (input.role === "admin") {
     throw new Error("Admin accounts are provisioned by the platform team.");
   }
@@ -149,6 +140,8 @@ export async function signupWithPassword(input: {
     return { accessToken, role: input.role, email };
   }
 
+=======
+>>>>>>> Stashed changes
   let response: Response;
   try {
     response = await fetch(joinApiUrl(apiEndpoints.auth.signup), {
@@ -173,15 +166,101 @@ export async function signupWithPassword(input: {
   return body;
 }
 
+export type SignupOnboarding = {
+  address?: string;
+  phone?: string;
+  birthDate?: string;
+  niches?: string[];
+  businessName?: string;
+  businessType?: string;
+  identificationNumber?: string;
+  bankName?: string;
+  accountNumber?: string;
+};
+
+export type SignupStartResult = {
+  needsVerification: boolean;
+  email: string;
+  role: string;
+  bypass?: boolean;
+};
+
+async function postAuthJson<T>(path: string, body: unknown): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(joinApiUrl(path), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Error(
+      "API is not reachable. Start npm run dev:api (and Next if using /api rewrite).",
+    );
+  }
+  if (!response.ok) throw new Error(await readAuthError(response));
+  return readResponseJson<T>(response);
+}
+
+export async function signupStart(input: {
+  email: string;
+  password: string;
+  role: string;
+  displayName?: string;
+  onboarding?: SignupOnboarding;
+}): Promise<SignupStartResult> {
+  return postAuthJson<SignupStartResult>(apiEndpoints.auth.signupStart, {
+    email: input.email,
+    password: input.password,
+    role: input.role,
+    displayName: input.displayName,
+    onboarding: input.onboarding,
+  });
+}
+
+export async function signupVerify(input: {
+  email: string;
+  token: string;
+  role: string;
+}): Promise<AuthResult> {
+  const body = await postAuthJson<AuthResult>(apiEndpoints.auth.signupVerify, {
+    email: input.email,
+    token: input.token,
+    role: input.role,
+  });
+  if (!body.accessToken) throw new Error("No access token returned.");
+  writeAccessToken(body.accessToken);
+  return body;
+}
+
+export async function signupResend(input: {
+  email: string;
+  role?: string;
+}): Promise<{ ok: boolean; email: string; bypass?: boolean }> {
+  return postAuthJson(apiEndpoints.auth.signupResend, {
+    email: input.email,
+    role: input.role,
+  });
+}
+
 export async function apiClient<T>(
   path: string,
-  { params, retryOnUnauthorized = true, ...init }: RequestOptions = {},
+  {
+    params,
+    retryOnUnauthorized = true,
+    keepTokenOn401 = false,
+    ...init
+  }: RequestOptions = {},
 ): Promise<T> {
   let res: Response;
   try {
     const token = await resolveAccessToken();
     const headers = new Headers(init.headers);
-    if (!headers.has("Content-Type") && init.body) {
+    if (
+      !headers.has("Content-Type") &&
+      init.body &&
+      !(typeof FormData !== "undefined" && init.body instanceof FormData)
+    ) {
       headers.set("Content-Type", "application/json");
     }
     if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -198,7 +277,7 @@ export async function apiClient<T>(
   }
 
   if (res.status === 401) {
-    if (typeof window !== "undefined") clearAccessToken();
+    if (typeof window !== "undefined" && !keepTokenOn401) clearAccessToken();
     throw new ApiRequestError(401, path, "unauthenticated");
   }
 

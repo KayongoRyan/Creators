@@ -37,8 +37,53 @@ def test_admin_state_matches_portal_contract(client) -> None:
         "pay_amina",
         "pay_others",
     }
+    assert isinstance(state["activityLog"], list)
+    assert isinstance(state["auditLog"], list)
+    assert isinstance(state["brandAccounts"], list)
+    assert len(state["brandAccounts"]) >= 1
+    assert "daily" in state["analytics"]
+    assert len(state["analytics"]["daily"]) == 14
     denied = client.get("/api/admin/state", headers=token(client, "brand", "brand@ubunifu.dev"))
     assert denied.status_code == 403
+
+
+def test_admin_activity_log_after_approve(client) -> None:
+    headers = token(client, "admin", "admin@ubunifu.dev")
+    assert (
+        client.post("/api/admin/submissions/sub_jb/approve", headers=headers).status_code
+        == 200
+    )
+    state = client.get("/api/admin/state", headers=headers).json()
+    kinds = {row["kind"] for row in state["activityLog"]}
+    assert "submission_approved" in kinds
+    actions = {row["action"] for row in state["auditLog"]}
+    assert "submission_approved" in actions
+
+
+def test_brand_creates_campaign_visible_to_admin(client) -> None:
+    brand = token(client, "brand", "brand@ubunifu.dev")
+    created = client.post(
+        "/api/brand/campaigns",
+        headers=brand,
+        json={
+            "title": "Brand draft UGC",
+            "campaignType": "UGC",
+            "budgetRwf": 500_000,
+            "deadline": "2026-08-01",
+            "brief": "Shoot the can outdoors",
+        },
+    )
+    assert created.status_code == 200, created.text
+    campaign_id = created.json()["id"]
+
+    brand_state = client.get("/api/brand/state", headers=brand).json()
+    assert any(row["id"] == campaign_id for row in brand_state["campaigns"])
+    assert any(row.get("campaignId") == campaign_id for row in brand_state["invoices"])
+
+    admin = token(client, "admin", "admin@ubunifu.dev")
+    admin_state = client.get("/api/admin/state", headers=admin).json()
+    assert any(row["id"] == campaign_id for row in admin_state["campaigns"])
+    assert any(row["kind"] == "campaign_created" for row in admin_state["activityLog"])
 
 
 def test_brand_and_creator_portals(client) -> None:
@@ -55,6 +100,7 @@ def test_brand_and_creator_portals(client) -> None:
         headers=token(client, "creator", "creator@ubunifu.dev"),
     ).json()
     assert creator["profile"]["displayName"] == "Marie K."
+    assert creator["profile"]["phone"] == "+250 788 222 333"
     assert creator["profile"]["momo"] == "+250 788 222 333"
     open_ids = {row["id"] for row in creator["discover"] if row["open"]}
     assert "cmp_kcb" in open_ids
@@ -160,8 +206,11 @@ def test_fund_gates_launch_and_creator_flow(client) -> None:
         json={"campaignId": campaign_id},
     )
     assert opened.status_code == 200
+    apply_body = opened.json()
+    assert apply_body.get("assignmentId")
     state = client.get("/api/creator/state", headers=creator).json()
     assert any(row["campaignId"] == campaign_id for row in state["applications"])
+    assert any(row["campaignId"] == campaign_id for row in state["assignments"])
     db = session_factory()()
     try:
         campaign = db.get(Campaign, campaign_id)
@@ -169,30 +218,45 @@ def test_fund_gates_launch_and_creator_flow(client) -> None:
         assert campaign.creator_pool_rwf == 670_000
         assert campaign.funded_at
         assert campaign.is_open is True
+        assert campaign.assigned_creators >= 1
     finally:
         db.close()
 
+    assignment_id = apply_body["assignmentId"]
     submitted = client.post(
-        "/api/creator/assignments/asgn_iwacu/submit",
+        f"/api/creator/assignments/{assignment_id}/submit",
         headers=creator,
         json={"postUrl": "https://tiktok.com/@mariekigali/video/999"},
     )
-    assert submitted.status_code == 200
+    assert submitted.status_code == 200, submitted.text
     state = client.get("/api/creator/state", headers=creator).json()
-    assignment = next(row for row in state["assignments"] if row["id"] == "asgn_iwacu")
+    assignment = next(row for row in state["assignments"] if row["id"] == assignment_id)
     assert assignment["status"] == "pending"
     assert assignment["postUrl"].endswith("/999")
+
+    admin_state = client.get("/api/admin/state", headers=admin).json()
+    assert any(
+        row["campaignId"] == campaign_id and row["status"] == "pending"
+        for row in admin_state["submissions"]
+    )
+
+    # Keep legacy seeded assignment submit coverage.
+    seeded = client.post(
+        "/api/creator/assignments/asgn_iwacu/submit",
+        headers=creator,
+        json={"postUrl": "https://tiktok.com/@mariekigali/video/888"},
+    )
+    assert seeded.status_code == 200
 
     patched = client.patch(
         "/api/creator/profile",
         headers=creator,
-        json={"momo": "+250 788 999 000"},
+        json={"phone": "+250 788 999 000"},
     )
     assert patched.status_code == 200
-    assert (
-        client.get("/api/creator/state", headers=creator).json()["profile"]["momo"]
-        == "+250 788 999 000"
-    )
+    profile = client.get("/api/creator/state", headers=creator).json()["profile"]
+    assert profile["phone"] == "+250 788 999 000"
+    assert profile["momo"] == "+250 788 999 000"
 
 
 def test_public_application_stores_screenshot(client) -> None:
@@ -200,7 +264,7 @@ def test_public_application_stores_screenshot(client) -> None:
         "/api/public/creator-applications",
         data={
             "fullName": "Keza Aline",
-            "momo": "+250 788 321 000",
+            "phone": "+250 788 321 000",
             "tiktokHandle": "@keza",
             "instagramHandle": "@keza",
             "niche": "Food",
@@ -218,9 +282,24 @@ def test_public_application_stores_screenshot(client) -> None:
         row = db.get(CreatorApplication, application_id)
         assert row is not None
         assert row.screenshot_path
+        assert row.phone == "+250 788 321 000"
         assert row.status == "pending"
     finally:
         db.close()
+
+
+def test_admin_uploads_campaign_source_asset(client) -> None:
+    headers = token(client, "admin", "admin@ubunifu.dev")
+    response = client.post(
+        "/api/admin/campaigns/cmp_iwacu/source-asset",
+        headers=headers,
+        files={"file": ("clip.mp4", b"fake-video-bytes", "video/mp4")},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["sourceAssetPath"]
+    state = client.get("/api/admin/state", headers=headers).json()
+    iwacu = next(row for row in state["campaigns"] if row["id"] == "cmp_iwacu")
+    assert iwacu.get("sourceAssetPath")
 
 
 def test_legacy_lists_and_demo_header(client) -> None:

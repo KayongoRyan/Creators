@@ -148,6 +148,14 @@ export function PortalGate({
     return <PortalLoadingState />;
   }
   if (status === "unauthenticated") {
+    if (typeof window !== "undefined" && readDemoSession()) {
+      return (
+        <PortalErrorState
+          message="Could not verify your session with the API. Retry, or sign in again."
+          onRetry={onRetry}
+        />
+      );
+    }
     return <PortalAuthRedirect role={loginRole} />;
   }
   if (status === "forbidden") {

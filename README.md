@@ -94,7 +94,15 @@ Copy [`.env.example`](.env.example) to `.env.local` when overriding defaults.
 Backend lives in [`apps/api`](apps/api) (FastAPI, SQLite locally, Supabase Postgres when `DATABASE_URL` is set). Contract:
 
 - [`docs/BACKEND_INTEGRATION.md`](docs/BACKEND_INTEGRATION.md) — routes, request/response shapes (`AdminState`, `BrandState`, `CreatorState`), demo headers
-- [`docs/PHASE4_QA.md`](docs/PHASE4_QA.md) — manual QA checklist, responsive breakpoints, known gaps
+- [`docs/LOCAL_API.md`](docs/LOCAL_API.md) — local live API without Supabase
+- [`docs/DEPLOY.md`](docs/DEPLOY.md) — production env, Docker, migrations, auth remap
+- [`docs/TELEMETRY.md`](docs/TELEMETRY.md) — what analytics are real vs stubbed
+- [`docs/PHASE4_QA.md`](docs/PHASE4_QA.md) — manual QA checklist, three-portal live smoke
+
+```bash
+npm run test:api
+npm run test:e2e
+```
 
 Code entry points: `src/lib/api/endpoints.ts`, `src/lib/api/portalApi.ts`, `src/lib/api/client.ts`, `src/config/site.ts`.
 

@@ -11,10 +11,11 @@ import {
   underlineInputClassName,
 } from "@/components/shared/inspiredForm";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
-import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
+import { writePendingSignup } from "@/features/auth/pendingSignup";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
-import { signupWithPassword } from "@/lib/api";
-import { isValidEmail } from "@/lib/validators";
+import { routes } from "@/config/routes";
+import { signupStart } from "@/lib/api";
+import { firstPasswordError, isValidEmail } from "@/lib/validators";
 import type { UserRole } from "@/types";
 
 function readImageAsDataUrl(file: File) {
@@ -68,8 +69,9 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
           return;
         }
 
-        if (password.length < 8) {
-          setError("Use a password with at least 8 characters.");
+        const passwordIssue = firstPasswordError(password);
+        if (passwordIssue) {
+          setError(passwordIssue);
           return;
         }
 
@@ -93,33 +95,49 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
           }
         }
 
+        if (role !== "creator" && role !== "brand") {
+          setError("Choose Creator or Brand.");
+          return;
+        }
+
         setPending(true);
         setError("");
-        void signupWithPassword({
+        void signupStart({
           email,
           password,
           role,
           displayName,
+          onboarding: {
+            ...(role === "creator"
+              ? {
+                  address: address || undefined,
+                  birthDate: birthDate || undefined,
+                  phone: phone || undefined,
+                  niches: selectedNiches,
+                }
+              : {}),
+          },
         })
           .then((result) => {
-            saveDemoSession(
-              {
-                role: result.role as UserRole,
-                displayName,
-                email: result.email,
-                ...(role === "creator"
-                  ? {
-                      address,
-                      birthDate,
-                      phone,
-                      niches: selectedNiches,
-                      ...(avatarDataUrl ? { avatarDataUrl } : {}),
-                    }
-                  : {}),
-              },
-              { method: "register" },
-            );
-            router.replace(getRoleHome(result.role as UserRole));
+            writePendingSignup({
+              email: result.email,
+              role,
+              displayName,
+              address: address || undefined,
+              phone: phone || undefined,
+              birthDate: birthDate || undefined,
+              niches: role === "creator" ? selectedNiches : undefined,
+              bypass: Boolean(result.bypass),
+            });
+            const verifyUrl = `${routes.auth.verify}?${new URLSearchParams({
+              email: result.email,
+              role,
+            }).toString()}`;
+            if (typeof window !== "undefined") {
+              window.location.assign(verifyUrl);
+              return;
+            }
+            router.push(verifyUrl);
           })
           .catch((reason) => {
             setError(reason instanceof Error ? reason.message : "Could not create that account.");

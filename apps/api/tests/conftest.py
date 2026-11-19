@@ -5,9 +5,9 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["JWT_SECRET"] = "test-secret-must-be-32-bytes-min"
 os.environ["AUTH_DEV"] = "1"
 os.environ["SUPABASE_JWT_SECRET"] = ""
-os.environ["SUPABASE_URL"] = "https://example.supabase.co"
-os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "test-service-role"
-os.environ["SUPABASE_ANON_KEY"] = "test-anon-key"
+os.environ["SUPABASE_URL"] = ""
+os.environ["SUPABASE_SERVICE_ROLE_KEY"] = ""
+os.environ["SUPABASE_ANON_KEY"] = ""
 os.environ["UPLOAD_DIR"] = str(Path(__file__).resolve().parent / "uploads")
 
 from app.core.config import get_settings
@@ -21,7 +21,7 @@ from fastapi.testclient import TestClient
 
 from app.core.db import get_engine, session_factory
 from app.db.base import Base
-from app.db.seed import seed
+from app.db.seed import ensure_demo_passwords, seed
 from app.main import app
 
 
@@ -33,6 +33,7 @@ def fresh_database() -> Iterator[None]:
     db = session_factory()()
     try:
         seed(db)
+        ensure_demo_passwords(db)
         db.commit()
     finally:
         db.close()

@@ -8,9 +8,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { siteConfig } from "@/config/site";
 import { readDemoSession } from "@/features/auth/demoSession";
-import { adminSeed } from "@/lib/api/fixtures";
 import {
   PLATFORM_EVENTS_UPDATE,
   fetchPlatformEventsFromHub,
@@ -29,6 +27,7 @@ import {
   apiRejectSubmission,
   apiRequestRevision,
   apiSnapshotCampaign,
+  apiUploadCampaignSourceAsset,
   apiVerifyCreator,
   fetchAdminState,
 } from "@/lib/api/portalApi";
@@ -40,7 +39,6 @@ import {
 import {
   selectRecentBrandSignups,
   selectRecentCreatorSignups,
-  syncRegistrationsFromEvents,
 } from "@/lib/admin/registrationIntake";
 import type {
   AdminActivityEvent,
@@ -54,43 +52,71 @@ import type {
   CreateCampaignInput,
   CreatorApplication,
   PayoutRecord,
+  PlatformAnalytics,
 } from "@/types";
 
-const STORAGE_KEY = "creators_admin_state_v1";
+const STORAGE_KEY = "creators_admin_state_v2";
+const LEGACY_STORAGE_KEY = "creators_admin_state_v1";
+
+const EMPTY_ANALYTICS: PlatformAnalytics = {
+  daily: [],
+  trafficSources: [],
+  devices: [],
+  topPages: [],
+  reviewSla: {
+    targetHours: 24,
+    avgHours: 0,
+    medianHours: 0,
+    withinSlaPercent: 0,
+  },
+};
+
+function emptyLiveAdminState(): AdminState {
+  return {
+    campaigns: [],
+    creatorApplications: [],
+    verifiedCreators: [],
+    submissions: [],
+    brandCollections: [],
+    brandAccounts: [],
+    payouts: [],
+    activityLog: [],
+    analytics: EMPTY_ANALYTICS,
+    auditLog: [],
+    ingestedRegistrationEventIds: [],
+  };
+}
 
 function normalizeState(partial: Partial<AdminState>): AdminState {
-  const seed = structuredClone(adminSeed);
-  // In mock mode the analytics series and audit seed are regenerated relative
-  // to today, so always use the fresh seed. Live activity is merged from the
-  // shared platform event log. In API mode, prefer server-provided data.
-  const useSeedAnalytics =
-    siteConfig.useMockData || !partial.analytics?.daily?.length;
   return {
-    ...seed,
+    ...emptyLiveAdminState(),
     ...partial,
-    brandAccounts: partial.brandAccounts?.length
-      ? partial.brandAccounts
-      : seed.brandAccounts,
-    activityLog: partial.activityLog?.length ? partial.activityLog : seed.activityLog,
-    analytics: useSeedAnalytics ? seed.analytics : partial.analytics!,
-    auditLog:
-      siteConfig.useMockData || !Array.isArray(partial.auditLog)
-        ? seed.auditLog
-        : partial.auditLog,
+    campaigns: partial.campaigns ?? [],
+    creatorApplications: partial.creatorApplications ?? [],
+    verifiedCreators: partial.verifiedCreators ?? [],
+    submissions: partial.submissions ?? [],
+    brandCollections: partial.brandCollections ?? [],
+    brandAccounts: partial.brandAccounts ?? [],
+    payouts: partial.payouts ?? [],
+    activityLog: partial.activityLog ?? [],
+    analytics: partial.analytics?.daily ? partial.analytics : EMPTY_ANALYTICS,
+    auditLog: Array.isArray(partial.auditLog) ? partial.auditLog : [],
     ingestedRegistrationEventIds: partial.ingestedRegistrationEventIds ?? [],
   };
 }
 
 function readState(): AdminState {
   if (typeof window === "undefined") {
-    return structuredClone(adminSeed);
+    return emptyLiveAdminState();
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(adminSeed);
+    if (!raw) {
+      return emptyLiveAdminState();
+    }
     return normalizeState(JSON.parse(raw) as Partial<AdminState>);
   } catch {
-    return structuredClone(adminSeed);
+    return emptyLiveAdminState();
   }
 }
 
@@ -110,11 +136,12 @@ function appendActivity(
 
 function writeState(state: AdminState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   window.dispatchEvent(new CustomEvent("admin-store-updated"));
 }
 
 export function resetAdminStore() {
-  writeState(structuredClone(adminSeed));
+  writeState(emptyLiveAdminState());
 }
 
 export type { CreateCampaignInput };
@@ -157,21 +184,13 @@ export function useAdminStore() {
 }
 
 function useAdminStoreController() {
-  const [state, setState] = useState<AdminState>(() => readState());
-  const [status, setStatus] = useState<PortalLoadStatus>(() =>
-    siteConfig.useMockData ? "ready" : "loading",
-  );
+  const [state, setState] = useState<AdminState>(() => emptyLiveAdminState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() => "loading");
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [liveEvents, setLiveEvents] = useState<AuditEvent[]>([]);
 
   const hydrate = useCallback(async () => {
-    if (siteConfig.useMockData) {
-      setState(readState());
-      setStatus("ready");
-      setError(null);
-      return;
-    }
     setStatus("loading");
     setError(null);
     const result = await hydrateFromApi(fetchAdminState, (state) =>
@@ -182,7 +201,9 @@ function useAdminStoreController() {
       setStatus("ready");
       return;
     }
-    setState(readState());
+    setState(emptyLiveAdminState());
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
     setError(result.error);
     setStatus(
       result.kind === "unauthenticated"
@@ -193,9 +214,54 @@ function useAdminStoreController() {
     );
   }, []);
 
+  const persist = useCallback((updater: (prev: AdminState) => AdminState) => {
+    setState((prev) => {
+      const next = updater(prev);
+      writeState(next);
+      return next;
+    });
+  }, []);
+
+  const refreshQuietly = useCallback(async () => {
+    const result = await hydrateFromApi(fetchAdminState, (state) =>
+      writeState(normalizeState(state)),
+    );
+    if (result.ok) setState(normalizeState(result.data));
+  }, []);
+
+  const runMutationThenRefresh = useCallback(
+    async (mutation: () => Promise<void>) => {
+      const result = await runApiMutation(mutation);
+      if (!result.ok) {
+        setActionError(result.error);
+        return;
+      }
+      await refreshQuietly();
+    },
+    [refreshQuietly],
+  );
+
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    const tick = () => {
+      if (status !== "ready") return;
+      if (document.visibilityState !== "visible") return;
+      void refreshQuietly();
+    };
+    const interval = window.setInterval(tick, 15_000);
+    const onVisible = () => {
+      if (status !== "ready") return;
+      if (document.visibilityState === "visible") void refreshQuietly();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshQuietly, status]);
 
   useEffect(() => {
     const sync = () => setState(readState());
@@ -216,12 +282,6 @@ function useAdminStoreController() {
           : readPlatformEvents();
       if (cancelled) return;
       setLiveEvents(events);
-      setState((prev) => {
-        const merged = syncRegistrationsFromEvents(prev, events);
-        if (merged === prev) return prev;
-        writeState(merged);
-        return merged;
-      });
     };
     void sync();
     const interval =
@@ -241,19 +301,6 @@ function useAdminStoreController() {
       window.removeEventListener(PLATFORM_EVENTS_UPDATE, onSignal);
       window.removeEventListener("storage", onSignal);
     };
-  }, []);
-
-  const persist = useCallback((updater: (prev: AdminState) => AdminState) => {
-    setState((prev) => {
-      const next = updater(prev);
-      writeState(next);
-      return next;
-    });
-  }, []);
-
-  const notifyMutationFailure = useCallback(async (mutation: () => Promise<void>) => {
-    const result = await runApiMutation(mutation);
-    if (!result.ok) setActionError(result.error);
   }, []);
 
   const createCampaign = useCallback(
@@ -285,7 +332,7 @@ function useAdminStoreController() {
           },
         ),
       );
-      void notifyMutationFailure(() => apiCreateCampaign(input));
+      void runMutationThenRefresh(() => apiCreateCampaign(input));
       logAdminAction({
         action: "campaign_created",
         summary: `Created campaign draft · ${campaign.title}`,
@@ -295,7 +342,7 @@ function useAdminStoreController() {
       });
       return campaign;
     },
-    [notifyMutationFailure, persist],
+    [persist, runMutationThenRefresh],
   );
 
   const verifyCreator = useCallback(
@@ -332,7 +379,7 @@ function useAdminStoreController() {
           href: "/admin/creators",
         });
       });
-      void notifyMutationFailure(() => apiVerifyCreator(applicationId));
+      void runMutationThenRefresh(() => apiVerifyCreator(applicationId));
       logAdminAction({
         action: "creator_approved",
         summary: application
@@ -343,7 +390,7 @@ function useAdminStoreController() {
         source: "/admin/creators",
       });
     },
-    [notifyMutationFailure, persist, state.creatorApplications],
+    [persist, runMutationThenRefresh, state.creatorApplications],
   );
 
   const rejectCreator = useCallback(
@@ -368,7 +415,7 @@ function useAdminStoreController() {
           href: "/admin/creators",
         });
       });
-      void notifyMutationFailure(() => apiRejectCreator(applicationId));
+      void runMutationThenRefresh(() => apiRejectCreator(applicationId));
       logAdminAction({
         action: "creator_rejected",
         summary: application
@@ -379,7 +426,7 @@ function useAdminStoreController() {
         source: "/admin/creators",
       });
     },
-    [notifyMutationFailure, persist, state.creatorApplications],
+    [persist, runMutationThenRefresh, state.creatorApplications],
   );
 
   const approveSubmission = useCallback(
@@ -399,7 +446,7 @@ function useAdminStoreController() {
         }
         return next;
       });
-      void notifyMutationFailure(() => apiApproveSubmission(submissionId));
+      void runMutationThenRefresh(() => apiApproveSubmission(submissionId));
       logAdminAction({
         action: "submission_approved",
         summary: submission
@@ -410,7 +457,7 @@ function useAdminStoreController() {
         source: "/admin/submissions",
       });
     },
-    [notifyMutationFailure, persist, state.submissions],
+    [persist, runMutationThenRefresh, state.submissions],
   );
 
   const rejectSubmission = useCallback(
@@ -430,7 +477,7 @@ function useAdminStoreController() {
         }
         return next;
       });
-      void notifyMutationFailure(() => apiRejectSubmission(submissionId));
+      void runMutationThenRefresh(() => apiRejectSubmission(submissionId));
       logAdminAction({
         action: "submission_rejected",
         summary: submission
@@ -441,7 +488,7 @@ function useAdminStoreController() {
         source: "/admin/submissions",
       });
     },
-    [notifyMutationFailure, persist, state.submissions],
+    [persist, runMutationThenRefresh, state.submissions],
   );
 
   const requestRevision = useCallback(
@@ -465,9 +512,7 @@ function useAdminStoreController() {
         }
         return next;
       });
-      void notifyMutationFailure(() =>
-        apiRequestRevision(submissionId, note),
-      );
+      void runMutationThenRefresh(() => apiRequestRevision(submissionId, note));
       logAdminAction({
         action: "submission_revision",
         summary: submission
@@ -478,7 +523,7 @@ function useAdminStoreController() {
         source: "/admin/submissions",
       });
     },
-    [notifyMutationFailure, persist, state.submissions],
+    [persist, runMutationThenRefresh, state.submissions],
   );
 
   const markPayoutPaid = useCallback(
@@ -490,25 +535,19 @@ function useAdminStoreController() {
           p.id === payoutId ? { ...p, status: "paid" as const } : p,
         ),
       }));
-      void notifyMutationFailure(() => apiMarkPayoutPaid(payoutId));
+      void runMutationThenRefresh(() => apiMarkPayoutPaid(payoutId));
       logAdminAction({
         action: "payout_paid",
         summary: payout
-          ? `Paid RWF ${payout.amountRwf.toLocaleString("en-US")} to ${payout.creatorName} via MoMo`
+          ? `Paid RWF ${payout.amountRwf.toLocaleString("en-US")} to ${payout.creatorName}`
           : "Marked a payout as paid",
         targetLabel: payout?.creatorName,
         href: "/admin/payments",
         source: "/admin/payments",
       });
     },
-    [notifyMutationFailure, persist, state.payouts],
+    [persist, runMutationThenRefresh, state.payouts],
   );
-
-  const refreshQuietly = useCallback(async () => {
-    if (siteConfig.useMockData) return;
-    const result = await hydrateFromApi(fetchAdminState, writeState);
-    if (result.ok) setState(result.data);
-  }, []);
 
   const fundCampaign = useCallback(
     (campaignId: string) => {
@@ -520,56 +559,30 @@ function useAdminStoreController() {
             : campaign,
         ),
       }));
-      void (async () => {
-        const result = await runApiMutation(() => apiFundCampaign(campaignId));
-        if (!result.ok) {
-          setActionError(result.error);
-          return;
-        }
-        await refreshQuietly();
-      })();
+      void runMutationThenRefresh(() => apiFundCampaign(campaignId));
     },
-    [persist, refreshQuietly],
+    [persist, runMutationThenRefresh],
   );
 
   const snapshotCampaign = useCallback(
     (campaignId: string, views: { submissionId: string; views: number }[]) => {
-      void (async () => {
-        const result = await runApiMutation(() => apiSnapshotCampaign(campaignId, views));
-        if (!result.ok) {
-          setActionError(result.error);
-          return;
-        }
-        await refreshQuietly();
-      })();
+      void runMutationThenRefresh(() => apiSnapshotCampaign(campaignId, views));
     },
-    [refreshQuietly],
+    [runMutationThenRefresh],
+  );
+
+  const uploadCampaignSourceAsset = useCallback(
+    (campaignId: string, file: File) => {
+      void runMutationThenRefresh(() =>
+        apiUploadCampaignSourceAsset(campaignId, file).then(() => undefined),
+      );
+    },
+    [runMutationThenRefresh],
   );
 
   const loadCampaignReport = useCallback(async (campaignId: string) => {
-    if (siteConfig.useMockData) {
-      const campaign = state.campaigns.find((item) => item.id === campaignId);
-      const creators = state.submissions
-        .filter((submission) => submission.campaignId === campaignId)
-        .map((submission) => ({
-          creatorName: submission.creatorName,
-          postUrl: submission.postUrl,
-          views: 0,
-          payoutRwf: 0,
-          status: submission.status,
-        }));
-      return {
-        campaignId,
-        title: campaign?.title ?? campaignId,
-        creators,
-        totalReach: 0,
-        totalPayoutRwf: 0,
-        creatorPoolRwf: campaign?.creatorPoolRwf ?? 0,
-        poolRemainingRwf: campaign?.poolRemainingRwf ?? 0,
-      } satisfies CampaignReport;
-    }
     return apiCampaignReport(campaignId);
-  }, [state.campaigns, state.submissions]);
+  }, []);
 
   const markAllDuePayoutsPaid = useCallback(() => {
     const pending = state.payouts.filter((p) => p.status === "pending");
@@ -587,21 +600,21 @@ function useAdminStoreController() {
         at: new Date().toISOString(),
         kind: "payout_paid",
         actorLabel: "Finance",
-        summary: `Marked ${count} payout${count === 1 ? "" : "s"} as paid via MoMo`,
+        summary: `Marked ${count} payout${count === 1 ? "" : "s"} as paid`,
         href: "/admin/payments",
       });
     });
-    void notifyMutationFailure(() => apiMarkAllPayoutsPaid());
+    void runMutationThenRefresh(() => apiMarkAllPayoutsPaid());
     if (pending.length > 0) {
       logAdminAction({
         action: "payout_batch_paid",
-        summary: `Marked ${pending.length} payout${pending.length === 1 ? "" : "s"} as paid via MoMo · RWF ${total.toLocaleString("en-US")}`,
+        summary: `Marked ${pending.length} payout${pending.length === 1 ? "" : "s"} as paid · RWF ${total.toLocaleString("en-US")}`,
         targetLabel: "Finance",
         href: "/admin/payments",
         source: "/admin/payments",
       });
     }
-  }, [notifyMutationFailure, persist, state.payouts]);
+  }, [persist, runMutationThenRefresh, state.payouts]);
 
   const setBrandStatus = useCallback(
     (brandId: string, status: BrandAccountStatus) => {
@@ -697,6 +710,7 @@ function useAdminStoreController() {
     setCreatorSuspended,
     fundCampaign,
     snapshotCampaign,
+    uploadCampaignSourceAsset,
     loadCampaignReport,
   };
 }

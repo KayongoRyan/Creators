@@ -19,6 +19,7 @@ app/core/audit.py
 app/core/config.py
 app/core/db.py
 app/core/ids.py
+app/core/passwords.py
 app/core/security.py
 app/db/__init__.py
 app/db/apply.py
@@ -44,6 +45,7 @@ app/modules/storage/screenshots.py
 app/modules/submissions/__init__.py
 app/modules/submissions/service.py
 tests/test_api.py
+tests/test_auth.py
 tests/test_economics.py
 tests/test_migration_sql.py
 ugc_api.egg-info/PKG-INFO

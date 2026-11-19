@@ -108,7 +108,9 @@ function BrandRow({
           </div>
           <p className="mt-2 text-sm text-neutral-600">
             {brand.contactName} · {brand.contactEmail}
-            {brand.momoPhone ? ` · MoMo ${brand.momoPhone}` : ""}
+            {brand.phone || brand.momoPhone
+              ? ` · Phone ${brand.phone ?? brand.momoPhone}`
+              : ""}
           </p>
           <p className="mt-2 text-sm text-neutral-600">
             {brand.campaignsRun} campaign{brand.campaignsRun === 1 ? "" : "s"} · Total spent{" "}

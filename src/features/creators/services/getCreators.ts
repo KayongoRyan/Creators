@@ -1,6 +1,6 @@
 import { fetchResource } from "@/lib/api/fetchResource";
-import type { CreatorRecord } from "@/lib/api/fixtures";
+import type { CreatorRecord } from "@/lib/api/resourceTypes";
 
 export async function getCreators() {
-  return fetchResource<CreatorRecord[]>("creators", "/creators");
+  return fetchResource<CreatorRecord[]>("/creators");
 }

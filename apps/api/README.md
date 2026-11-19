@@ -41,8 +41,8 @@ Seeded dev users (view switcher emails):
 | `brand@ubunifu.dev` | brand (Primus) |
 | `creator@ubunifu.dev` | creator (Marie K.) |
 
-- `POST /api/auth/signup` / `POST /api/auth/login` — email + password against Supabase Auth. Login never creates a profile. Role comes from `app_metadata.role`, then the `profiles` row (`id` = `auth.uid()`).
-- Demo accounts: `admin@ubunifu.dev`, `brand@ubunifu.dev`, `creator@ubunifu.dev` / `CreatorsDemo1!`.
+- **Local auth:** with empty `SUPABASE_*`, passwords live as bcrypt on `profiles` (see `.env.example`). Demo: `*@ubunifu.dev` and `admin@creators.rw` / `CreatorsDemo1!`.
+- **Supabase auth:** set `SUPABASE_URL` + keys — signup/login use Supabase; `profiles.id` = `auth.users.id` after `scripts/seed_auth_users.py`.
 - `POST /api/auth/dev-token` is lookup-only while `AUTH_DEV=1` (tests). Supabase access tokens are ES256 and verified via JWKS.
 
 Screenshots: Supabase Storage bucket `creator-screenshots` when both Supabase env vars are set, otherwise `uploads/`.

@@ -18,6 +18,7 @@ create table if not exists creators (
   instagram_followers integer not null default 0,
   niche text not null default '',
   momo text not null default '',
+  phone text not null default '',
   label text not null default 'New',
   campaigns_completed integer not null default 0
 );
@@ -28,7 +29,8 @@ create table if not exists profiles (
   role text not null,
   display_name text not null,
   brand_id text references brands (id),
-  creator_id text references creators (id)
+  creator_id text references creators (id),
+  password_hash text
 );
 
 create table if not exists creator_applications (
@@ -41,6 +43,7 @@ create table if not exists creator_applications (
   instagram_followers integer not null default 0,
   niche text not null default '',
   momo_phone text not null default '',
+  phone text not null default '',
   screenshot_path text,
   why_join text,
   status text not null default 'pending',
@@ -83,6 +86,7 @@ create table if not exists campaigns (
   spots_left integer not null default 0,
   is_open boolean not null default false,
   flat_payout_rwf bigint,
+  source_asset_path text,
   listed_in_admin boolean not null default true,
   listed_in_discover boolean not null default false,
   listed_in_brand boolean not null default false

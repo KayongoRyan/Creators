@@ -66,6 +66,8 @@ export function BrandCampaignList() {
   const { state, createCampaign } = useBrandStore();
   const [filter, setFilter] = useState<CampaignFilter>("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const counts = useMemo(() => countCampaignBuckets(state.campaigns), [state.campaigns]);
 
@@ -113,15 +115,38 @@ export function BrandCampaignList() {
       <p className="text-sm text-neutral-600 sm:max-w-xl">{filterHint}</p>
 
       {showCreate ? (
-        <BrandCampaignCreatePanel
-          onCancel={() => setShowCreate(false)}
-          onSubmit={(input) => {
-            const campaign = createCampaign(input);
-            setShowCreate(false);
-            setFilter("new");
-            router.push(`${routes.brand.campaigns}/${campaign.id}`);
-          }}
-        />
+        <div className="space-y-3">
+          <BrandCampaignCreatePanel
+            pending={creating}
+            onCancel={() => {
+              if (creating) return;
+              setCreateError("");
+              setShowCreate(false);
+            }}
+            onSubmit={async (input) => {
+              if (creating) return;
+              setCreating(true);
+              setCreateError("");
+              try {
+                const campaign = await createCampaign(input);
+                setShowCreate(false);
+                setFilter("new");
+                router.push(`${routes.brand.campaigns}/${campaign.id}`);
+              } catch (reason) {
+                setCreateError(
+                  reason instanceof Error ? reason.message : "Could not create that campaign.",
+                );
+              } finally {
+                setCreating(false);
+              }
+            }}
+          />
+          {createError ? (
+            <p className="text-sm font-medium text-red-600" role="alert">
+              {createError}
+            </p>
+          ) : null}
+        </div>
       ) : state.campaigns.length === 0 ? (
         <BrandCampaignEmptyCta onCreateClick={() => setShowCreate(true)} />
       ) : visible.length === 0 ? (

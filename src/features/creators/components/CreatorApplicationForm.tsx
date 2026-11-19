@@ -8,9 +8,6 @@ import {
   InspiredSubmit,
   underlineInputClassName,
 } from "@/components/shared/inspiredForm";
-import { readDemoSession } from "@/features/auth/demoSession";
-import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
-import { siteConfig } from "@/config/site";
 import { apiEndpoints, joinApiUrl } from "@/lib/api";
 import { creatorNicheGroups } from "../data/creatorNiches";
 
@@ -52,33 +49,13 @@ export function CreatorApplicationForm() {
           setShowNicheError(true);
           return;
         }
-        if (siteConfig.useMockData) {
-          const data = new FormData(event.currentTarget);
-          const session = readDemoSession();
-          const fullName = String(data.get("fullName") ?? session?.displayName ?? "Creator").trim();
-          const tiktok = String(data.get("tiktokHandle") ?? "@pending").trim();
-          const instagram = String(data.get("instagramHandle") ?? "@pending").trim();
-          const niche = selectedNiches.join(", ");
-          recordPlatformEvent({
-            actorName: fullName,
-            actorRole: "creator",
-            actorEmail: session?.email,
-            action: "creator_application",
-            summary: `${fullName} submitted a creator application`,
-            targetLabel: `${tiktok}|${instagram}|${niche}`,
-            source: "/apply",
-            severity: "success",
-          });
-          setSubmitted(true);
-          return;
-        }
         const data = new FormData(event.currentTarget);
         const tiktok = String(data.get("tiktokHandle") ?? "").trim();
         const instagram = String(data.get("instagramHandle") ?? "").trim();
-        const momo = String(data.get("momo") ?? "").trim();
+        const phone = String(data.get("phone") ?? data.get("momo") ?? "").trim();
         const screenshot = data.get("screenshot");
-        if (!momo) {
-          setError("Add the MoMo number payouts should go to.");
+        if (!phone) {
+          setError("Add the phone number for payout contact.");
           return;
         }
         if (!tiktok && !instagram) {
@@ -206,10 +183,10 @@ export function CreatorApplicationForm() {
       ))}
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <InspiredField id="momo" label="MTN MoMo number" required>
+        <InspiredField id="phone" label="Phone number" required>
           <input
-            id="momo"
-            name="momo"
+            id="phone"
+            name="phone"
             type="tel"
             autoComplete="tel"
             placeholder="0780000000"

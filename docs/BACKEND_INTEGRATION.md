@@ -16,12 +16,22 @@ Implementation: `src/config/site.ts`, `src/lib/api/client.ts`, `src/lib/api/port
 
 The browser sends `Authorization: Bearer <access_token>`.
 
-- `POST /auth/signup` `{ email, password, role, displayName }` — creates a Supabase Auth user (`app_metadata.role`) and a `profiles` row with `id = auth.uid()`. Returns `{ accessToken }`.
-- `POST /auth/login` `{ email, password, role }` — password grant against Supabase Auth, then requires an existing `profiles` row with that role. **Never creates a profile.** Wrong email/password/role → 401.
-- Stored token: `localStorage["creators.access_token"]`. Join/login store it; the client does not invent users from a demo session.
-- Demo accounts: `admin@ubunifu.dev`, `brand@ubunifu.dev`, `creator@ubunifu.dev` with password `CreatorsDemo1!`.
+**Local mode (default dev):** leave `SUPABASE_URL` empty in `apps/api/.env`. Passwords are bcrypt hashes on `profiles.password_hash`. API returns an HS256 JWT from `JWT_SECRET`.
+
+**Supabase mode:** set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and service role. Creator/brand signup uses **email OTP** (see [`AUTH_EMAIL_OTP.md`](./AUTH_EMAIL_OTP.md)). Portal sessions still use HS256 API tokens after verify/login.
+
+- `POST /auth/signup/start` `{ email, password, role, displayName, onboarding? }` — creator/brand only. Creates unconfirmed Auth user + `pending_signups`. Returns `{ needsVerification: true }` (no `profiles` yet).
+- `POST /auth/signup/verify` `{ email, token, role }` — verifies 6-digit OTP, creates `profiles` + creator/brand links + onboarding fields. Returns `{ accessToken }`.
+- `POST /auth/signup/resend` `{ email, role? }` — resends signup OTP.
+- `POST /auth/signup` `{ email, password, role, displayName }` — admin (or local bcrypt without Supabase). Creator/brand with Supabase → 422 directing clients to start/verify.
+- `POST /auth/login` `{ email, password, role }` — verifies password (local bcrypt or Supabase). Requires matching role. Unconfirmed Supabase users → verify-email message. Never creates a profile on failed login.
+- Password policy (signup): ≥8 chars, upper, lower, digit, no spaces (mirrored in `src/lib/validators/auth.ts`).
+- Stored token: `localStorage["creators.access_token"]`.
 - `POST /auth/dev-token` is lookup-only when `AUTH_DEV=1` (tests/scripts). It does not create profiles.
 - `AUTH_DEV=1` still accepts `X-Demo-Role` / `X-Demo-Email` for scripts when the profile already exists.
+- `AUTH_EMAIL_OTP_BYPASS=1` (with `AUTH_DEV=1` only) accepts OTP `000000` without SMTP.
+
+**Smoke:** `npm run dev:api`, then `GET http://127.0.0.1:4000/api/health` → `{"ok":true}`. Front: `NEXT_PUBLIC_USE_MOCK=0`, `NEXT_PUBLIC_API_URL=http://127.0.0.1:4000/api`.
 
 ## Legacy read endpoints (already wired via `fetchResource`)
 
@@ -60,11 +70,12 @@ Frontend: optimistic local update + POST; on failure shows amber banner (`Portal
 
 ### Brand
 
-| Method | Path | Response |
+| Method | Path | Body / Response |
 |---|---|---|
-| GET | `/brand/state` | `BrandState` |
+| GET | `/brand/state` | `BrandState` (includes `campaignId` on invoices) |
+| POST | `/brand/campaigns` | `{ title, campaignType, budgetRwf, deadline, brief? }` → `{ id }` |
 
-Read-only in the UI today. Brand portal uses Primus demo persona.
+Admin `GET /admin/state` also returns `activityLog`, `auditLog`, `brandAccounts`, and derived `analytics` from DB (`admin_events` + aggregates).
 
 ### Creator
 
@@ -99,10 +110,16 @@ Approve/reject/revision and payout mark-paid accept `Idempotency-Key`.
 
 Screenshot bytes go to Supabase Storage bucket `creator-screenshots` when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set, otherwise `apps/api/uploads/`.
 
-## Not implemented on frontend (unfinished)
+## Clipping source assets
 
-- Pagination, filters, file uploads for clipping source assets
-- Automated MoMo disbursement
-- E2E automated tests in CI
+`POST /admin/campaigns/{id}/source-asset` (multipart `file`) stores the asset and sets `campaigns.source_asset_path` (also surfaces on assignments missing `sourceUrl`).
 
-See `docs/PHASE4_QA.md` for manual QA checklist.
+## Phone fields
+
+Prefer `phone` on creator profile / public apply. Legacy `momo` / `momo_phone` still accepted and mirrored.
+
+## Analytics traffic stubs
+
+`analytics.daily` ops counters (campaigns, applications, submissions, payouts) are DB-derived. `visitors` / `pageViews` / `activeUsers` stay `0` until a real telemetry product is wired. See [`docs/TELEMETRY.md`](TELEMETRY.md).
+
+See `docs/PHASE4_QA.md` for manual QA checklist and `docs/DEPLOY.md` for production.

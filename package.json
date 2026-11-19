@@ -9,7 +9,11 @@
     "dev:creator": "node scripts/dev-role.mjs creator /creator",
     "dev:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev",
     "dev:reset": "node scripts/dev-reset.mjs",
-    "dev:api": "python -m uvicorn app.main:app --app-dir apps/api --host 127.0.0.1 --port 4000 --reload",
+    "dev:api": "node scripts/dev-api.mjs",
+    "dev:all": "node scripts/dev-all.mjs",
+    "dev:stack": "node scripts/dev-all.mjs --portals",
+    "test:api": "python -m pytest -q -c apps/api/pyproject.toml apps/api/tests",
+    "test:e2e": "playwright test",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -25,6 +29,7 @@
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

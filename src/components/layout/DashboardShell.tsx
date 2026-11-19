@@ -133,6 +133,16 @@ export function DashboardShell({
             >
               Sign out
             </button>
+<<<<<<< Updated upstream
+=======
+          ) : (
+            <Link
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}&mode=login`}
+              className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
+            >
+              Log in
+            </Link>
+>>>>>>> Stashed changes
           )}
         </div>
         <nav
@@ -165,10 +175,10 @@ export function DashboardShell({
           <p className="truncate text-xs text-gray-500">{guestEmail}</p>
           {guestMode ? (
             <Link
-              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}&mode=login`}
               className="mt-3 inline-block text-sm font-medium text-emerald-800 hover:text-emerald-950"
             >
-              Join to unlock
+              Log in to unlock
             </Link>
           ) : adminLoginFree ? null : (
             <button

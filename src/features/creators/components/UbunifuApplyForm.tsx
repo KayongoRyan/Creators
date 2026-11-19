@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { siteConfig } from "@/config/site";
 import { apiEndpoints, joinApiUrl } from "@/lib/api";
 
 const niches = [
@@ -35,10 +34,6 @@ export function UbunifuApplyForm() {
       onSubmit={async (event) => {
         event.preventDefault();
         setError("");
-        if (siteConfig.useMockData) {
-          setSubmitted(true);
-          return;
-        }
         setPending(true);
         try {
           const response = await fetch(
@@ -67,10 +62,10 @@ export function UbunifuApplyForm() {
         />
       </label>
       <label className="mb-3 flex flex-col gap-1 text-xs text-[#3d3d3a]">
-        Phone (MTN MoMo number)
+        Phone number
         <input
           required
-          name="momo"
+          name="phone"
           type="tel"
           placeholder="+250 7XX XXX XXX"
           className="rounded-lg border border-[rgba(31,30,29,0.3)] px-2.5 py-2 text-[13px] text-[#141413] outline-none"

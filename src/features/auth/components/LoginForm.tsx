@@ -48,7 +48,12 @@ export function LoginForm({ initialRole }: LoginFormProps) {
               displayName: email.split("@")[0] || "Creator",
               email: result.email,
             });
-            router.replace(getRoleHome(result.role as UserRole));
+            const home = getRoleHome(result.role as UserRole);
+            if (typeof window !== "undefined") {
+              window.location.assign(home);
+              return;
+            }
+            router.replace(home);
           })
           .catch((reason) => {
             setError(reason instanceof Error ? reason.message : "Wrong password");
@@ -92,7 +97,7 @@ export function LoginForm({ initialRole }: LoginFormProps) {
       </InspiredSubmit>
 
       <p className="text-xs leading-5 text-gray-500">
-        Demo: creator@ubunifu.dev / CreatorsDemo1!
+        Use the email and password from your creator signup.
       </p>
     </form>
   );

@@ -1,5 +1,6 @@
 from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import JSON
 
 from app.db.base import Base
 
@@ -23,7 +24,8 @@ class Creator(Base):
     tiktok_followers: Mapped[int] = mapped_column(Integer, default=0)
     instagram_followers: Mapped[int] = mapped_column(Integer, default=0)
     niche: Mapped[str] = mapped_column(String(128), default="")
-    momo: Mapped[str] = mapped_column(String(64), default="")
+    momo: Mapped[str] = mapped_column(String(64), default="")  # legacy; prefer phone
+    phone: Mapped[str] = mapped_column(String(64), default="")
     label: Mapped[str] = mapped_column(String(32), default="New")
     campaigns_completed: Mapped[int] = mapped_column(Integer, default=0)
 
@@ -37,6 +39,19 @@ class Profile(Base):
     display_name: Mapped[str] = mapped_column(String(255))
     brand_id: Mapped[str | None] = mapped_column(ForeignKey("brands.id"), nullable=True)
     creator_id: Mapped[str | None] = mapped_column(ForeignKey("creators.id"), nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
+class PendingSignup(Base):
+    __tablename__ = "pending_signups"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    role: Mapped[str] = mapped_column(String(16))
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    supabase_user_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expires_at: Mapped[str] = mapped_column(String(40))
+    created_at: Mapped[str] = mapped_column(String(40))
 
 
 class CreatorApplication(Base):
@@ -50,7 +65,8 @@ class CreatorApplication(Base):
     tiktok_followers: Mapped[int] = mapped_column(Integer, default=0)
     instagram_followers: Mapped[int] = mapped_column(Integer, default=0)
     niche: Mapped[str] = mapped_column(String(128), default="")
-    momo_phone: Mapped[str] = mapped_column(String(64), default="")
+    momo_phone: Mapped[str] = mapped_column(String(64), default="")  # legacy; prefer phone
+    phone: Mapped[str] = mapped_column(String(64), default="")
     screenshot_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     why_join: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
@@ -97,6 +113,7 @@ class Campaign(Base):
     flat_payout_rwf: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     listed_in_admin: Mapped[bool] = mapped_column(Boolean, default=True)
     listed_in_discover: Mapped[bool] = mapped_column(Boolean, default=False)
+    source_asset_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     listed_in_brand: Mapped[bool] = mapped_column(Boolean, default=False)
 
 

@@ -35,7 +35,7 @@ const campaignTitles = [
   "Primus Beer — reaction videos",
   "Iwacu Music — song clip campaign",
   "KCB Rwanda — product review",
-  "MTN MoMo — wallet tutorial",
+  "Fintech tips — wallet tutorial",
 ];
 
 /** Deterministic pseudo-random value in [0, 1) for a numeric seed. */
@@ -202,7 +202,7 @@ export function buildSeedAuditLog(): AuditEvent[] {
         actorName: admin,
         actorRole: "admin",
         action: "payout_paid",
-        summary: `Paid RWF ${amount.toLocaleString("en-US")} to ${creator} via MoMo`,
+        summary: `Paid RWF ${amount.toLocaleString("en-US")} to ${creator}`,
         targetLabel: creator,
         href: "/admin/payments",
         source: "/admin/payments",

@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     supabase_anon_key: str = ""
     auth_dev: bool = True
+    # AUTH_EMAIL_OTP_BYPASS=1 with AUTH_DEV=1 skips Supabase OTP (token 000000). Never in production.
+    auth_email_otp_bypass: bool = False
+    # SEED_DEMO=1 loads Primus/KCB fixture rows when the campaigns table is empty.
+    seed_demo: bool = False
     upload_dir: str = ""
     cors_origins: str = ""
 
@@ -47,6 +51,16 @@ class Settings(BaseSettings):
     def upload_path(self) -> Path:
         raw = self.upload_dir or str(API_ROOT / "uploads")
         return Path(raw)
+
+    @property
+    def supabase_auth_enabled(self) -> bool:
+        if not self.supabase_url.strip():
+            return False
+        return bool(self.supabase_service_role_key.strip() or self.supabase_anon_key.strip())
+
+    @property
+    def email_otp_bypass_enabled(self) -> bool:
+        return bool(self.auth_dev and self.auth_email_otp_bypass)
 
 
 @lru_cache

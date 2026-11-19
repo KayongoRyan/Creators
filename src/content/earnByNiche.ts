@@ -23,7 +23,7 @@ export const earnByNicheSteps = [
   },
   {
     step: "4",
-    title: "Get paid on MoMo",
-    body: "Approved submissions unlock payout — flat fees or RPM on clips, sent to your mobile money on schedule.",
+    title: "Get paid",
+    body: "Approved submissions unlock payout — flat fees or RPM on clips, marked paid on schedule.",
   },
 ] as const;

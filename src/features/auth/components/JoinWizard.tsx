@@ -4,20 +4,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
-import { lookupMockCredential } from "@/lib/auth/mockCredentials";
-import { siteConfig } from "@/config/site";
 import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
 import { routes } from "@/config/routes";
-import { loginWithPassword, signupWithPassword } from "@/lib/api";
+import { writePendingSignup } from "@/features/auth/pendingSignup";
+import { loginWithPassword, signupStart, signupWithPassword } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
-import { isValidEmail } from "@/lib/validators";
+import { firstPasswordError, isValidEmail } from "@/lib/validators";
 import type { UserRole } from "@/types";
 
 const STEP_LABELS = {
-  creator: ["Profile", "Location", "Creator", "Payout", "Verify"],
-  brand: ["Profile", "Location", "Business", "Payout", "Verify"],
+  creator: ["Profile", "Location", "Creator", "Payout", "Password"],
+  brand: ["Profile", "Location", "Business", "Payout", "Password"],
 } as const;
+
+const PASSWORD_STEP = 4;
 
 const inputClass =
   "mt-1 block w-full rounded-lg border border-black/15 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-black focus:ring-1 focus:ring-black";
@@ -57,23 +58,68 @@ export function JoinWizard() {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
+<<<<<<< Updated upstream
   const isLogin = mode === "login";
   const signupRole: Extract<UserRole, "creator" | "brand"> =
     role === "brand" ? "brand" : "creator";
   const stepLabels = STEP_LABELS[signupRole];
   const totalSteps = stepLabels.length;
+=======
+  useEffect(() => {
+    if (adminPortal) setRole("admin");
+  }, [adminPortal]);
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    if (modeParam === "login") setMode("login");
+    else if (modeParam === "signup") setMode("signup");
+    if (adminPortal) return;
+    const rp = searchParams.get("role");
+    if (rp === "brand" || rp === "creator") setRole(rp);
+  }, [searchParams, adminPortal]);
+
+  const isLogin = mode === "login";
+  const signupRole: Extract<UserRole, "creator" | "brand" | "admin"> = adminPortal
+    ? "admin"
+    : role === "brand"
+      ? "brand"
+      : "creator";
+  const isAdminSignup = adminPortal && !isLogin;
+  const stepLabels = STEP_LABELS[adminPortal ? "creator" : signupRole];
+>>>>>>> Stashed changes
 
   const sectionTitle = useMemo(() => {
     if (isLogin) return "Welcome back";
     if (signupRole === "brand") {
-      return ["Profile details", "Location", "Business information", "Payout details", "Verify account"][step];
+      return [
+        "Profile details",
+        "Location",
+        "Business information",
+        "Payout details",
+        "Choose a password",
+      ][step];
     }
+<<<<<<< Updated upstream
     return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
   }, [isLogin, signupRole, step]);
+=======
+    return [
+      "Profile details",
+      "Location",
+      "Creator profile",
+      "Payout details",
+      "Choose a password",
+    ][step];
+  }, [adminPortal, isLogin, signupRole, step]);
+>>>>>>> Stashed changes
 
   async function completeLogin() {
-    if (!isValidEmail(email) || !password) {
-      setError("Wrong password");
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (!password) {
+      setError("Enter your password.");
       return;
     }
     setPending(true);
@@ -85,19 +131,23 @@ export function JoinWizard() {
         password,
         role: loginRole,
       });
+<<<<<<< Updated upstream
       const mockProfile = siteConfig.useMockData
         ? lookupMockCredential(result.email, result.role as UserRole)
         : null;
+=======
+>>>>>>> Stashed changes
       saveDemoSession({
         role: result.role as UserRole,
-        displayName:
-          displayName.trim() ||
-          mockProfile?.displayName ||
-          email.split("@")[0] ||
-          "User",
+        displayName: displayName.trim() || email.split("@")[0] || "User",
         email: result.email,
       });
-      router.replace(getRoleHome(result.role as UserRole));
+      const home = getRoleHome(result.role as UserRole);
+      if (typeof window !== "undefined") {
+        window.location.assign(home);
+        return;
+      }
+      router.replace(home);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Wrong password");
     } finally {
@@ -105,9 +155,66 @@ export function JoinWizard() {
     }
   }
 
+<<<<<<< Updated upstream
   async function completeSignup() {
     if (password.length < 8) {
       setError("Use a password with at least 8 characters.");
+=======
+  async function completeAdminSignup() {
+    if (!displayName.trim()) {
+      setError("Enter your name.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    const passwordIssue = firstPasswordError(password);
+    if (passwordIssue) {
+      setError(passwordIssue);
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    const name = displayName.trim();
+    setPending(true);
+    setError("");
+    try {
+      const result = await signupWithPassword({
+        email: email.trim(),
+        password,
+        role: "admin",
+        displayName: name,
+      });
+      saveDemoSession(
+        {
+          role: "admin",
+          displayName: name,
+          email: result.email,
+        },
+        { method: "register" },
+      );
+      router.replace(getRoleHome("admin"));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not create that account.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function signupDisplayName() {
+    return signupRole === "brand"
+      ? businessName.trim() || displayName.trim()
+      : displayName.trim();
+  }
+
+  async function startEmailVerification() {
+    const passwordIssueSignup = firstPasswordError(password);
+    if (passwordIssueSignup) {
+      setError(passwordIssueSignup);
+>>>>>>> Stashed changes
       return;
     }
     if (password !== confirmPassword) {
@@ -119,33 +226,48 @@ export function JoinWizard() {
       return;
     }
 
-    const name =
-      signupRole === "brand"
-        ? businessName.trim() || displayName.trim()
-        : displayName.trim();
+    const name = signupDisplayName();
     setPending(true);
     setError("");
     try {
-      const result = await signupWithPassword({
+      const result = await signupStart({
         email: email.trim(),
         password,
         role: signupRole,
         displayName: name,
-      });
-      saveDemoSession(
-        {
-          role: result.role as UserRole,
-          displayName: name,
-          email: result.email,
-          address,
-          phone,
-          ...(signupRole === "creator" ? { birthDate, niches: selectedNiches } : {}),
+        onboarding: {
+          address: address.trim() || undefined,
+          phone: phone.trim() || undefined,
+          birthDate: birthDate || undefined,
+          niches: signupRole === "creator" ? selectedNiches : undefined,
+          businessName: businessName.trim() || undefined,
+          businessType: businessType.trim() || undefined,
+          identificationNumber: identificationNumber.trim() || undefined,
+          bankName: bankName.trim() || undefined,
+          accountNumber: accountNumber.trim() || undefined,
         },
-        { method: "register" },
-      );
-      router.replace(getRoleHome(result.role as UserRole));
+      });
+      writePendingSignup({
+        email: result.email,
+        role: signupRole,
+        displayName: name,
+        address: address.trim() || undefined,
+        phone: phone.trim() || undefined,
+        birthDate: birthDate || undefined,
+        niches: signupRole === "creator" ? selectedNiches : undefined,
+        bypass: Boolean(result.bypass),
+      });
+      const verifyUrl = `${routes.auth.verify}?${new URLSearchParams({
+        email: result.email,
+        role: signupRole,
+      }).toString()}`;
+      if (typeof window !== "undefined") {
+        window.location.assign(verifyUrl);
+        return;
+      }
+      router.push(verifyUrl);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not create that account.");
+      setError(reason instanceof Error ? reason.message : "Could not start signup.");
     } finally {
       setPending(false);
     }
@@ -191,9 +313,15 @@ export function JoinWizard() {
         return false;
       }
     }
-    if (step === 3) {
-      if (!bankName.trim() || !accountNumber.trim()) {
-        setError("Add payout details to continue (demo placeholders are fine).");
+    // Payout details are optional at signup — can be completed later in the portal.
+    if (step === PASSWORD_STEP) {
+      const passwordIssueSignup = firstPasswordError(password);
+      if (passwordIssueSignup) {
+        setError(passwordIssueSignup);
+        return false;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
         return false;
       }
     }
@@ -202,8 +330,8 @@ export function JoinWizard() {
 
   async function onNext() {
     if (!validateStep()) return;
-    if (step >= totalSteps - 1) {
-      await completeSignup();
+    if (step === PASSWORD_STEP) {
+      await startEmailVerification();
       return;
     }
     setStep((s) => s + 1);
@@ -307,7 +435,7 @@ export function JoinWizard() {
                   <DemoRolePicker
                     value={role}
                     onChange={setRole}
-                    excludedRoles={isLogin ? [] : ["admin"]}
+                    excludedRoles={["admin"]}
                   />
                 ) : null}
                 {!isLogin ? (
@@ -470,7 +598,11 @@ export function JoinWizard() {
               </>
             ) : null}
 
+<<<<<<< Updated upstream
             {(isLogin || step === 4) && (
+=======
+            {(isLogin || isAdminSignup || (!isLogin && step === PASSWORD_STEP)) && (
+>>>>>>> Stashed changes
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Password
@@ -533,24 +665,34 @@ export function JoinWizard() {
                 ? "Working…"
                 : isLogin
                   ? "Log in ›"
+<<<<<<< Updated upstream
                   : step === totalSteps - 1
                     ? "Finish ›"
                     : "Next ›"}
+=======
+                  : isAdminSignup
+                    ? "Create account ›"
+                    : step === PASSWORD_STEP
+                      ? "Send code ›"
+                      : "Next ›"}
+>>>>>>> Stashed changes
             </button>
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
             {adminPortal
+<<<<<<< Updated upstream
               ? siteConfig.useMockData
                 ? "Mock: admin@ubunifu.dev / CreatorsDemo1! — or use your existing admin account."
                 : "Demo: admin@ubunifu.dev — password CreatorsDemo1!"
+=======
+              ? isLogin
+                ? "Use the admin email and password provisioned for this environment."
+                : "Creates an admin account on the server when API signup allows the admin role."
+>>>>>>> Stashed changes
               : isLogin
-                ? siteConfig.useMockData
-                  ? "Mock mode: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1! (API optional)"
-                  : "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
-                : siteConfig.useMockData
-                  ? "Mock mode: new brand/creator accounts stay in this browser (API optional)."
-                  : "Creates a real account. Email and password are checked on the server."}
+                ? "Use the email and password from creator signup. Pick Creator vs Brand above to match your account."
+                : "Creates a real account. After the password step we email a 6-digit code to verify."}
           </p>
         </div>
       </div>

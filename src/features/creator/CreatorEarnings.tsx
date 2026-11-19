@@ -11,7 +11,7 @@ import type { CreatorEarningLine } from "@/types";
 
 function earningStatusPill(status: CreatorEarningLine["status"]) {
   if (status === "paid") return { label: "Paid", variant: "solid" as const };
-  if (status === "approved") return { label: "Approved · MoMo", variant: "default" as const };
+  if (status === "approved") return { label: "Approved", variant: "default" as const };
   return { label: "Pending review", variant: "outline" as const };
 }
 
@@ -35,7 +35,7 @@ export function CreatorEarnings() {
   const paid = earnings.filter((e) => e.status === "paid").reduce((s, e) => s + e.amountRwf, 0);
 
   const stats = [
-    { value: formatRwf(approved), label: "Approved", hint: "Queued for MoMo payout" },
+    { value: formatRwf(approved), label: "Approved", hint: "Queued for payout" },
     { value: formatRwf(pending), label: "Pending", hint: "Awaiting brand approval" },
     { value: formatRwf(paid), label: "Paid out", hint: "Sent to your wallet" },
   ];
@@ -70,7 +70,7 @@ export function CreatorEarnings() {
               Payout history
             </p>
             <p className="mt-1 text-sm text-neutral-600">
-              Every campaign line tied to approval and MoMo dates.
+              Every campaign line tied to approval and payout dates.
             </p>
           </div>
           {approved > 0 ? (

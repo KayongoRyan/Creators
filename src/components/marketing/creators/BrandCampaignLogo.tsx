@@ -128,7 +128,7 @@ export function BrandCampaignLogo({
             fontWeight="700"
             fontFamily="system-ui,sans-serif"
           >
-            MoMo
+            Rwanda
           </text>
         </svg>
       );

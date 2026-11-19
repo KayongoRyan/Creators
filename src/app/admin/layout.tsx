@@ -1,4 +1,3 @@
-import { AdminDevBootstrap } from "@/components/layout/AdminDevBootstrap";
 import { AdminPortalGate } from "@/components/layout/AdminPortalGate";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { adminNav } from "@/config/navigation";
@@ -12,7 +11,6 @@ export default function AdminLayout({
   return (
     <DashboardShell title="Admin" role="admin" nav={adminNav}>
       <AdminStoreProvider>
-        <AdminDevBootstrap />
         <AdminPortalGate>{children}</AdminPortalGate>
       </AdminStoreProvider>
     </DashboardShell>

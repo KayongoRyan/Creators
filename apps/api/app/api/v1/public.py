@@ -10,6 +10,7 @@ router = APIRouter(prefix="/public", tags=["public"])
 @router.post("/creator-applications")
 async def post_creator_application(
     fullName: str = Form(),
+    phone: str = Form(""),
     momo: str = Form(""),
     tiktokHandle: str = Form(""),
     instagramHandle: str = Form(""),
@@ -31,7 +32,7 @@ async def post_creator_application(
     return submit_public_application(
         db,
         full_name=fullName,
-        momo_phone=momo,
+        phone=(phone or momo),
         tiktok_handle=tiktokHandle,
         instagram_handle=instagramHandle,
         niche=niche,

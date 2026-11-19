@@ -1,7 +1,13 @@
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy.orm import Session
 
 from app.core.security import Actor
 from app.db.models import (
+    AdminEvent,
     Assignment,
     Brand,
     BrandCollection,
@@ -13,8 +19,43 @@ from app.db.models import (
     CreatorApplication,
     CreatorEarning,
     Payout,
+    Profile,
     Submission,
 )
+
+_ACTION_TO_ACTIVITY: dict[str, tuple[str, str]] = {
+    "campaign.create": ("campaign_created", "/admin/campaigns"),
+    "campaign.fund": ("brand_payment", "/admin/campaigns"),
+    "campaign.snapshot": ("campaign_created", "/admin/campaigns"),
+    "campaign.source_upload": ("campaign_created", "/admin/campaigns"),
+    "creator.verify": ("creator_verified", "/admin/creators"),
+    "creator.reject": ("creator_rejected", "/admin/creators"),
+    "submission.create": ("submission_pending", "/admin/submissions"),
+    "submission.approve": ("submission_approved", "/admin/submissions"),
+    "submission.reject": ("submission_rejected", "/admin/submissions"),
+    "submission.revision": ("submission_revision", "/admin/submissions"),
+    "campaign.apply": ("campaign_created", "/admin/campaigns"),
+    "campaign.application_accept": ("campaign_created", "/admin/campaigns"),
+    "payout.paid": ("payout_paid", "/admin/payments"),
+    "payout.paid_all": ("payout_paid", "/admin/payments"),
+}
+
+_ACTION_TO_AUDIT: dict[str, tuple[str, str]] = {
+    "campaign.create": ("campaign_created", "success"),
+    "campaign.fund": ("collection_paid", "success"),
+    "campaign.snapshot": ("campaign_updated", "info"),
+    "campaign.source_upload": ("campaign_updated", "info"),
+    "campaign.apply": ("campaign_updated", "info"),
+    "campaign.application_accept": ("campaign_updated", "success"),
+    "creator.verify": ("creator_approved", "success"),
+    "creator.reject": ("creator_rejected", "warning"),
+    "submission.create": ("submission_pending", "info"),
+    "submission.approve": ("submission_approved", "success"),
+    "submission.reject": ("submission_rejected", "warning"),
+    "submission.revision": ("submission_revision", "info"),
+    "payout.paid": ("payout_paid", "success"),
+    "payout.paid_all": ("payout_batch_paid", "success"),
+}
 
 
 def _followers_label(count: int) -> str:
@@ -47,6 +88,14 @@ def admin_state(db: Session) -> dict:
     creator_by_id = {creator.id: creator for creator in creators}
     collections = db.query(BrandCollection).all()
     payouts = db.query(Payout).all()
+    events = (
+        db.query(AdminEvent).order_by(AdminEvent.created_at.desc()).limit(80).all()
+    )
+    profiles = {
+        profile.brand_id: profile
+        for profile in db.query(Profile).filter(Profile.brand_id.isnot(None)).all()
+        if profile.brand_id
+    }
 
     return {
         "campaigns": [
@@ -72,6 +121,11 @@ def admin_state(db: Session) -> dict:
                 "maxPayoutRwf": campaign.max_payout_rwf,
                 "setupFeeRwf": campaign.setup_fee_rwf,
                 "fundedAt": campaign.funded_at,
+                **(
+                    {"sourceAssetPath": campaign.source_asset_path}
+                    if campaign.source_asset_path
+                    else {}
+                ),
             }
             for campaign in campaigns
         ],
@@ -85,6 +139,7 @@ def admin_state(db: Session) -> dict:
                 "instagramFollowers": application.instagram_followers,
                 "niche": application.niche,
                 "status": application.status,
+                "appliedAt": application.created_at,
             }
             for application in applications
         ],
@@ -103,8 +158,12 @@ def admin_state(db: Session) -> dict:
                 "id": submission.id,
                 "campaignId": submission.campaign_id,
                 "campaignTitle": campaign_titles.get(submission.campaign_id, ""),
-                "creatorName": creator_by_id[submission.creator_id].display_name,
-                "handle": creator_by_id[submission.creator_id].tiktok_handle,
+                "creatorName": creator_by_id[submission.creator_id].display_name
+                if submission.creator_id in creator_by_id
+                else "",
+                "handle": creator_by_id[submission.creator_id].tiktok_handle
+                if submission.creator_id in creator_by_id
+                else "",
                 **(
                     {"postUrl": submission.post_url}
                     if submission.post_url
@@ -129,6 +188,7 @@ def admin_state(db: Session) -> dict:
             }
             for collection in collections
         ],
+        "brandAccounts": _brand_accounts(db, brands, profiles),
         "payouts": [
             {
                 "id": payout.id,
@@ -140,18 +200,179 @@ def admin_state(db: Session) -> dict:
             }
             for payout in payouts
         ],
+        "activityLog": [
+            row
+            for event in events
+            if (row := _activity_from_event(event)) is not None
+        ],
+        "auditLog": [_audit_from_event(event) for event in events],
+        "analytics": _derived_analytics(db),
+    }
+
+
+def _brand_accounts(
+    db: Session,
+    brands: dict[str, Brand],
+    profiles: dict[str, Profile],
+) -> list[dict]:
+    accounts: list[dict] = []
+    for brand_id, brand in brands.items():
+        profile = profiles.get(brand_id)
+        campaigns = db.query(Campaign).filter(Campaign.brand_id == brand_id).all()
+        spent = sum(
+            campaign.spend_rwf or 0
+            for campaign in campaigns
+            if campaign.status in {"active", "completed"}
+        )
+        if campaigns:
+            last_active = max(campaign.created_at for campaign in campaigns)
+        else:
+            last_active = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        pending_invoice = (
+            db.query(BrandInvoice)
+            .filter(BrandInvoice.brand_id == brand_id, BrandInvoice.status == "pending")
+            .first()
+        )
+        status = "pending_payment" if pending_invoice is not None else "active"
+        accounts.append(
+            {
+                "id": brand.id,
+                "name": brand.name,
+                "contactName": profile.display_name if profile else brand.legal_name,
+                "contactEmail": profile.email if profile else "",
+                "status": status,
+                "campaignsRun": len(campaigns),
+                "totalSpentRwf": spent,
+                "lastActiveAt": last_active,
+                "joinedAt": last_active,
+            }
+        )
+    return accounts
+
+
+def _activity_from_event(event: AdminEvent) -> dict | None:
+    mapped = _ACTION_TO_ACTIVITY.get(event.action)
+    if mapped is None:
+        return None
+    kind, href = mapped
+    summary = event.detail or event.action
+    return {
+        "id": event.id,
+        "at": event.created_at,
+        "kind": kind,
+        "actorLabel": event.actor_email.split("@")[0] if event.actor_email else "Admin",
+        "summary": summary,
+        "href": href,
+    }
+
+
+def _audit_from_event(event: AdminEvent) -> dict:
+    mapped = _ACTION_TO_AUDIT.get(event.action, ("settings_updated", "info"))
+    action, severity = mapped
+    return {
+        "id": event.id,
+        "at": event.created_at,
+        "actorName": event.actor_email.split("@")[0] if event.actor_email else "Admin",
+        "actorRole": "admin",
+        "actorEmail": event.actor_email,
+        "action": action,
+        "summary": event.detail or f"{event.action} · {event.entity_type}",
+        "targetLabel": event.entity_id,
+        "source": f"/admin/{event.entity_type}",
+        "severity": severity,
+    }
+
+
+def _day_key(value: str | None) -> str | None:
+    if not value:
+        return None
+    return value[:10]
+
+
+def _derived_analytics(db: Session) -> dict:
+    today = datetime.now(UTC).date()
+    days = [today - timedelta(days=offset) for offset in range(13, -1, -1)]
+    day_keys = [day.isoformat() for day in days]
+
+    campaigns_by_day: dict[str, int] = defaultdict(int)
+    for campaign in db.query(Campaign).all():
+        key = _day_key(campaign.created_at)
+        if key in day_keys:
+            campaigns_by_day[key] += 1
+
+    apps_by_day: dict[str, int] = defaultdict(int)
+    for application in db.query(CreatorApplication).all():
+        key = _day_key(application.created_at)
+        if key in day_keys:
+            apps_by_day[key] += 1
+
+    submissions_by_day: dict[str, int] = defaultdict(int)
+    approvals_by_day: dict[str, int] = defaultdict(int)
+    for submission in db.query(Submission).all():
+        key = _day_key(submission.submitted_at)
+        if key in day_keys:
+            submissions_by_day[key] += 1
+            if submission.status == "approved":
+                approvals_by_day[key] += 1
+
+    collections_by_day: dict[str, int] = defaultdict(int)
+    for collection in db.query(BrandCollection).filter(BrandCollection.status == "paid").all():
+        # No paid_at column — attribute to "today" bucket if paid, else skip series noise.
+        collections_by_day[day_keys[-1]] += collection.amount_rwf
+
+    payouts_by_day: dict[str, int] = defaultdict(int)
+    for payout in db.query(Payout).filter(Payout.status == "paid").all():
+        payouts_by_day[day_keys[-1]] += payout.amount_rwf
+
+    campaign_apps_by_day: dict[str, int] = defaultdict(int)
+    for application in db.query(CampaignApplication).all():
+        key = _day_key(application.applied_at)
+        if key in day_keys:
+            campaign_apps_by_day[key] += 1
+
+    daily = [
+        {
+            "date": key,
+            "visitors": 0,
+            "pageViews": 0,
+            "signups": apps_by_day[key],
+            "activeUsers": 0,
+            "campaignsCreated": campaigns_by_day[key],
+            "creatorApplications": apps_by_day[key],
+            "campaignApplications": campaign_apps_by_day[key],
+            "submissions": submissions_by_day[key],
+            "approvals": approvals_by_day[key],
+            "collectionsRwf": collections_by_day[key],
+            "payoutsRwf": payouts_by_day[key],
+        }
+        for key in day_keys
+    ]
+
+    return {
+        "daily": daily,
+        "trafficSources": [],
+        "devices": [],
+        "topPages": [],
+        "reviewSla": {
+            "targetHours": 48,
+            "avgHours": 0,
+            "medianHours": 0,
+            "withinSlaPercent": 0,
+        },
     }
 
 
 def brand_state(db: Session, actor: Actor) -> dict:
-    if not actor.brand_id:
-        return {"brandName": "", "companyLine": "", "campaigns": [], "invoices": []}
-    brand = db.get(Brand, actor.brand_id)
-    if brand is None:
+    from app.modules.portal.brand_access import load_brand_for_actor
+
+    try:
+        brand = load_brand_for_actor(db, actor)
+    except HTTPException:
         return {"brandName": "", "companyLine": "", "campaigns": [], "invoices": []}
     campaigns = (
         db.query(Campaign)
-        .filter(Campaign.brand_id == brand.id, Campaign.listed_in_brand.is_(True))
+        .filter(Campaign.brand_id == brand.id)
+        .order_by(Campaign.created_at.desc())
         .all()
     )
     invoices = (
@@ -164,6 +385,7 @@ def brand_state(db: Session, actor: Actor) -> dict:
         "invoices": [
             {
                 "id": invoice.id,
+                "campaignId": invoice.campaign_id,
                 "label": invoice.label,
                 "creatorBudgetRwf": invoice.creator_budget_rwf,
                 "feeRwf": invoice.fee_rwf,
@@ -239,7 +461,8 @@ def creator_state(db: Session, actor: Actor) -> dict:
             "tiktokFollowers": creator.tiktok_followers,
             "instagramFollowers": creator.instagram_followers,
             "niche": creator.niche,
-            "momo": creator.momo,
+            "momo": creator.phone or creator.momo,
+            "phone": creator.phone or creator.momo,
             "label": creator.label,
             "campaignsCompleted": creator.campaigns_completed,
         },

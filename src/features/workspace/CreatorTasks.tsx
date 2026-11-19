@@ -20,7 +20,7 @@ export function CreatorTasks() {
     <>
       <Notice>
         Your Primus Beer submission was approved! RWF 45,000 will be sent to
-        your MoMo by Friday.
+        your account by Friday.
       </Notice>
       <PageIntro title="My tasks" subtitle="Campaigns you are assigned to" />
       <Card>

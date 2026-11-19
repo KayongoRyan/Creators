@@ -38,9 +38,9 @@ export const featuredBrandCampaigns: FeaturedBrandCampaign[] = [
   {
     id: "mtn",
     brand: "MTN Rwanda",
-    title: "MoMo tips — everyday payments",
+    title: "Everyday payments — tips series",
     description:
-      "Short tips for bills and MoMo transfers. Reels, TikTok, or Stories.",
+      "Short tips for bills and mobile payments. Reels, TikTok, or Stories.",
     budget: "RWF 38,000 flat",
     niche: "Tech & lifestyle",
   },

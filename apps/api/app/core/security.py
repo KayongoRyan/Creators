@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
@@ -40,18 +41,38 @@ def _jwks_client(supabase_url: str) -> PyJWKClient:
     return PyJWKClient(f"{supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json")
 
 
+def warmup_supabase_jwks() -> None:
+    settings = get_settings()
+    if not settings.supabase_url.strip():
+        return
+    try:
+        _jwks_client(settings.supabase_url).get_signing_keys()
+    except Exception:
+        # First request may still populate cache; login should not fail on warmup miss.
+        pass
+
+
 def _decode_supabase_asymmetric(token: str) -> dict:
     settings = get_settings()
     if not settings.supabase_url:
         raise jwt.InvalidTokenError("Supabase URL is not configured")
-    key = _jwks_client(settings.supabase_url).get_signing_key_from_jwt(token)
-    return jwt.decode(
-        token,
-        key.key,
-        algorithms=["ES256", "RS256"],
-        audience="authenticated",
-        options={"require": ["exp", "sub"]},
-    )
+    client = _jwks_client(settings.supabase_url)
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            key = client.get_signing_key_from_jwt(token)
+            return jwt.decode(
+                token,
+                key.key,
+                algorithms=["ES256", "RS256"],
+                audience="authenticated",
+                options={"require": ["exp", "sub"]},
+            )
+        except Exception as exc:  # noqa: BLE001 - retry transient JWKS/network errors
+            last_error = exc
+            if attempt < 2:
+                time.sleep(0.2 * (attempt + 1))
+    raise jwt.InvalidTokenError("Could not verify Supabase access token") from last_error
 
 
 def _decode(token: str) -> dict:

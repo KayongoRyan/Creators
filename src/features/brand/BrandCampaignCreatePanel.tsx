@@ -35,9 +35,11 @@ function validate(input: BrandCreateCampaignInput): FormErrors {
 export function BrandCampaignCreatePanel({
   onSubmit,
   onCancel,
+  pending = false,
 }: {
-  onSubmit: (input: BrandCreateCampaignInput) => void;
+  onSubmit: (input: BrandCreateCampaignInput) => void | Promise<void>;
   onCancel: () => void;
+  pending?: boolean;
 }) {
   const [form, setForm] = useState<BrandCreateCampaignInput>({
     title: "",
@@ -50,10 +52,11 @@ export function BrandCampaignCreatePanel({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (pending) return;
     const nextErrors = validate(form);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
-    onSubmit(form);
+    void onSubmit(form);
   };
 
   return (
@@ -152,13 +155,18 @@ export function BrandCampaignCreatePanel({
       </div>
 
       <div className="mt-8 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <button type="submit" className={cn(workspacePrimaryButton, "min-h-11 w-full sm:w-auto")}>
-          Create campaign
+        <button
+          type="submit"
+          disabled={pending}
+          className={cn(workspacePrimaryButton, "min-h-11 w-full sm:w-auto disabled:opacity-60")}
+        >
+          {pending ? "Creating…" : "Create campaign"}
         </button>
         <button
           type="button"
+          disabled={pending}
           onClick={onCancel}
-          className="min-h-11 w-full rounded-full border border-black/15 px-5 text-sm font-medium text-neutral-900 sm:w-auto"
+          className="min-h-11 w-full rounded-full border border-black/15 px-5 text-sm font-medium text-neutral-900 sm:w-auto disabled:opacity-60"
         >
           Cancel
         </button>

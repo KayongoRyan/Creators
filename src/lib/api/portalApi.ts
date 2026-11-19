@@ -1,29 +1,29 @@
-import { siteConfig } from "@/config/site";
 import type {
   AdminState,
+  BrandCreateCampaignInput,
   BrandState,
   CampaignReport,
+  CreateCampaignInput,
   CreatorProfile,
   CreatorState,
 } from "@/types";
 import { apiClient } from "./client";
 import { apiEndpoints } from "./endpoints";
-import type { CreateCampaignInput } from "@/types";
 
 export function isLiveApiMode() {
-  return !siteConfig.useMockData;
+  return true;
 }
 
 export async function fetchAdminState(): Promise<AdminState> {
-  return apiClient<AdminState>(apiEndpoints.admin.state);
+  return apiClient<AdminState>(apiEndpoints.admin.state, { keepTokenOn401: true });
 }
 
 export async function fetchBrandState(): Promise<BrandState> {
-  return apiClient<BrandState>(apiEndpoints.brand.state);
+  return apiClient<BrandState>(apiEndpoints.brand.state, { keepTokenOn401: true });
 }
 
 export async function fetchCreatorState(): Promise<CreatorState> {
-  return apiClient<CreatorState>(apiEndpoints.creator.state);
+  return apiClient<CreatorState>(apiEndpoints.creator.state, { keepTokenOn401: true });
 }
 
 export async function apiFundCampaign(campaignId: string): Promise<void> {
@@ -123,4 +123,25 @@ export async function apiUpdateCreatorProfile(
     method: "PATCH",
     body: JSON.stringify(profile),
   });
+}
+
+export async function apiCreateBrandCampaign(
+  input: BrandCreateCampaignInput,
+): Promise<{ id: string }> {
+  return apiClient<{ id: string }>(apiEndpoints.brand.campaigns, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function apiUploadCampaignSourceAsset(
+  campaignId: string,
+  file: File,
+): Promise<{ sourceAssetPath: string }> {
+  const body = new FormData();
+  body.append("file", file);
+  return apiClient<{ sourceAssetPath: string }>(
+    apiEndpoints.admin.campaignSourceAsset(campaignId),
+    { method: "POST", body },
+  );
 }

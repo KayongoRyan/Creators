@@ -26,6 +26,7 @@ export type Campaign = {
   poolRemainingRwf?: number;
   creatorPoolRwf?: number;
   fundedAt?: string | null;
+  sourceAssetPath?: string | null;
 };
 
 export type CampaignReportLine = {
@@ -105,7 +106,9 @@ export type BrandAccount = {
   name: string;
   contactName: string;
   contactEmail: string;
+  /** @deprecated use phone */
   momoPhone?: string;
+  phone?: string;
   status: BrandAccountStatus;
   campaignsRun: number;
   totalSpentRwf: number;
@@ -359,7 +362,9 @@ export type CreatorProfile = {
   tiktokFollowers: number;
   instagramFollowers: number;
   niche: string;
+  /** @deprecated prefer phone */
   momo: string;
+  phone?: string;
   label: string;
   campaignsCompleted: number;
 };

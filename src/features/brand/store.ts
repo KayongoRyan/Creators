@@ -8,55 +8,57 @@ import {
   useEffect,
   useState,
 } from "react";
-import { siteConfig } from "@/config/site";
-import { fetchBrandState } from "@/lib/api/portalApi";
-import { hydrateFromApi, type PortalLoadStatus } from "@/lib/portal/hydration";
-import { brandSeed } from "@/lib/portalSeeds";
+import {
+  apiCreateBrandCampaign,
+  fetchBrandState,
+} from "@/lib/api/portalApi";
+import {
+  hydrateFromApi,
+  runApiMutation,
+  type PortalLoadStatus,
+} from "@/lib/portal/hydration";
+import { emptyBrandState } from "@/lib/portal/emptyState";
 import type {
   BrandCampaignView,
   BrandCreateCampaignInput,
-  BrandInvoice,
   BrandState,
 } from "@/types";
 
-function nextId(prefix: string) {
-  return `${prefix}_${Date.now().toString(36)}`;
+function dedupeById<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
 }
 
-const STORAGE_KEY = "creators_brand_state_v1";
+const STORAGE_KEY = "creators_brand_state_v2";
+const LEGACY_STORAGE_KEY = "creators_brand_state_v1";
 
-function withBrandDemoFallback(data: BrandState): BrandState {
-  const seed = structuredClone(brandSeed);
-  const campaignsMissing = !data.campaigns?.length;
-  const invoicesNeedSeed =
-    !data.invoices?.length || data.invoices.some((inv) => !inv.campaignId);
-
-  if (!campaignsMissing && !invoicesNeedSeed) return data;
-
+function normalizeBrandState(data: BrandState): BrandState {
   return {
-    ...data,
-    brandName: data.brandName?.trim() ? data.brandName : seed.brandName,
-    companyLine: data.companyLine?.trim() ? data.companyLine : seed.companyLine,
-    campaigns: campaignsMissing ? seed.campaigns : data.campaigns,
-    invoices: invoicesNeedSeed ? seed.invoices : data.invoices,
+    brandName: data.brandName ?? "",
+    companyLine: data.companyLine ?? "",
+    campaigns: dedupeById(data.campaigns ?? []),
+    invoices: dedupeById(data.invoices ?? []),
   };
 }
 
 function readState(): BrandState {
-  if (typeof window === "undefined") return structuredClone(brandSeed);
-  const seed = structuredClone(brandSeed);
+  if (typeof window === "undefined") return emptyBrandState();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed;
-    const parsed = JSON.parse(raw) as BrandState;
-    return withBrandDemoFallback(parsed);
+    if (!raw) return emptyBrandState();
+    return normalizeBrandState(JSON.parse(raw) as BrandState);
   } catch {
-    return seed;
+    return emptyBrandState();
   }
 }
 
 function writeState(state: BrandState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   window.dispatchEvent(new CustomEvent("brand-store-updated"));
 }
 
@@ -78,28 +80,22 @@ export function useBrandStore() {
 }
 
 function useBrandStoreController() {
-  const [state, setState] = useState<BrandState>(() => readState());
-  const [status, setStatus] = useState<PortalLoadStatus>(() =>
-    siteConfig.useMockData ? "ready" : "loading",
-  );
+  const [state, setState] = useState<BrandState>(() => emptyBrandState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() => "loading");
   const [error, setError] = useState<string | null>(null);
 
   const hydrate = useCallback(async () => {
-    if (siteConfig.useMockData) {
-      setState(readState());
-      setStatus("ready");
-      setError(null);
-      return;
-    }
     setStatus("loading");
     setError(null);
     const result = await hydrateFromApi(fetchBrandState, writeState);
     if (result.ok) {
-      setState(withBrandDemoFallback(result.data));
+      setState(normalizeBrandState(result.data));
       setStatus("ready");
       return;
     }
-    setState(readState());
+    setState(emptyBrandState());
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
     setError(result.error);
     setStatus(
       result.kind === "unauthenticated"
@@ -124,22 +120,42 @@ function useBrandStoreController() {
     };
   }, []);
 
-  const persist = useCallback((updater: (prev: BrandState) => BrandState) => {
-    setState((prev) => {
-      const next = updater(prev);
-      writeState(next);
-      return next;
+  const createCampaign = useCallback(async (input: BrandCreateCampaignInput) => {
+    const title = input.title.trim();
+    const feeRwf = Math.round(input.budgetRwf * 0.2);
+    let campaignId: string | null = null;
+    const result = await runApiMutation(async () => {
+      const body = await apiCreateBrandCampaign(input);
+      campaignId = body.id;
     });
-  }, []);
-
-  const createCampaign = useCallback(
-    (input: BrandCreateCampaignInput) => {
-      const title = input.title.trim();
-      const feeRwf = Math.round(input.budgetRwf * 0.2);
-      const id = nextId("cmp");
-
-      const campaign: BrandCampaignView = {
-        id,
+    if (!result.ok) {
+      setError(result.error);
+      throw new Error(result.error);
+    }
+    if (!campaignId) {
+      throw new Error("API did not return a campaign id.");
+    }
+    const hydrated = await hydrateFromApi(fetchBrandState, (data) =>
+      writeState(normalizeBrandState(data)),
+    );
+    if (!hydrated.ok) {
+      setError(hydrated.error);
+      throw new Error(hydrated.error);
+    }
+    let next = normalizeBrandState(hydrated.data);
+    let created = next.campaigns.find((c) => c.id === campaignId);
+    if (!created) {
+      const retry = await hydrateFromApi(fetchBrandState, (data) =>
+        writeState(normalizeBrandState(data)),
+      );
+      if (retry.ok) {
+        next = normalizeBrandState(retry.data);
+        created = next.campaigns.find((c) => c.id === campaignId);
+      }
+    }
+    if (!created) {
+      const fallback: BrandCampaignView = {
+        id: campaignId,
         title,
         status: "draft",
         runPeriod: `Opens ${input.deadline}`,
@@ -151,34 +167,18 @@ function useBrandStoreController() {
         submitted: 0,
         approved: 0,
         posts: [],
-        performance: {
-          totalViews: 0,
-          engagementRate: "—",
-          spendRwf: 0,
-        },
+        performance: { totalViews: 0, engagementRate: "—", spendRwf: 0 },
       };
-
-      const invoice: BrandInvoice = {
-        id: nextId("inv"),
-        campaignId: id,
-        label: title,
-        creatorBudgetRwf: input.budgetRwf,
-        feeRwf,
-        totalRwf: input.budgetRwf + feeRwf,
-        status: "pending",
-        issuedAt: new Date().toISOString(),
-      };
-
-      persist((s) => ({
-        ...s,
-        campaigns: [campaign, ...s.campaigns],
-        invoices: [invoice, ...s.invoices],
-      }));
-
-      return campaign;
-    },
-    [persist],
-  );
+      next = normalizeBrandState({
+        ...next,
+        campaigns: [fallback, ...next.campaigns],
+      });
+      created = fallback;
+    }
+    setState(next);
+    writeState(next);
+    return created;
+  }, []);
 
   return {
     state,

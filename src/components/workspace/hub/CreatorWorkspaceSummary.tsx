@@ -61,7 +61,7 @@ export function CreatorWorkspaceSummary({
                 <span className="font-semibold text-neutral-900">
                   {formatRwf(approvedNotice.payoutRwf)}
                 </span>{" "}
-                will be sent to your MoMo by Friday.
+                will be paid out by Friday.
               </p>
             </div>
           ) : null}

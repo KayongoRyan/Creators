@@ -48,7 +48,7 @@ export function AdminOverview() {
           status: formatRwf(metrics.payoutsDueRwf),
           body: `${pendingPayouts.length} creator${
             pendingPayouts.length === 1 ? "" : "s"
-          } have approved submissions. Disburse via MTN MoMo before end of week.`,
+          } have approved submissions. Mark payouts before end of week.`,
           href: routes.admin.payments,
           action: "View payouts",
           payoutCta: true as const,
@@ -146,7 +146,7 @@ export function AdminOverview() {
         title="Mark all due payouts as paid?"
         description={`This will mark ${pendingPayouts.length} pending payout${
           pendingPayouts.length === 1 ? "" : "s"
-        } (${formatRwf(metrics.payoutsDueRwf)}) as paid via MTN MoMo.`}
+        } (${formatRwf(metrics.payoutsDueRwf)}) as paid.`}
         confirmLabel="Mark as paid"
         onConfirm={() => {
           markAllDuePayoutsPaid();

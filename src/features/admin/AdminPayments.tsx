@@ -1,16 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { AdminListControls } from "@/components/admin/AdminListControls";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAdminStore } from "@/features/admin/store";
 import { PaymentStatusBadge } from "@/features/payments/components/PaymentStatusBadge";
+import {
+  DEFAULT_LIST_QUERY,
+  paginateList,
+  type ListQuery,
+} from "@/lib/admin/listQuery";
 import { formatRwf } from "@/lib/format/money";
 
 export function AdminPayments() {
   const { state, markPayoutPaid } = useAdminStore();
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [query, setQuery] = useState<ListQuery>(DEFAULT_LIST_QUERY);
+
+  const page = useMemo(
+    () =>
+      paginateList(state.payouts, query, (row, search, status) => {
+        if (status !== "all" && row.status !== status) return false;
+        if (!search) return true;
+        const hay = `${row.creatorName} ${row.handle} ${row.campaignTitle}`.toLowerCase();
+        return hay.includes(search);
+      }),
+    [query, state.payouts],
+  );
 
   const totalPending = state.payouts
     .filter((p) => p.status === "pending")
@@ -20,13 +38,25 @@ export function AdminPayments() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         title="Payment tracker"
-        description="Creator disbursements for this payout week"
+        description="Creator payouts for this week"
       />
       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
         Creator payouts
       </p>
-      {state.payouts.length === 0 ? (
-        <EmptyState message="No payouts this week." />
+      <AdminListControls
+        query={query}
+        onChange={setQuery}
+        total={page.total}
+        pageCount={page.pageCount}
+        searchPlaceholder="Creator, handle, campaign…"
+        statusOptions={[
+          { value: "all", label: "All" },
+          { value: "pending", label: "Pending" },
+          { value: "paid", label: "Paid" },
+        ]}
+      />
+      {page.rows.length === 0 ? (
+        <EmptyState message="No payouts match these filters." />
       ) : (
         <div className="mt-4 overflow-x-auto border-y border-black/10">
           <table className="w-full min-w-[32rem] text-left text-sm">
@@ -40,7 +70,7 @@ export function AdminPayments() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/10">
-              {state.payouts.map((row) => (
+              {page.rows.map((row) => (
                 <tr key={row.id}>
                   <td className="py-4 pr-4">
                     <p className="font-medium text-gray-900">{row.creatorName}</p>
@@ -85,7 +115,7 @@ export function AdminPayments() {
       <ConfirmDialog
         open={confirmId !== null}
         title="Mark payout as paid?"
-        description="This simulates an MTN MoMo disbursement. You can’t undo it in this demo."
+        description="Marks this payout as paid in the ledger. You can’t undo it in this demo."
         confirmLabel="Mark paid"
         onConfirm={() => {
           if (confirmId) markPayoutPaid(confirmId);

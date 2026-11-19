@@ -1,6 +1,6 @@
 import { fetchResource } from "@/lib/api/fetchResource";
-import type { BrandRecord } from "@/lib/api/fixtures";
+import type { BrandRecord } from "@/lib/api/resourceTypes";
 
 export async function getBrands() {
-  return fetchResource<BrandRecord[]>("brands", "/brands");
+  return fetchResource<BrandRecord[]>("/brands");
 }

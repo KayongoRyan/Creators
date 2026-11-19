@@ -8,7 +8,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { siteConfig } from "@/config/site";
 import { recordPlatformEvent } from "@/lib/analytics/platformEvents";
 import { severityForAction } from "@/lib/analytics/seed";
 import {
@@ -22,7 +21,7 @@ import {
   runApiMutation,
   type PortalLoadStatus,
 } from "@/lib/portal/hydration";
-import { creatorSeed } from "@/lib/portalSeeds";
+import { emptyCreatorState } from "@/lib/portal/emptyState";
 import type {
   CampaignApplication,
   CreatorAssignment,
@@ -30,21 +29,23 @@ import type {
   CreatorState,
 } from "@/types";
 
-const STORAGE_KEY = "creators_creator_state_v1";
+const STORAGE_KEY = "creators_creator_state_v2";
+const LEGACY_STORAGE_KEY = "creators_creator_state_v1";
 
 function readState(): CreatorState {
-  if (typeof window === "undefined") return creatorSeed;
+  if (typeof window === "undefined") return emptyCreatorState();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return structuredClone(creatorSeed);
+    if (!raw) return emptyCreatorState();
     return JSON.parse(raw) as CreatorState;
   } catch {
-    return structuredClone(creatorSeed);
+    return emptyCreatorState();
   }
 }
 
 function writeState(state: CreatorState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
   window.dispatchEvent(new CustomEvent("creator-store-updated"));
 }
 
@@ -70,20 +71,12 @@ export function useCreatorStore() {
 }
 
 function useCreatorStoreController() {
-  const [state, setState] = useState<CreatorState>(() => readState());
-  const [status, setStatus] = useState<PortalLoadStatus>(() =>
-    siteConfig.useMockData ? "ready" : "loading",
-  );
+  const [state, setState] = useState<CreatorState>(() => emptyCreatorState());
+  const [status, setStatus] = useState<PortalLoadStatus>(() => "loading");
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const hydrate = useCallback(async () => {
-    if (siteConfig.useMockData) {
-      setState(readState());
-      setStatus("ready");
-      setError(null);
-      return;
-    }
     setStatus("loading");
     setError(null);
     const result = await hydrateFromApi(fetchCreatorState, writeState);
@@ -92,7 +85,9 @@ function useCreatorStoreController() {
       setStatus("ready");
       return;
     }
-    setState(readState());
+    setState(emptyCreatorState());
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
     setError(result.error);
     setStatus(
       result.kind === "unauthenticated"
@@ -153,40 +148,54 @@ function useCreatorStoreController() {
   const applyToCampaign = useCallback(
     (campaignId: string, pitch?: string) => {
       const campaign = state.discover.find((c) => c.id === campaignId);
-      persist((s) => {
-        if (s.applications.some((a) => a.campaignId === campaignId)) return s;
-        const campaign = s.discover.find((c) => c.id === campaignId);
-        if (!campaign?.open) return s;
-        const application: CampaignApplication = {
-          campaignId,
-          status: "pending",
-          appliedAt: new Date().toISOString(),
-          pitch: pitch?.trim(),
-        };
-        return {
-          ...s,
-          applications: [...s.applications, application],
-          discover: s.discover.map((c) =>
-            c.id === campaignId
-              ? { ...c, spotsLeft: Math.max(0, c.spotsLeft - 1) }
-              : c,
-          ),
-        };
-      });
-      void notifyMutationFailure(() => apiApplyToCampaign(campaignId, pitch));
-      recordPlatformEvent({
-        actorName: state.profile.displayName,
-        actorRole: "creator",
-        action: "campaign_applied",
-        summary: campaign
-          ? `${state.profile.displayName} applied to ${campaign.title}`
-          : `${state.profile.displayName} applied to a campaign`,
-        targetLabel: campaign?.title,
-        href: "/admin/creators",
-        severity: severityForAction("campaign_applied"),
-      });
+      void (async () => {
+        const result = await runApiMutation(() =>
+          apiApplyToCampaign(campaignId, pitch),
+        );
+        if (!result.ok) {
+          setActionError(result.error);
+          return;
+        }
+        // Rehydrate so the new Assignment shows under Tasks (apply creates it for open campaigns).
+        const hydrated = await hydrateFromApi(fetchCreatorState, writeState);
+        if (hydrated.ok) {
+          setState(hydrated.data);
+        } else {
+          persist((s) => {
+            if (s.applications.some((a) => a.campaignId === campaignId)) return s;
+            const row = s.discover.find((c) => c.id === campaignId);
+            if (!row?.open) return s;
+            const application: CampaignApplication = {
+              campaignId,
+              status: "accepted",
+              appliedAt: new Date().toISOString(),
+              pitch: pitch?.trim(),
+            };
+            return {
+              ...s,
+              applications: [...s.applications, application],
+              discover: s.discover.map((c) =>
+                c.id === campaignId
+                  ? { ...c, spotsLeft: Math.max(0, c.spotsLeft - 1) }
+                  : c,
+              ),
+            };
+          });
+        }
+        recordPlatformEvent({
+          actorName: state.profile.displayName,
+          actorRole: "creator",
+          action: "campaign_applied",
+          summary: campaign
+            ? `${state.profile.displayName} applied to ${campaign.title}`
+            : `${state.profile.displayName} applied to a campaign`,
+          targetLabel: campaign?.title,
+          href: "/admin/creators",
+          severity: severityForAction("campaign_applied"),
+        });
+      })();
     },
-    [notifyMutationFailure, persist, state.discover, state.profile.displayName],
+    [persist, state.discover, state.profile.displayName],
   );
 
   const submitAssignment = useCallback(

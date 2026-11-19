@@ -39,6 +39,7 @@ export function DashboardShell({
   const [session, setSession] = useState<DemoSession | null>(null);
   const [guestMode, setGuestMode] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const adminLoginFree = role === "admin";
 
   useEffect(() => {
     if (role === "admin") {
@@ -47,8 +48,15 @@ export function DashboardShell({
     const currentSession = readDemoSession();
 
     if (!currentSession) {
-      if (role === "admin") {
-        router.replace(adminJoinUrl());
+      // Admin is login-free: never bounce to the sign-in screen.
+      if (adminLoginFree) {
+        setGuestMode(false);
+        setSession({
+          role: "admin",
+          displayName: "Platform Admin",
+          email: "admin@ubunifu.dev",
+        });
+        setIsReady(true);
         return;
       }
       setGuestMode(true);
@@ -65,7 +73,7 @@ export function DashboardShell({
     setGuestMode(false);
     setSession(currentSession);
     setIsReady(true);
-  }, [role, router]);
+  }, [adminLoginFree, role, router]);
 
   function handleSignOut() {
     if (role === "admin" && isAdminOnlyPortal()) {
@@ -110,7 +118,14 @@ export function DashboardShell({
               {guestMode ? " · guest" : ""}
             </p>
           </div>
-          {!guestMode ? (
+          {guestMode ? (
+            <Link
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
+              className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
+            >
+              Join
+            </Link>
+          ) : adminLoginFree ? null : (
             <button
               type="button"
               onClick={handleSignOut}
@@ -118,13 +133,6 @@ export function DashboardShell({
             >
               Sign out
             </button>
-          ) : (
-            <Link
-              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
-              className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
-            >
-              Join
-            </Link>
           )}
         </div>
         <nav
@@ -162,7 +170,7 @@ export function DashboardShell({
             >
               Join to unlock
             </Link>
-          ) : (
+          ) : adminLoginFree ? null : (
             <button
               type="button"
               onClick={handleSignOut}

@@ -27,13 +27,15 @@ type JoinMode = "signup" | "login";
 export function JoinWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const adminPortal = isAdminOnlyPortal();
   const roleParam = searchParams.get("role");
-  const initialRole: UserRole =
-    roleParam === "brand" || roleParam === "admin" || roleParam === "creator"
+  const initialRole: UserRole = adminPortal
+    ? "admin"
+    : roleParam === "brand" || roleParam === "admin" || roleParam === "creator"
       ? roleParam
       : "creator";
   const initialMode: JoinMode =
-    searchParams.get("mode") === "login" ? "login" : "signup";
+    adminPortal || searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [mode, setMode] = useState<JoinMode>(initialMode);
   const [role, setRole] = useState<UserRole>(initialRole);
@@ -55,11 +57,11 @@ export function JoinWizard() {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
+  const isLogin = mode === "login";
   const signupRole: Extract<UserRole, "creator" | "brand"> =
     role === "brand" ? "brand" : "creator";
   const stepLabels = STEP_LABELS[signupRole];
   const totalSteps = stepLabels.length;
-  const isLogin = mode === "login";
 
   const sectionTitle = useMemo(() => {
     if (isLogin) return "Welcome back";
@@ -76,15 +78,16 @@ export function JoinWizard() {
     }
     setPending(true);
     setError("");
+    const loginRole = adminPortal ? "admin" : role;
     try {
       const result = await loginWithPassword({
         email: email.trim(),
         password,
-        role,
+        role: loginRole,
       });
-      const mockProfile =
-        siteConfig.useMockData &&
-        lookupMockCredential(result.email, result.role as UserRole);
+      const mockProfile = siteConfig.useMockData
+        ? lookupMockCredential(result.email, result.role as UserRole)
+        : null;
       saveDemoSession({
         role: result.role as UserRole,
         displayName:
@@ -216,40 +219,42 @@ export function JoinWizard() {
       <div className="mx-auto w-full max-w-3xl border border-black/10 bg-white p-6 sm:p-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
-            Create your profile
+            {adminPortal ? "Admin access" : "Create your profile"}
           </h1>
-          <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
-            <button
-              type="button"
-              aria-pressed={mode === "signup"}
-              onClick={() => {
-                setMode("signup");
-                setStep(0);
-                setError("");
-                if (role === "admin") setRole("creator");
-              }}
-              className={cn(
-                "min-h-10 px-4 text-sm font-semibold",
-                mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
-              )}
-            >
-              Sign up
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === "login"}
-              onClick={() => {
-                setMode("login");
-                setError("");
-              }}
-              className={cn(
-                "min-h-10 px-4 text-sm font-semibold",
-                mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
-              )}
-            >
-              Log in
-            </button>
-          </div>
+          {!adminPortal ? (
+            <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
+              <button
+                type="button"
+                aria-pressed={mode === "signup"}
+                onClick={() => {
+                  setMode("signup");
+                  setStep(0);
+                  setError("");
+                  if (role === "admin") setRole("creator");
+                }}
+                className={cn(
+                  "min-h-10 px-4 text-sm font-semibold",
+                  mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
+                )}
+              >
+                Sign up
+              </button>
+              <button
+                type="button"
+                aria-pressed={mode === "login"}
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                }}
+                className={cn(
+                  "min-h-10 px-4 text-sm font-semibold",
+                  mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
+                )}
+              >
+                Log in
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {!isLogin ? (
@@ -288,19 +293,23 @@ export function JoinWizard() {
             {sectionTitle}
           </p>
           <p className="mt-1 text-sm text-gray-600">
-            {isLogin
-              ? "Sign in with an existing account. Email and password are checked on the server."
-              : "Provide the details below to set up your workspace."}
+            {adminPortal
+              ? "Platform staff only. Use your admin email and password."
+              : isLogin
+                ? "Sign in with an existing account. Email and password are checked on the server."
+                : "Provide the details below to set up your workspace."}
           </p>
 
           <div className="mt-6 space-y-5">
             {(isLogin || step === 0) && (
               <>
-                <DemoRolePicker
-                  value={role}
-                  onChange={setRole}
-                  excludedRoles={isLogin ? [] : ["admin"]}
-                />
+                {!adminPortal ? (
+                  <DemoRolePicker
+                    value={role}
+                    onChange={setRole}
+                    excludedRoles={isLogin ? [] : ["admin"]}
+                  />
+                ) : null}
                 {!isLogin ? (
                   <label className="block text-sm font-medium text-gray-700">
                     {signupRole === "brand" ? "Your name" : "Full name"}
@@ -461,7 +470,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {(isLogin || (!isLogin && step === 4)) && (
+            {(isLogin || step === 4) && (
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Password
@@ -531,12 +540,14 @@ export function JoinWizard() {
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
-            {isLogin
+            {adminPortal
               ? siteConfig.useMockData
-                ? "Mock mode: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1! (API optional)"
-                : "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
-              : isAdminOnlyPortal()
-                ? "Admin console: sign up is for brand/creator only. Pick Admin + Log in for platform staff."
+                ? "Mock: admin@ubunifu.dev / CreatorsDemo1! — or use your existing admin account."
+                : "Demo: admin@ubunifu.dev — password CreatorsDemo1!"
+              : isLogin
+                ? siteConfig.useMockData
+                  ? "Mock mode: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1! (API optional)"
+                  : "Demo accounts: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1!"
                 : siteConfig.useMockData
                   ? "Mock mode: new brand/creator accounts stay in this browser (API optional)."
                   : "Creates a real account. Email and password are checked on the server."}

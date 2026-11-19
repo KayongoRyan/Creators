@@ -67,7 +67,9 @@ async function readResponseJson<T>(response: Response): Promise<T> {
   try {
     return JSON.parse(trimmed) as T;
   } catch {
-    throw new Error("API returned a non-JSON response. Check NEXT_PUBLIC_API_URL and that FastAPI is up.");
+    throw new Error(
+      "API returned a non-JSON response. Check NEXT_PUBLIC_API_URL and that FastAPI is up.",
+    );
   }
 }
 
@@ -114,7 +116,9 @@ export async function loginWithPassword(input: {
       body: JSON.stringify(input),
     });
   } catch {
-    throw new Error("API is not reachable. Start npm run dev:api (and Next if using /api rewrite).");
+    throw new Error(
+      "API is not reachable. Start npm run dev:api (and Next if using /api rewrite).",
+    );
   }
   if (!response.ok) throw new Error(await readAuthError(response));
   const body = await readResponseJson<AuthResult>(response);
@@ -129,10 +133,10 @@ export async function signupWithPassword(input: {
   role: string;
   displayName?: string;
 }): Promise<AuthResult> {
+  if (input.role === "admin") {
+    throw new Error("Admin accounts are provisioned by the platform team.");
+  }
   if (siteConfig.useMockData) {
-    if (input.role === "admin") {
-      throw new Error("Admin accounts are provisioned by the platform team.");
-    }
     if (input.password.length < 8) {
       throw new Error("Use a password with at least 8 characters.");
     }
@@ -158,7 +162,9 @@ export async function signupWithPassword(input: {
       }),
     });
   } catch {
-    throw new Error("API is not reachable. Start npm run dev:api (and Next if using /api rewrite).");
+    throw new Error(
+      "API is not reachable. Start npm run dev:api (and Next if using /api rewrite).",
+    );
   }
   if (!response.ok) throw new Error(await readAuthError(response));
   const body = await readResponseJson<AuthResult>(response);
@@ -201,5 +207,5 @@ export async function apiClient<T>(
     throw new ApiRequestError(res.status, path, kind);
   }
 
-  return res.json() as Promise<T>;
+  return readResponseJson<T>(res);
 }

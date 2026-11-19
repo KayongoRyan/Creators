@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
 import { lookupMockCredential } from "@/lib/auth/mockCredentials";
@@ -35,7 +35,7 @@ export function JoinWizard() {
       ? roleParam
       : "creator";
   const initialMode: JoinMode =
-    searchParams.get("mode") === "login" ? "login" : "signup";
+    adminPortal || searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [mode, setMode] = useState<JoinMode>(initialMode);
   const [role, setRole] = useState<UserRole>(initialRole);
@@ -57,28 +57,19 @@ export function JoinWizard() {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (adminPortal) setRole("admin");
-  }, [adminPortal]);
-
   const isLogin = mode === "login";
-  const signupRole: Extract<UserRole, "creator" | "brand" | "admin"> = adminPortal
-    ? "admin"
-    : role === "brand"
-      ? "brand"
-      : "creator";
-  const isAdminSignup = adminPortal && !isLogin;
-  const stepLabels = STEP_LABELS[adminPortal ? "creator" : signupRole];
+  const signupRole: Extract<UserRole, "creator" | "brand"> =
+    role === "brand" ? "brand" : "creator";
+  const stepLabels = STEP_LABELS[signupRole];
   const totalSteps = stepLabels.length;
 
   const sectionTitle = useMemo(() => {
-    if (adminPortal && !isLogin) return "Create admin account";
     if (isLogin) return "Welcome back";
     if (signupRole === "brand") {
       return ["Profile details", "Location", "Business information", "Payout details", "Verify account"][step];
     }
     return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
-  }, [adminPortal, isLogin, signupRole, step]);
+  }, [isLogin, signupRole, step]);
 
   async function completeLogin() {
     if (!isValidEmail(email) || !password) {
@@ -94,9 +85,9 @@ export function JoinWizard() {
         password,
         role: loginRole,
       });
-      const mockProfile =
-        siteConfig.useMockData &&
-        lookupMockCredential(result.email, result.role as UserRole);
+      const mockProfile = siteConfig.useMockData
+        ? lookupMockCredential(result.email, result.role as UserRole)
+        : null;
       saveDemoSession({
         role: result.role as UserRole,
         displayName:
@@ -114,54 +105,7 @@ export function JoinWizard() {
     }
   }
 
-  async function completeAdminSignup() {
-    if (!displayName.trim()) {
-      setError("Enter your name.");
-      return;
-    }
-    if (!isValidEmail(email)) {
-      setError("Enter a valid email address.");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Use a password with at least 8 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-    const name = displayName.trim();
-    setPending(true);
-    setError("");
-    try {
-      const result = await signupWithPassword({
-        email: email.trim(),
-        password,
-        role: "admin",
-        displayName: name,
-      });
-      saveDemoSession(
-        {
-          role: "admin",
-          displayName: name,
-          email: result.email,
-        },
-        { method: "register" },
-      );
-      router.replace(getRoleHome("admin"));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not create that account.");
-    } finally {
-      setPending(false);
-    }
-  }
-
   async function completeSignup() {
-    if (isAdminSignup) {
-      await completeAdminSignup();
-      return;
-    }
     if (password.length < 8) {
       setError("Use a password with at least 8 characters.");
       return;
@@ -277,42 +221,43 @@ export function JoinWizard() {
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
             {adminPortal ? "Admin access" : "Create your profile"}
           </h1>
-          <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
-            <button
-              type="button"
-              aria-pressed={mode === "signup"}
-              onClick={() => {
-                setMode("signup");
-                setStep(0);
-                setError("");
-                if (adminPortal) setRole("admin");
-                else if (role === "admin") setRole("creator");
-              }}
-              className={cn(
-                "min-h-10 px-4 text-sm font-semibold",
-                mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
-              )}
-            >
-              Sign up
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === "login"}
-              onClick={() => {
-                setMode("login");
-                setError("");
-              }}
-              className={cn(
-                "min-h-10 px-4 text-sm font-semibold",
-                mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
-              )}
-            >
-              Log in
-            </button>
-          </div>
+          {!adminPortal ? (
+            <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
+              <button
+                type="button"
+                aria-pressed={mode === "signup"}
+                onClick={() => {
+                  setMode("signup");
+                  setStep(0);
+                  setError("");
+                  if (role === "admin") setRole("creator");
+                }}
+                className={cn(
+                  "min-h-10 px-4 text-sm font-semibold",
+                  mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
+                )}
+              >
+                Sign up
+              </button>
+              <button
+                type="button"
+                aria-pressed={mode === "login"}
+                onClick={() => {
+                  setMode("login");
+                  setError("");
+                }}
+                className={cn(
+                  "min-h-10 px-4 text-sm font-semibold",
+                  mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
+                )}
+              >
+                Log in
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        {!isLogin && !adminPortal ? (
+        {!isLogin ? (
           <ol className="mt-8 flex justify-between gap-2">
             {stepLabels.map((label, index) => {
               const active = index === step;
@@ -349,16 +294,14 @@ export function JoinWizard() {
           </p>
           <p className="mt-1 text-sm text-gray-600">
             {adminPortal
-              ? isLogin
-                ? "Platform staff only. Use your admin email and password."
-                : "Register a new admin account for this environment."
+              ? "Platform staff only. Use your admin email and password."
               : isLogin
                 ? "Sign in with an existing account. Email and password are checked on the server."
                 : "Provide the details below to set up your workspace."}
           </p>
 
           <div className="mt-6 space-y-5">
-            {(isLogin || step === 0 || isAdminSignup) && (
+            {(isLogin || step === 0) && (
               <>
                 {!adminPortal ? (
                   <DemoRolePicker
@@ -527,7 +470,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-            {(isLogin || isAdminSignup || (!isLogin && step === 4)) && (
+            {(isLogin || step === 4) && (
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Password
@@ -562,7 +505,7 @@ export function JoinWizard() {
           </div>
 
           <div className="mt-8 flex items-center justify-between gap-4">
-            {!isLogin && !isAdminSignup && step > 0 ? (
+            {!isLogin && step > 0 ? (
               <button
                 type="button"
                 onClick={onPrevious}
@@ -582,10 +525,6 @@ export function JoinWizard() {
                   void completeLogin();
                   return;
                 }
-                if (isAdminSignup) {
-                  void completeAdminSignup();
-                  return;
-                }
                 void onNext();
               }}
               className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white disabled:opacity-60"
@@ -594,23 +533,17 @@ export function JoinWizard() {
                 ? "Working…"
                 : isLogin
                   ? "Log in ›"
-                  : isAdminSignup
-                    ? "Create account ›"
-                    : step === totalSteps - 1
-                      ? "Finish ›"
-                      : "Next ›"}
+                  : step === totalSteps - 1
+                    ? "Finish ›"
+                    : "Next ›"}
             </button>
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
             {adminPortal
-              ? isLogin
-                ? siteConfig.useMockData
-                  ? "Mock: admin@ubunifu.dev / CreatorsDemo1! — or use an account you created here."
-                  : "Demo: admin@ubunifu.dev — password CreatorsDemo1!"
-                : siteConfig.useMockData
-                  ? "Mock mode: new admin emails are stored for this browser (API optional)."
-                  : "Creates an admin account on the server when API signup allows the admin role."
+              ? siteConfig.useMockData
+                ? "Mock: admin@ubunifu.dev / CreatorsDemo1! — or use your existing admin account."
+                : "Demo: admin@ubunifu.dev — password CreatorsDemo1!"
               : isLogin
                 ? siteConfig.useMockData
                   ? "Mock mode: admin@ubunifu.dev, brand@ubunifu.dev, creator@ubunifu.dev — password CreatorsDemo1! (API optional)"

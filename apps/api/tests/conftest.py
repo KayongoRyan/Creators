@@ -4,6 +4,7 @@ from pathlib import Path
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["JWT_SECRET"] = "test-secret-must-be-32-bytes-min"
 os.environ["AUTH_DEV"] = "1"
+os.environ["AUTH_EMAIL_OTP_BYPASS"] = "0"
 os.environ["SUPABASE_JWT_SECRET"] = ""
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SERVICE_ROLE_KEY"] = ""

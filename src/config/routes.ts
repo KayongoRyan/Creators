@@ -8,9 +8,12 @@ export const routes = {
     login: "/login",
     register: "/register",
     verify: "/verify",
+    forgotPassword: "/forgot-password",
+    resetPassword: "/reset-password",
   },
   admin: {
     root: "/admin",
+    login: "/admin/login",
     operations: "/admin/operations",
     analytics: "/admin/analytics",
     campaigns: "/admin/campaigns",

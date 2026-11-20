@@ -11,6 +11,8 @@ export type PendingSignupSession = {
   birthDate?: string;
   niches?: string[];
   bypass?: boolean;
+  /** epoch ms when current OTP was issued (60s TTL). */
+  otpIssuedAt?: number;
 };
 
 export function writePendingSignup(session: PendingSignupSession) {

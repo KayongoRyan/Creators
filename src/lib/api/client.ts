@@ -1,8 +1,4 @@
 import { siteConfig } from "@/config/site";
-<<<<<<< Updated upstream
-import { lookupMockCredential } from "@/lib/auth/mockCredentials";
-=======
->>>>>>> Stashed changes
 import { apiEndpoints } from "./endpoints";
 import { ApiRequestError, classifyHttpFailure } from "./errors";
 
@@ -123,25 +119,6 @@ export async function signupWithPassword(input: {
   role: string;
   displayName?: string;
 }): Promise<AuthResult> {
-<<<<<<< Updated upstream
-  if (input.role === "admin") {
-    throw new Error("Admin accounts are provisioned by the platform team.");
-  }
-  if (siteConfig.useMockData) {
-    if (input.password.length < 8) {
-      throw new Error("Use a password with at least 8 characters.");
-    }
-    const email = input.email.trim().toLowerCase();
-    if (lookupMockCredential(email, input.role)) {
-      throw new Error("Email is already registered.");
-    }
-    const accessToken = mockAccessToken(input.role);
-    writeAccessToken(accessToken);
-    return { accessToken, role: input.role, email };
-  }
-
-=======
->>>>>>> Stashed changes
   let response: Response;
   try {
     response = await fetch(joinApiUrl(apiEndpoints.auth.signup), {
@@ -182,6 +159,7 @@ export type SignupStartResult = {
   needsVerification: boolean;
   email: string;
   role: string;
+  expiresIn?: number;
   bypass?: boolean;
 };
 
@@ -236,10 +214,41 @@ export async function signupVerify(input: {
 export async function signupResend(input: {
   email: string;
   role?: string;
-}): Promise<{ ok: boolean; email: string; bypass?: boolean }> {
+}): Promise<{ ok: boolean; email: string; expiresIn?: number; bypass?: boolean }> {
   return postAuthJson(apiEndpoints.auth.signupResend, {
     email: input.email,
     role: input.role,
+  });
+}
+
+export async function passwordForgot(input: {
+  email: string;
+}): Promise<{ ok: boolean; expiresIn?: number; bypass?: boolean }> {
+  return postAuthJson(apiEndpoints.auth.passwordForgot, {
+    email: input.email,
+  });
+}
+
+export async function passwordReset(input: {
+  email: string;
+  token: string;
+  password: string;
+}): Promise<AuthResult> {
+  const body = await postAuthJson<AuthResult>(apiEndpoints.auth.passwordReset, {
+    email: input.email,
+    token: input.token,
+    password: input.password,
+  });
+  if (!body.accessToken) throw new Error("No access token returned.");
+  writeAccessToken(body.accessToken);
+  return body;
+}
+
+export async function passwordResend(input: {
+  email: string;
+}): Promise<{ ok: boolean; expiresIn?: number; bypass?: boolean }> {
+  return postAuthJson(apiEndpoints.auth.passwordResend, {
+    email: input.email,
   });
 }
 
@@ -283,7 +292,16 @@ export async function apiClient<T>(
 
   if (!res.ok) {
     const kind = classifyHttpFailure(res.status, path);
-    throw new ApiRequestError(res.status, path, kind);
+    let detail: string | undefined;
+    try {
+      const body = await readResponseJson<{ detail?: unknown }>(res);
+      if (typeof body.detail === "string" && body.detail.trim()) {
+        detail = body.detail.trim();
+      }
+    } catch {
+      // keep generic status message
+    }
+    throw new ApiRequestError(res.status, path, kind, detail);
   }
 
   return readResponseJson<T>(res);

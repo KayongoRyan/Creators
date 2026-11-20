@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { routes } from "@/config/routes";
@@ -85,6 +86,15 @@ export function LoginForm({ initialRole }: LoginFormProps) {
           className={underlineInputClassName}
         />
       </InspiredField>
+
+      <div className="flex justify-end -mt-2">
+        <Link
+          href={routes.auth.forgotPassword}
+          className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-black"
+        >
+          Forgot password?
+        </Link>
+      </div>
 
       {error ? (
         <p role="alert" className="text-sm font-medium text-red-600">

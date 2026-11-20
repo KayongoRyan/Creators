@@ -49,6 +49,20 @@ class SignupResendIn(ApiModel):
     role: str | None = None
 
 
+class PasswordForgotIn(ApiModel):
+    email: str
+
+
+class PasswordResetIn(ApiModel):
+    email: str
+    token: str
+    password: str
+
+
+class PasswordResendIn(ApiModel):
+    email: str
+
+
 class CreateCampaignIn(ApiModel):
     title: str
     brand_name: str = Field(alias="brandName")

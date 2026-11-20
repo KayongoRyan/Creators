@@ -13,8 +13,15 @@ def _default_sqlite_url() -> str:
 
 
 def _default_cors() -> str:
-    hosts = ("localhost", "127.0.0.1", "172.22.192.1")
-    ports = (3000, 3001, 3002, 3003, 4000)
+    # Include common Windows Hyper-V / WSL LAN adapters Next prints as "Network".
+    hosts = (
+        "localhost",
+        "127.0.0.1",
+        "172.22.192.1",
+        "172.25.160.1",
+        "172.30.224.1",
+    )
+    ports = (3000, 3001, 3002, 3003, 3004, 4000)
     return ",".join(f"http://{host}:{port}" for host in hosts for port in ports)
 
 

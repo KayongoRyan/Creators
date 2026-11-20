@@ -43,5 +43,8 @@ export const apiEndpoints = {
     signupStart: "/auth/signup/start",
     signupVerify: "/auth/signup/verify",
     signupResend: "/auth/signup/resend",
+    passwordForgot: "/auth/password/forgot",
+    passwordReset: "/auth/password/reset",
+    passwordResend: "/auth/password/resend",
   },
 } as const;

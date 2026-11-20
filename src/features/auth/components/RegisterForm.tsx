@@ -128,6 +128,7 @@ export function RegisterForm({ initialRole }: RegisterFormProps) {
               birthDate: birthDate || undefined,
               niches: role === "creator" ? selectedNiches : undefined,
               bypass: Boolean(result.bypass),
+              otpIssuedAt: Date.now(),
             });
             const verifyUrl = `${routes.auth.verify}?${new URLSearchParams({
               email: result.email,

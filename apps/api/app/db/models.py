@@ -54,6 +54,17 @@ class PendingSignup(Base):
     created_at: Mapped[str] = mapped_column(String(40))
 
 
+class PendingPasswordReset(Base):
+    """Server-side recovery OTP challenge: 60s TTL, single-use."""
+
+    __tablename__ = "pending_password_resets"
+
+    email: Mapped[str] = mapped_column(String(255), primary_key=True)
+    expires_at: Mapped[str] = mapped_column(String(40))
+    consumed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
 class CreatorApplication(Base):
     __tablename__ = "creator_applications"
 

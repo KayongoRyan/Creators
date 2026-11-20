@@ -21,6 +21,7 @@ export default defineConfig({
       ...process.env,
       PORT: apiPort,
       AUTH_DEV: "1",
+      SEED_DEMO: "1",
       JWT_SECRET: "ci-test-secret-must-be-32-bytes-min",
       SUPABASE_URL: "",
       SUPABASE_SERVICE_ROLE_KEY: "",

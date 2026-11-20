@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils/cn";
 import {
   adminJoinUrl,
   clearDemoSession,
-  ensureAdminDevSession,
   getRoleHome,
   markAdminManualSignIn,
   readDemoSession,
@@ -39,24 +38,13 @@ export function DashboardShell({
   const [session, setSession] = useState<DemoSession | null>(null);
   const [guestMode, setGuestMode] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const adminLoginFree = role === "admin";
 
   useEffect(() => {
-    if (role === "admin") {
-      ensureAdminDevSession();
-    }
     const currentSession = readDemoSession();
 
     if (!currentSession) {
-      // Admin is login-free: never bounce to the sign-in screen.
-      if (adminLoginFree) {
-        setGuestMode(false);
-        setSession({
-          role: "admin",
-          displayName: "Platform Admin",
-          email: "admin@ubunifu.dev",
-        });
-        setIsReady(true);
+      if (role === "admin") {
+        router.replace(adminJoinUrl());
         return;
       }
       setGuestMode(true);
@@ -73,15 +61,19 @@ export function DashboardShell({
     setGuestMode(false);
     setSession(currentSession);
     setIsReady(true);
-  }, [adminLoginFree, role, router]);
+  }, [role, router]);
 
   function handleSignOut() {
-    if (role === "admin" && isAdminOnlyPortal()) {
+    if (role === "admin") {
       markAdminManualSignIn();
     }
     clearDemoSession();
     setSession(null);
-    if (role === "admin" && isAdminOnlyPortal()) {
+    if (role === "admin") {
+      router.replace(adminJoinUrl());
+      return;
+    }
+    if (isAdminOnlyPortal()) {
       router.replace(adminJoinUrl());
       return;
     }
@@ -108,7 +100,7 @@ export function DashboardShell({
         <div className="flex items-center justify-between gap-4 px-5 py-4 lg:block lg:px-6 lg:py-7">
           <div>
             <Link
-              href={routes.public.home}
+              href={role === "admin" ? routes.admin.root : routes.public.home}
               className="text-base font-semibold tracking-tight text-gray-900"
             >
               Creators
@@ -120,12 +112,12 @@ export function DashboardShell({
           </div>
           {guestMode ? (
             <Link
-              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}`}
+              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}&mode=login`}
               className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
             >
-              Join
+              Log in
             </Link>
-          ) : adminLoginFree ? null : (
+          ) : (
             <button
               type="button"
               onClick={handleSignOut}
@@ -133,16 +125,6 @@ export function DashboardShell({
             >
               Sign out
             </button>
-<<<<<<< Updated upstream
-=======
-          ) : (
-            <Link
-              href={`${routes.auth.join}?role=${role === "creator" ? "creator" : "brand"}&mode=login`}
-              className="rounded-md px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-50 lg:hidden"
-            >
-              Log in
-            </Link>
->>>>>>> Stashed changes
           )}
         </div>
         <nav
@@ -180,7 +162,7 @@ export function DashboardShell({
             >
               Log in to unlock
             </Link>
-          ) : adminLoginFree ? null : (
+          ) : (
             <button
               type="button"
               onClick={handleSignOut}

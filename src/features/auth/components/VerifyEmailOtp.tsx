@@ -10,12 +10,19 @@ import {
   writePendingSignup,
   type PendingSignupSession,
 } from "@/features/auth/pendingSignup";
+import { OTP_LENGTH, OTP_TTL_SECONDS, otpExpiresIn } from "@/features/auth/otp";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
 import { signupResend, signupVerify } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
 import type { UserRole } from "@/types";
 
-const OTP_LENGTH = 6;
+function remainingOtpSeconds(issuedAt?: number) {
+  const start = issuedAt ?? Date.now();
+  return Math.max(
+    0,
+    OTP_TTL_SECONDS - Math.floor((Date.now() - start) / 1000),
+  );
+}
 
 export function VerifyEmailOtp() {
   const router = useRouter();
@@ -25,7 +32,7 @@ export function VerifyEmailOtp() {
   const [digits, setDigits] = useState<string[]>(() => Array(OTP_LENGTH).fill(""));
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [resendIn, setResendIn] = useState(60);
+  const [expiresIn, setExpiresIn] = useState(OTP_TTL_SECONDS);
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const emailFromQuery = searchParams.get("email")?.trim().toLowerCase() ?? "";
@@ -34,7 +41,13 @@ export function VerifyEmailOtp() {
   useEffect(() => {
     const stored = readPendingSignup();
     if (stored) {
-      setSession(stored);
+      const next = {
+        ...stored,
+        otpIssuedAt: stored.otpIssuedAt ?? Date.now(),
+      };
+      writePendingSignup(next);
+      setSession(next);
+      setExpiresIn(remainingOtpSeconds(next.otpIssuedAt));
       setReady(true);
       return;
     }
@@ -46,18 +59,22 @@ export function VerifyEmailOtp() {
         email: emailFromQuery,
         role: roleFromQuery,
         displayName: emailFromQuery.split("@")[0] || "User",
+        otpIssuedAt: Date.now(),
       };
       writePendingSignup(fallback);
       setSession(fallback);
+      setExpiresIn(OTP_TTL_SECONDS);
     }
     setReady(true);
   }, [emailFromQuery, roleFromQuery]);
 
   useEffect(() => {
-    if (resendIn <= 0) return;
-    const id = window.setTimeout(() => setResendIn((s) => s - 1), 1000);
-    return () => window.clearTimeout(id);
-  }, [resendIn]);
+    if (!session) return;
+    const id = window.setInterval(() => {
+      setExpiresIn(remainingOtpSeconds(session.otpIssuedAt));
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [session]);
 
   useEffect(() => {
     if (!ready || !session) return;
@@ -109,6 +126,10 @@ export function VerifyEmailOtp() {
   async function onVerify(e?: React.FormEvent) {
     e?.preventDefault();
     if (!session) return;
+    if (expiresIn <= 0) {
+      setError("Code expired. Request a new one.");
+      return;
+    }
     if (!/^\d{6}$/.test(code)) {
       setError("Enter the 6-digit code from your email.");
       return;
@@ -149,7 +170,7 @@ export function VerifyEmailOtp() {
   }
 
   async function onResend() {
-    if (!session || resendIn > 0) return;
+    if (!session || expiresIn > 0 || pending) return;
     setPending(true);
     setError("");
     try {
@@ -157,10 +178,15 @@ export function VerifyEmailOtp() {
         email: session.email,
         role: session.role,
       });
-      const next = { ...session, bypass: Boolean(result.bypass) };
+      const next = {
+        ...session,
+        bypass: Boolean(result.bypass),
+        otpIssuedAt: Date.now(),
+      };
       writePendingSignup(next);
       setSession(next);
-      setResendIn(60);
+      setExpiresIn(otpExpiresIn(result.expiresIn));
+      setDigits(Array(OTP_LENGTH).fill(""));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not resend code.");
     } finally {
@@ -207,7 +233,13 @@ export function VerifyEmailOtp() {
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
           Enter the 6-digit code we sent to{" "}
-          <span className="font-medium text-black">{session.email}</span>.
+          <span className="font-medium text-black">{session.email}</span>. It
+          expires in 60 seconds and can only be used once.
+        </p>
+        <p className="mt-2 text-sm font-medium text-gray-900">
+          {expiresIn > 0
+            ? `Code expires in ${expiresIn}s`
+            : "Code expired — request a new one."}
         </p>
 
         <form className="mt-8 space-y-6" onSubmit={(e) => void onVerify(e)}>
@@ -226,6 +258,7 @@ export function VerifyEmailOtp() {
                   aria-label={`Digit ${index + 1}`}
                   maxLength={1}
                   value={digit}
+                  disabled={expiresIn <= 0}
                   onChange={(e) => setDigitAt(index, e.target.value)}
                   onKeyDown={(e) => onKeyDown(index, e.key)}
                   onPaste={(e) => {
@@ -235,6 +268,7 @@ export function VerifyEmailOtp() {
                   className={cn(
                     "h-14 w-full max-w-14 rounded-lg border border-black/15 bg-white text-center text-xl font-semibold text-gray-900 outline-none",
                     "focus:border-black focus:ring-1 focus:ring-black",
+                    expiresIn <= 0 && "opacity-50",
                   )}
                 />
               ))}
@@ -249,13 +283,13 @@ export function VerifyEmailOtp() {
 
           {session.bypass ? (
             <p className="text-xs text-amber-800">
-              Dev bypass is on — use code <code>000000</code>.
+              Dev bypass is on — use code <code>000000</code> within 60s.
             </p>
           ) : null}
 
           <button
             type="submit"
-            disabled={pending || code.length !== OTP_LENGTH}
+            disabled={pending || expiresIn <= 0 || code.length !== OTP_LENGTH}
             className="inline-flex min-h-11 w-full items-center justify-center bg-black px-6 text-sm font-semibold text-white disabled:opacity-60"
           >
             {pending ? "Verifying…" : "Verify email"}
@@ -265,11 +299,11 @@ export function VerifyEmailOtp() {
         <div className="mt-6 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            disabled={pending || resendIn > 0}
+            disabled={pending || expiresIn > 0}
             onClick={() => void onResend()}
             className="font-semibold text-black disabled:opacity-50"
           >
-            {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+            {expiresIn > 0 ? `Resend available in ${expiresIn}s` : "Resend code"}
           </button>
           <Link href={joinHref} className="font-medium text-gray-600 hover:text-black">
             Use a different email

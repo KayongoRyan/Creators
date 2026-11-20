@@ -11,12 +11,15 @@ from app.core.config import get_settings
 from app.core.ids import new_id, now_iso
 from app.core.passwords import assert_password_policy, hash_password, verify_password
 from app.core.security import _decode, _role_from_claims, encode_access_token
-from app.db.models import Brand, Creator, PendingSignup, Profile
+from app.db.models import Brand, Creator, PendingPasswordReset, PendingSignup, Profile
 
 VALID_ROLES = {"admin", "brand", "creator"}
 PORTAL_SIGNUP_ROLES = {"brand", "creator"}
 OTP_BYPASS_TOKEN = "000000"
+# Draft signup row lifetime (password hash / onboarding). OTP itself is shorter.
 PENDING_TTL = timedelta(hours=24)
+OTP_TTL = timedelta(seconds=60)
+OTP_TTL_SECONDS = 60
 
 
 def _clean_email(email: str) -> str:
@@ -284,6 +287,48 @@ def _local_signup(
     return _token_payload(profile)
 
 
+def _parse_iso(value: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return datetime.now(UTC) - timedelta(seconds=1)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
+
+
+def _issue_otp_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    now = datetime.now(UTC)
+    return {
+        **payload,
+        "otp_expires_at": (now + OTP_TTL).isoformat(),
+        "otp_consumed": False,
+    }
+
+
+def _assert_otp_usable(payload: dict[str, Any]) -> None:
+    if payload.get("otp_consumed"):
+        raise HTTPException(
+            status_code=401,
+            detail="Verification code already used. Request a new code.",
+        )
+    raw = payload.get("otp_expires_at")
+    if not isinstance(raw, str) or not raw:
+        raise HTTPException(
+            status_code=410,
+            detail="Verification code expired. Request a new code.",
+        )
+    if _parse_iso(raw) < datetime.now(UTC):
+        raise HTTPException(
+            status_code=410,
+            detail="Verification code expired. Request a new code.",
+        )
+
+
+def _mark_otp_consumed(payload: dict[str, Any]) -> dict[str, Any]:
+    return {**payload, "otp_consumed": True}
+
+
 def _upsert_pending(
     db: Session,
     *,
@@ -295,10 +340,11 @@ def _upsert_pending(
     now = datetime.now(UTC)
     expires = (now + PENDING_TTL).isoformat()
     created = now_iso()
+    next_payload = _issue_otp_payload(payload)
     existing = db.query(PendingSignup).filter(PendingSignup.email == email).one_or_none()
     if existing is not None:
         existing.role = role
-        existing.payload = payload
+        existing.payload = next_payload
         existing.supabase_user_id = supabase_user_id
         existing.expires_at = expires
         existing.created_at = created
@@ -308,7 +354,7 @@ def _upsert_pending(
         id=new_id("ps"),
         email=email,
         role=role,
-        payload=payload,
+        payload=next_payload,
         supabase_user_id=supabase_user_id,
         expires_at=expires,
         created_at=created,
@@ -319,20 +365,68 @@ def _upsert_pending(
 
 
 def _get_pending(db: Session, email: str) -> PendingSignup:
+    """Pending signup draft (24h). OTP validity is checked separately."""
     row = db.query(PendingSignup).filter(PendingSignup.email == email).one_or_none()
     if row is None:
         raise HTTPException(status_code=404, detail="No pending signup for that email")
-    try:
-        expires = datetime.fromisoformat(row.expires_at.replace("Z", "+00:00"))
-    except ValueError:
-        expires = datetime.now(UTC) - timedelta(seconds=1)
-    if expires.tzinfo is None:
-        expires = expires.replace(tzinfo=UTC)
-    if expires < datetime.now(UTC):
+    if _parse_iso(row.expires_at) < datetime.now(UTC):
         db.delete(row)
         db.flush()
-        raise HTTPException(status_code=410, detail="Signup code expired. Start signup again.")
+        raise HTTPException(status_code=410, detail="Signup expired. Start signup again.")
     return row
+
+
+def _upsert_password_otp(db: Session, *, email: str) -> None:
+    now = datetime.now(UTC)
+    expires = (now + OTP_TTL).isoformat()
+    created = now_iso()
+    existing = (
+        db.query(PendingPasswordReset)
+        .filter(PendingPasswordReset.email == email)
+        .one_or_none()
+    )
+    if existing is not None:
+        existing.expires_at = expires
+        existing.consumed_at = None
+        existing.created_at = created
+        db.flush()
+        return
+    db.add(
+        PendingPasswordReset(
+            email=email,
+            expires_at=expires,
+            consumed_at=None,
+            created_at=created,
+        )
+    )
+    db.flush()
+
+
+def _get_usable_password_otp(db: Session, *, email: str) -> PendingPasswordReset:
+    row = (
+        db.query(PendingPasswordReset)
+        .filter(PendingPasswordReset.email == email)
+        .one_or_none()
+    )
+    if row is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+    if row.consumed_at:
+        raise HTTPException(
+            status_code=401,
+            detail="Verification code already used. Request a new code.",
+        )
+    if _parse_iso(row.expires_at) < datetime.now(UTC):
+        db.delete(row)
+        db.flush()
+        raise HTTPException(
+            status_code=410,
+            detail="Verification code expired. Request a new code.",
+        )
+    return row
+
+
+def _mark_password_otp_consumed(row: PendingPasswordReset) -> None:
+    row.consumed_at = now_iso()
 
 
 def _friendly_signup_error(detail: str) -> str:
@@ -417,6 +511,78 @@ def _resend_signup_otp(email: str) -> None:
         raise HTTPException(status_code=400, detail=_supabase_error_detail(response))
 
 
+def _send_recovery_otp(email: str) -> None:
+    settings = get_settings()
+    url = f"{settings.supabase_url.rstrip('/')}/auth/v1/recover"
+    try:
+        response = httpx.post(
+            url,
+            headers=_auth_headers(service=False),
+            json={"email": email},
+            timeout=20,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach Supabase Auth") from exc
+    if response.status_code >= 400:
+        raise HTTPException(status_code=400, detail=_supabase_error_detail(response))
+
+
+def _resend_recovery_otp(email: str) -> None:
+    settings = get_settings()
+    url = f"{settings.supabase_url.rstrip('/')}/auth/v1/resend"
+    try:
+        response = httpx.post(
+            url,
+            headers=_auth_headers(service=False),
+            json={"type": "recovery", "email": email},
+            timeout=20,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach Supabase Auth") from exc
+    if response.status_code >= 400:
+        raise HTTPException(status_code=400, detail=_supabase_error_detail(response))
+
+
+def _verify_recovery_otp(email: str, token: str) -> dict:
+    settings = get_settings()
+    url = f"{settings.supabase_url.rstrip('/')}/auth/v1/verify"
+    try:
+        response = httpx.post(
+            url,
+            headers=_auth_headers(service=False),
+            json={"type": "recovery", "email": email, "token": token},
+            timeout=20,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach Supabase Auth") from exc
+    if response.status_code >= 400:
+        raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+    body = response.json()
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=502, detail="Supabase Auth returned an invalid response")
+    return body
+
+
+def _update_password_with_access_token(access_token: str, password: str) -> None:
+    settings = get_settings()
+    url = f"{settings.supabase_url.rstrip('/')}/auth/v1/user"
+    try:
+        response = httpx.put(
+            url,
+            headers={
+                "apikey": settings.supabase_anon_key or settings.supabase_service_role_key,
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={"password": password},
+            timeout=20,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Could not reach Supabase Auth") from exc
+    if response.status_code >= 400:
+        raise HTTPException(status_code=400, detail=_supabase_error_detail(response))
+
+
 def issue_dev_token(db: Session, *, role: str, email: str, display_name: str | None) -> dict:
     """Lookup-only helper for local tests. Never creates profiles."""
     if not get_settings().auth_dev:
@@ -468,6 +634,7 @@ def signup_start(
             "needsVerification": True,
             "email": cleaned,
             "role": role,
+            "expiresIn": OTP_TTL_SECONDS,
             "bypass": settings.email_otp_bypass_enabled,
         }
 
@@ -493,6 +660,7 @@ def signup_start(
                 "needsVerification": True,
                 "email": cleaned,
                 "role": role,
+                "expiresIn": OTP_TTL_SECONDS,
                 "bypass": True,
             }
         raise
@@ -507,6 +675,7 @@ def signup_start(
         "needsVerification": True,
         "email": cleaned,
         "role": role,
+        "expiresIn": OTP_TTL_SECONDS,
     }
 
 
@@ -535,6 +704,7 @@ def signup_verify(
 
     settings = get_settings()
     payload = pending.payload if isinstance(pending.payload, dict) else {}
+    _assert_otp_usable(payload)
     name = str(payload.get("display_name") or cleaned.split("@")[0])
 
     if not settings.supabase_auth_enabled or settings.email_otp_bypass_enabled:
@@ -544,6 +714,8 @@ def signup_verify(
             # Local auth without Supabase: accept any 6-digit code in tests/dev after start.
             if not (code.isdigit() and len(code) == 6):
                 raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+        pending.payload = _mark_otp_consumed(payload)
+        db.flush()
         profile = Profile(
             id=new_id("profile"),
             email=cleaned,
@@ -560,6 +732,8 @@ def signup_verify(
         return _token_payload(profile)
 
     verified = _verify_signup_otp(cleaned, code)
+    pending.payload = _mark_otp_consumed(payload)
+    db.flush()
     access_token = verified.get("access_token")
     user = verified.get("user") if isinstance(verified.get("user"), dict) else {}
     user_id = user.get("id") if isinstance(user, dict) else None
@@ -592,12 +766,21 @@ def signup_resend(db: Session, *, email: str, role: str | None = None) -> dict:
     if role is not None and pending.role != _require_portal_role(role):
         raise HTTPException(status_code=409, detail="Role does not match pending signup")
 
+    payload = pending.payload if isinstance(pending.payload, dict) else {}
+    pending.payload = _issue_otp_payload(payload)
+    db.flush()
+
     settings = get_settings()
     if not settings.supabase_auth_enabled or settings.email_otp_bypass_enabled:
-        return {"ok": True, "email": cleaned, "bypass": settings.email_otp_bypass_enabled}
+        return {
+            "ok": True,
+            "email": cleaned,
+            "expiresIn": OTP_TTL_SECONDS,
+            "bypass": settings.email_otp_bypass_enabled,
+        }
 
     _resend_signup_otp(cleaned)
-    return {"ok": True, "email": cleaned}
+    return {"ok": True, "email": cleaned, "expiresIn": OTP_TTL_SECONDS}
 
 
 def signup(
@@ -663,5 +846,115 @@ def login(db: Session, *, email: str, password: str, role: str) -> dict:
             email=cleaned,
             role=role,
         )
+    _repair_profile_links(db, profile)
+    return _token_payload(profile)
+
+
+def password_forgot(db: Session, *, email: str) -> dict:
+    cleaned = _clean_email(email)
+    settings = get_settings()
+    profile = db.query(Profile).filter(Profile.email == cleaned).one_or_none()
+    if profile is not None:
+        _upsert_password_otp(db, email=cleaned)
+    if not settings.supabase_auth_enabled or settings.email_otp_bypass_enabled:
+        return {
+            "ok": True,
+            "expiresIn": OTP_TTL_SECONDS,
+            "bypass": settings.email_otp_bypass_enabled,
+        }
+    try:
+        _send_recovery_otp(cleaned)
+    except HTTPException as exc:
+        # Anti-enumeration: unknown emails still look successful.
+        if exc.status_code in {400, 404, 422}:
+            return {"ok": True, "expiresIn": OTP_TTL_SECONDS}
+        raise
+    return {"ok": True, "expiresIn": OTP_TTL_SECONDS}
+
+
+def password_resend(db: Session, *, email: str) -> dict:
+    cleaned = _clean_email(email)
+    settings = get_settings()
+    profile = db.query(Profile).filter(Profile.email == cleaned).one_or_none()
+    if profile is not None:
+        _upsert_password_otp(db, email=cleaned)
+    if not settings.supabase_auth_enabled or settings.email_otp_bypass_enabled:
+        return {
+            "ok": True,
+            "expiresIn": OTP_TTL_SECONDS,
+            "bypass": settings.email_otp_bypass_enabled,
+        }
+    try:
+        _resend_recovery_otp(cleaned)
+    except HTTPException as exc:
+        if exc.status_code in {400, 404, 422}:
+            return {"ok": True, "expiresIn": OTP_TTL_SECONDS}
+        raise
+    return {"ok": True, "expiresIn": OTP_TTL_SECONDS}
+
+
+def password_reset(db: Session, *, email: str, token: str, password: str) -> dict:
+    cleaned = _clean_email(email)
+    code = token.strip()
+    if not code:
+        raise HTTPException(status_code=422, detail="Verification code is required")
+    assert_password_policy(password)
+
+    settings = get_settings()
+    profile = db.query(Profile).filter(Profile.email == cleaned).one_or_none()
+
+    challenge = _get_usable_password_otp(db, email=cleaned)
+
+    if not settings.supabase_auth_enabled or settings.email_otp_bypass_enabled:
+        if settings.email_otp_bypass_enabled and code != OTP_BYPASS_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+        if not settings.supabase_auth_enabled and code != OTP_BYPASS_TOKEN:
+            if not (code.isdigit() and len(code) == 6):
+                raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+        if profile is None:
+            raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+        _mark_password_otp_consumed(challenge)
+        profile.password_hash = hash_password(password)
+        db.flush()
+        _repair_profile_links(db, profile)
+        return _token_payload(profile)
+
+    verified = _verify_recovery_otp(cleaned, code)
+    _mark_password_otp_consumed(challenge)
+    db.flush()
+    access_token = verified.get("access_token")
+    if not isinstance(access_token, str) or not access_token:
+        raise HTTPException(status_code=502, detail="Supabase Auth returned no access token")
+    _update_password_with_access_token(access_token, password)
+
+    if profile is None:
+        user = verified.get("user") if isinstance(verified.get("user"), dict) else {}
+        user_id = user.get("id") if isinstance(user, dict) else None
+        if not isinstance(user_id, str) or not user_id:
+            claims = _decode(access_token)
+            sub = claims.get("sub")
+            user_id = sub if isinstance(sub, str) else None
+        if not isinstance(user_id, str) or not user_id:
+            raise HTTPException(status_code=401, detail="Invalid or expired verification code")
+        meta_role = None
+        app_meta = user.get("app_metadata") if isinstance(user, dict) else None
+        if isinstance(app_meta, dict) and isinstance(app_meta.get("role"), str):
+            meta_role = app_meta["role"]
+        role = meta_role if meta_role in VALID_ROLES else "creator"
+        name = cleaned.split("@")[0]
+        profile = Profile(
+            id=user_id,
+            email=cleaned,
+            role=role,
+            display_name=name,
+            password_hash=hash_password(password),
+        )
+        _attach_role_links(db, profile, role)
+        db.add(profile)
+        db.flush()
+    else:
+        profile.password_hash = hash_password(password)
+        db.flush()
+
     _repair_profile_links(db, profile)
     return _token_payload(profile)

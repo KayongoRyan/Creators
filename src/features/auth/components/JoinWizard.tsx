@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DemoRolePicker } from "@/features/auth/components/DemoRolePicker";
 import { getRoleHome, saveDemoSession } from "@/features/auth/demoSession";
+import { writePendingSignup } from "@/features/auth/pendingSignup";
 import { isAdminOnlyPortal } from "@/lib/portal/devScope";
 import { creatorNicheGroups } from "@/features/creators/data/creatorNiches";
 import { routes } from "@/config/routes";
-import { writePendingSignup } from "@/features/auth/pendingSignup";
 import { loginWithPassword, signupStart, signupWithPassword } from "@/lib/api";
 import { cn } from "@/lib/utils/cn";
 import { firstPasswordError, isValidEmail } from "@/lib/validators";
@@ -36,7 +37,7 @@ export function JoinWizard() {
       ? roleParam
       : "creator";
   const initialMode: JoinMode =
-    adminPortal || searchParams.get("mode") === "login" ? "login" : "signup";
+    searchParams.get("mode") === "login" ? "login" : "signup";
 
   const [mode, setMode] = useState<JoinMode>(initialMode);
   const [role, setRole] = useState<UserRole>(initialRole);
@@ -58,25 +59,23 @@ export function JoinWizard() {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
 
-<<<<<<< Updated upstream
-  const isLogin = mode === "login";
-  const signupRole: Extract<UserRole, "creator" | "brand"> =
-    role === "brand" ? "brand" : "creator";
-  const stepLabels = STEP_LABELS[signupRole];
-  const totalSteps = stepLabels.length;
-=======
   useEffect(() => {
     if (adminPortal) setRole("admin");
   }, [adminPortal]);
 
   useEffect(() => {
+    // Admin sign-in lives on /admin/login — keep /join for admin signup only.
+    if (adminPortal && searchParams.get("mode") !== "signup") {
+      router.replace(routes.admin.login);
+      return;
+    }
     const modeParam = searchParams.get("mode");
     if (modeParam === "login") setMode("login");
     else if (modeParam === "signup") setMode("signup");
     if (adminPortal) return;
     const rp = searchParams.get("role");
     if (rp === "brand" || rp === "creator") setRole(rp);
-  }, [searchParams, adminPortal]);
+  }, [searchParams, adminPortal, router]);
 
   const isLogin = mode === "login";
   const signupRole: Extract<UserRole, "creator" | "brand" | "admin"> = adminPortal
@@ -85,10 +84,10 @@ export function JoinWizard() {
       ? "brand"
       : "creator";
   const isAdminSignup = adminPortal && !isLogin;
-  const stepLabels = STEP_LABELS[adminPortal ? "creator" : signupRole];
->>>>>>> Stashed changes
+  const stepLabels = STEP_LABELS[adminPortal ? "creator" : signupRole === "brand" ? "brand" : "creator"];
 
   const sectionTitle = useMemo(() => {
+    if (adminPortal && !isLogin) return "Create admin account";
     if (isLogin) return "Welcome back";
     if (signupRole === "brand") {
       return [
@@ -99,10 +98,6 @@ export function JoinWizard() {
         "Choose a password",
       ][step];
     }
-<<<<<<< Updated upstream
-    return ["Profile details", "Location", "Creator profile", "Payout details", "Verify account"][step];
-  }, [isLogin, signupRole, step]);
-=======
     return [
       "Profile details",
       "Location",
@@ -111,7 +106,6 @@ export function JoinWizard() {
       "Choose a password",
     ][step];
   }, [adminPortal, isLogin, signupRole, step]);
->>>>>>> Stashed changes
 
   async function completeLogin() {
     if (!isValidEmail(email)) {
@@ -131,12 +125,6 @@ export function JoinWizard() {
         password,
         role: loginRole,
       });
-<<<<<<< Updated upstream
-      const mockProfile = siteConfig.useMockData
-        ? lookupMockCredential(result.email, result.role as UserRole)
-        : null;
-=======
->>>>>>> Stashed changes
       saveDemoSession({
         role: result.role as UserRole,
         displayName: displayName.trim() || email.split("@")[0] || "User",
@@ -155,11 +143,6 @@ export function JoinWizard() {
     }
   }
 
-<<<<<<< Updated upstream
-  async function completeSignup() {
-    if (password.length < 8) {
-      setError("Use a password with at least 8 characters.");
-=======
   async function completeAdminSignup() {
     if (!displayName.trim()) {
       setError("Enter your name.");
@@ -214,7 +197,6 @@ export function JoinWizard() {
     const passwordIssueSignup = firstPasswordError(password);
     if (passwordIssueSignup) {
       setError(passwordIssueSignup);
->>>>>>> Stashed changes
       return;
     }
     if (password !== confirmPassword) {
@@ -249,17 +231,18 @@ export function JoinWizard() {
       });
       writePendingSignup({
         email: result.email,
-        role: signupRole,
+        role: signupRole === "brand" ? "brand" : "creator",
         displayName: name,
         address: address.trim() || undefined,
         phone: phone.trim() || undefined,
         birthDate: birthDate || undefined,
         niches: signupRole === "creator" ? selectedNiches : undefined,
         bypass: Boolean(result.bypass),
+        otpIssuedAt: Date.now(),
       });
       const verifyUrl = `${routes.auth.verify}?${new URLSearchParams({
         email: result.email,
-        role: signupRole,
+        role: signupRole === "brand" ? "brand" : "creator",
       }).toString()}`;
       if (typeof window !== "undefined") {
         window.location.assign(verifyUrl);
@@ -313,7 +296,6 @@ export function JoinWizard() {
         return false;
       }
     }
-    // Payout details are optional at signup — can be completed later in the portal.
     if (step === PASSWORD_STEP) {
       const passwordIssueSignup = firstPasswordError(password);
       if (passwordIssueSignup) {
@@ -349,43 +331,42 @@ export function JoinWizard() {
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
             {adminPortal ? "Admin access" : "Create your profile"}
           </h1>
-          {!adminPortal ? (
-            <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
-              <button
-                type="button"
-                aria-pressed={mode === "signup"}
-                onClick={() => {
-                  setMode("signup");
-                  setStep(0);
-                  setError("");
-                  if (role === "admin") setRole("creator");
-                }}
-                className={cn(
-                  "min-h-10 px-4 text-sm font-semibold",
-                  mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
-                )}
-              >
-                Sign up
-              </button>
-              <button
-                type="button"
-                aria-pressed={mode === "login"}
-                onClick={() => {
-                  setMode("login");
-                  setError("");
-                }}
-                className={cn(
-                  "min-h-10 px-4 text-sm font-semibold",
-                  mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
-                )}
-              >
-                Log in
-              </button>
-            </div>
-          ) : null}
+          <div className="grid w-full max-w-xs grid-cols-2 overflow-hidden rounded-full bg-[#e8e8e8] sm:w-auto">
+            <button
+              type="button"
+              aria-pressed={mode === "signup"}
+              onClick={() => {
+                setMode("signup");
+                setStep(0);
+                setError("");
+                if (adminPortal) setRole("admin");
+                else if (role === "admin") setRole("creator");
+              }}
+              className={cn(
+                "min-h-10 px-4 text-sm font-semibold",
+                mode === "signup" ? "bg-white text-black" : "bg-transparent text-gray-600",
+              )}
+            >
+              Sign up
+            </button>
+            <button
+              type="button"
+              aria-pressed={mode === "login"}
+              onClick={() => {
+                setMode("login");
+                setError("");
+              }}
+              className={cn(
+                "min-h-10 px-4 text-sm font-semibold",
+                mode === "login" ? "bg-black text-white" : "bg-transparent text-gray-600",
+              )}
+            >
+              Log in
+            </button>
+          </div>
         </div>
 
-        {!isLogin ? (
+        {!isLogin && !adminPortal ? (
           <ol className="mt-8 flex justify-between gap-2">
             {stepLabels.map((label, index) => {
               const active = index === step;
@@ -422,14 +403,16 @@ export function JoinWizard() {
           </p>
           <p className="mt-1 text-sm text-gray-600">
             {adminPortal
-              ? "Platform staff only. Use your admin email and password."
+              ? isLogin
+                ? "Platform staff only. Use your admin email and password."
+                : "Register a new admin account for this environment."
               : isLogin
                 ? "Sign in with an existing account. Email and password are checked on the server."
                 : "Provide the details below to set up your workspace."}
           </p>
 
           <div className="mt-6 space-y-5">
-            {(isLogin || step === 0) && (
+            {(isLogin || step === 0 || isAdminSignup) && (
               <>
                 {!adminPortal ? (
                   <DemoRolePicker
@@ -482,13 +465,11 @@ export function JoinWizard() {
                     className={inputClass}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Street, city, country"
                   />
                 </label>
                 <label className="block text-sm font-medium text-gray-700">
-                  Phone number
+                  Phone
                   <input
-                    type="tel"
                     className={inputClass}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
@@ -516,22 +497,15 @@ export function JoinWizard() {
                     className={inputClass}
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="Your company"
                   />
                 </label>
                 <label className="block text-sm font-medium text-gray-700">
                   Business type
-                  <select
+                  <input
                     className={inputClass}
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
-                  >
-                    <option value="">Select from list</option>
-                    <option value="retail">Retail</option>
-                    <option value="saas">SaaS</option>
-                    <option value="agency">Agency</option>
-                    <option value="other">Other</option>
-                  </select>
+                  />
                 </label>
                 <label className="block text-sm font-medium text-gray-700">
                   Identification number
@@ -539,32 +513,31 @@ export function JoinWizard() {
                     className={inputClass}
                     value={identificationNumber}
                     onChange={(e) => setIdentificationNumber(e.target.value)}
-                    placeholder="Registration or tax ID"
                   />
                 </label>
               </>
             ) : null}
 
             {!isLogin && step === 2 && signupRole === "creator" ? (
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-medium text-gray-700">Your niches</legend>
-                <div className="flex flex-wrap gap-2">
-                  {creatorNicheGroups.flatMap((g) =>
-                    g.niches.map((niche) => {
+              <fieldset>
+                <legend className="text-sm font-medium text-gray-700">Niches</legend>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {creatorNicheGroups.flatMap((group) =>
+                    group.niches.map((niche) => {
                       const on = selectedNiches.includes(niche.label);
                       return (
                         <button
                           key={niche.label}
                           type="button"
                           onClick={() =>
-                            setSelectedNiches((cur) =>
+                            setSelectedNiches((prev) =>
                               on
-                                ? cur.filter((n) => n !== niche.label)
-                                : [...cur, niche.label],
+                                ? prev.filter((n) => n !== niche.label)
+                                : [...prev, niche.label],
                             )
                           }
                           className={cn(
-                            "rounded-full px-3 py-1.5 text-xs font-medium",
+                            "rounded-full px-3 py-1.5 text-xs font-semibold",
                             on ? "bg-black text-white" : "bg-gray-100 text-gray-800",
                           )}
                         >
@@ -598,11 +571,7 @@ export function JoinWizard() {
               </>
             ) : null}
 
-<<<<<<< Updated upstream
-            {(isLogin || step === 4) && (
-=======
             {(isLogin || isAdminSignup || (!isLogin && step === PASSWORD_STEP)) && (
->>>>>>> Stashed changes
               <>
                 <label className="block text-sm font-medium text-gray-700">
                   Password
@@ -614,7 +583,16 @@ export function JoinWizard() {
                     autoComplete={isLogin ? "current-password" : "new-password"}
                   />
                 </label>
-                {!isLogin ? (
+                {isLogin ? (
+                  <div className="flex justify-end">
+                    <Link
+                      href={routes.auth.forgotPassword}
+                      className="text-sm font-medium text-gray-700 underline underline-offset-2 hover:text-black"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                ) : (
                   <label className="block text-sm font-medium text-gray-700">
                     Confirm password
                     <input
@@ -625,7 +603,7 @@ export function JoinWizard() {
                       autoComplete="new-password"
                     />
                   </label>
-                ) : null}
+                )}
               </>
             )}
 
@@ -637,7 +615,7 @@ export function JoinWizard() {
           </div>
 
           <div className="mt-8 flex items-center justify-between gap-4">
-            {!isLogin && step > 0 ? (
+            {!isLogin && !isAdminSignup && step > 0 ? (
               <button
                 type="button"
                 onClick={onPrevious}
@@ -657,6 +635,10 @@ export function JoinWizard() {
                   void completeLogin();
                   return;
                 }
+                if (isAdminSignup) {
+                  void completeAdminSignup();
+                  return;
+                }
                 void onNext();
               }}
               className="ml-auto inline-flex min-h-11 items-center justify-center bg-black px-6 text-sm font-semibold text-white disabled:opacity-60"
@@ -665,31 +647,19 @@ export function JoinWizard() {
                 ? "Working…"
                 : isLogin
                   ? "Log in ›"
-<<<<<<< Updated upstream
-                  : step === totalSteps - 1
-                    ? "Finish ›"
-                    : "Next ›"}
-=======
                   : isAdminSignup
                     ? "Create account ›"
                     : step === PASSWORD_STEP
                       ? "Send code ›"
                       : "Next ›"}
->>>>>>> Stashed changes
             </button>
           </div>
 
           <p className="mt-6 text-xs leading-5 text-gray-500">
             {adminPortal
-<<<<<<< Updated upstream
-              ? siteConfig.useMockData
-                ? "Mock: admin@ubunifu.dev / CreatorsDemo1! — or use your existing admin account."
-                : "Demo: admin@ubunifu.dev — password CreatorsDemo1!"
-=======
               ? isLogin
                 ? "Use the admin email and password provisioned for this environment."
                 : "Creates an admin account on the server when API signup allows the admin role."
->>>>>>> Stashed changes
               : isLogin
                 ? "Use the email and password from creator signup. Pick Creator vs Brand above to match your account."
                 : "Creates a real account. After the password step we email a 6-digit code to verify."}

@@ -199,42 +199,56 @@ function useCreatorStoreController() {
   );
 
   const submitAssignment = useCallback(
-    (assignmentId: string, postUrl: string) => {
+    async (assignmentId: string, postUrl: string) => {
       const url = postUrl.trim();
+      if (!url) {
+        setActionError("Post URL is required");
+        return false;
+      }
       const assignment = state.assignments.find((a) => a.id === assignmentId);
-      persist((s) => {
-        const assignment = s.assignments.find((a) => a.id === assignmentId);
-        if (!assignment) return s;
-
-        const updated: CreatorAssignment = {
-          ...assignment,
-          postUrl: url,
-          status: "pending",
-        };
-
-        const earningsExists = s.earnings.some(
-          (e) => e.campaignTitle === assignment.title && e.status === "pending",
-        );
-
-        return {
-          ...s,
-          assignments: s.assignments.map((a) =>
-            a.id === assignmentId ? updated : a,
-          ),
-          earnings: earningsExists
-            ? s.earnings
-            : [
-                ...s.earnings,
-                {
-                  id: nextId("earn"),
-                  campaignTitle: assignment.title,
-                  amountRwf: assignment.payoutRwf,
-                  status: "pending" as const,
-                },
-              ],
-        };
-      });
-      void notifyMutationFailure(() => apiSubmitAssignment(assignmentId, url));
+      const result = await runApiMutation(() =>
+        apiSubmitAssignment(assignmentId, url),
+      );
+      if (!result.ok) {
+        setActionError(result.error);
+        return false;
+      }
+      setActionError(null);
+      // Rehydrate so Tasks/Submissions match DB (admin reads submissions table).
+      const hydrated = await hydrateFromApi(fetchCreatorState, writeState);
+      if (hydrated.ok) {
+        setState(hydrated.data);
+      } else {
+        persist((s) => {
+          const row = s.assignments.find((a) => a.id === assignmentId);
+          if (!row) return s;
+          const updated: CreatorAssignment = {
+            ...row,
+            postUrl: url,
+            status: "pending",
+          };
+          const earningsExists = s.earnings.some(
+            (e) => e.campaignTitle === row.title && e.status === "pending",
+          );
+          return {
+            ...s,
+            assignments: s.assignments.map((a) =>
+              a.id === assignmentId ? updated : a,
+            ),
+            earnings: earningsExists
+              ? s.earnings
+              : [
+                  ...s.earnings,
+                  {
+                    id: nextId("earn"),
+                    campaignTitle: row.title,
+                    amountRwf: row.payoutRwf,
+                    status: "pending" as const,
+                  },
+                ],
+          };
+        });
+      }
       recordPlatformEvent({
         actorName: state.profile.displayName,
         actorRole: "creator",
@@ -246,8 +260,9 @@ function useCreatorStoreController() {
         href: "/admin/submissions",
         severity: severityForAction("submission_created"),
       });
+      return true;
     },
-    [notifyMutationFailure, persist, state.assignments, state.profile.displayName],
+    [persist, state.assignments, state.profile.displayName],
   );
 
   return {

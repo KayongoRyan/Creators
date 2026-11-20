@@ -15,21 +15,24 @@ import { formatRwf } from "@/lib/format/money";
 import { isValidPostUrl } from "@/lib/validators/url";
 
 export function CreatorTasks() {
-  const { state, submitAssignment } = useCreatorStore();
+  const { state, submitAssignment, actionError, clearActionError } =
+    useCreatorStore();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   const submit = (assignmentId: string) => {
     const url = urls[assignmentId] ?? "";
     if (!isValidPostUrl(url)) {
       setErrors((e) => ({
         ...e,
-        [assignmentId]: "Paste a valid TikTok or Instagram post URL.",
+        [assignmentId]: "Paste a valid post URL (any social).",
       }));
       return;
     }
     setErrors((e) => ({ ...e, [assignmentId]: "" }));
+    clearActionError();
     setConfirmId(assignmentId);
   };
 
@@ -39,13 +42,24 @@ export function CreatorTasks() {
       title="My tasks"
       subtitle="Campaigns you are assigned to deliver"
     >
+      {actionError ? (
+        <p
+          role="alert"
+          className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {actionError}
+        </p>
+      ) : null}
+
       {state.assignments.length === 0 ? (
         <CreatorEmptyBlock message="No assigned campaigns yet." />
       ) : (
         <ul className="space-y-4">
           {state.assignments.map((task) => {
             const pill = assignmentStatusPill(task.status);
-            const canSubmit = task.status === "not_submitted" || task.status === "revision";
+            const canSubmit =
+              task.status === "not_submitted" || task.status === "revision";
+            const busy = submittingId === task.id;
 
             return (
               <li key={task.id}>
@@ -57,7 +71,8 @@ export function CreatorTasks() {
 
                   <div className="mt-4 space-y-2 text-sm leading-6 text-neutral-600">
                     <p>
-                      <span className="font-medium text-neutral-900">Brief:</span> {task.brief}
+                      <span className="font-medium text-neutral-900">Brief:</span>{" "}
+                      {task.brief}
                     </p>
                     {task.sourceUrl ? (
                       <p>
@@ -109,11 +124,16 @@ export function CreatorTasks() {
                           onChange={(e) =>
                             setUrls((u) => ({ ...u, [task.id]: e.target.value }))
                           }
-                          placeholder="Paste your TikTok or Instagram post URL"
+                          placeholder="Paste your post URL (TikTok, IG, YouTube, X, …)"
                           className={creatorFieldClass}
+                          disabled={busy}
                         />
-                        <button type="submit" className={creatorPrimaryButton}>
-                          Submit
+                        <button
+                          type="submit"
+                          className={creatorPrimaryButton}
+                          disabled={busy}
+                        >
+                          {busy ? "Submitting…" : "Submit"}
                         </button>
                       </div>
                       {errors[task.id] ? (
@@ -134,10 +154,13 @@ export function CreatorTasks() {
         description="Ubunifu will review before payout is released."
         confirmLabel="Submit"
         onConfirm={() => {
-          if (confirmId) {
-            submitAssignment(confirmId, urls[confirmId] ?? "");
-          }
+          const id = confirmId;
           setConfirmId(null);
+          if (!id) return;
+          setSubmittingId(id);
+          void submitAssignment(id, urls[id] ?? "").finally(() => {
+            setSubmittingId(null);
+          });
         }}
         onCancel={() => setConfirmId(null)}
       />

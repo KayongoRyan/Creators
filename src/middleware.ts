@@ -18,7 +18,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  const publicPaths = ["/join", "/login", "/register", "/verify"];
+  const publicPaths = [
+    "/join",
+    "/login",
+    "/register",
+    "/verify",
+    "/forgot-password",
+    "/reset-password",
+    "/admin/login",
+  ];
   if (
     publicPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`))
   ) {

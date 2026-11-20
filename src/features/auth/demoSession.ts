@@ -65,11 +65,9 @@ export function clearAdminManualSignIn() {
     window.sessionStorage.removeItem(adminSkipAutoKey);
 }
 
+/** Dedicated admin sign-in (not the creator/brand join wizard). */
 export function adminJoinUrl() {
-    return `${routes.auth.join}?${new URLSearchParams({
-        mode: "login",
-        role: "admin",
-    }).toString()}`;
+    return routes.admin.login;
 }
 
 /** Signed out, or signed in as a different portal role (preview as guest). */

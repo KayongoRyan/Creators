@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.schemas import (
     AuthCredentialsIn,
     DevTokenIn,
+    PasswordForgotIn,
+    PasswordResendIn,
+    PasswordResetIn,
     SignupResendIn,
     SignupStartIn,
     SignupVerifyIn,
@@ -12,6 +15,9 @@ from app.core.db import get_db
 from app.modules.identity.service import (
     issue_dev_token,
     login,
+    password_forgot,
+    password_resend,
+    password_reset,
     signup,
     signup_resend,
     signup_start,
@@ -82,3 +88,23 @@ def auth_login(body: AuthCredentialsIn, db: Session = Depends(get_db)) -> dict:
         password=body.password,
         role=body.role,
     )
+
+
+@router.post("/auth/password/forgot")
+def auth_password_forgot(body: PasswordForgotIn, db: Session = Depends(get_db)) -> dict:
+    return password_forgot(db, email=body.email)
+
+
+@router.post("/auth/password/reset")
+def auth_password_reset(body: PasswordResetIn, db: Session = Depends(get_db)) -> dict:
+    return password_reset(
+        db,
+        email=body.email,
+        token=body.token,
+        password=body.password,
+    )
+
+
+@router.post("/auth/password/resend")
+def auth_password_resend(body: PasswordResendIn, db: Session = Depends(get_db)) -> dict:
+    return password_resend(db, email=body.email)
